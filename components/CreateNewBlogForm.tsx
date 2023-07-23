@@ -1,0 +1,52 @@
+"use client";
+
+import { useState } from "react";
+import Button from "./Button";
+import BlogSlugInput from "./BlogSlugInput";
+
+export default function CreateNewBlogForm() {
+    const [form, setForm] = useState({ blogId: "" });
+    const [status, setStatus] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+
+    function handleSubmit() {
+        setIsLoading(true);
+        setStatus("블로그 만드는 중...");
+
+        fetch('/api/blogs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ blogId: form.blogId })
+        }).then(async res => {
+            if (res.ok) {
+                window.location.href = `/@${form.blogId}`;
+            } else {
+                const json = await res.json();
+
+                setIsLoading(false);
+                setStatus(json.error);
+            }
+        })
+    }
+
+    return (
+        <>
+            <form className="flex flex-col float-left space-y-2">
+                <h2 className="text-xl font-bold">새 블로그를 만듭니다.</h2>
+
+                <BlogSlugInput handleChange={e => setForm({ blogId: e.target.value })} className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm" />
+                <div>
+                    <p className="text-neutral-500">블로그 ID는 영문, 숫자, 밑줄만 사용할 수 있습니다.</p>
+                    <p className="text-neutral-500">블로그 주소: {`${process.env.NEXT_PUBLIC_DOMAIN}/@${form.blogId === '' ? 'blog' : form.blogId}`}</p>
+                </div>
+
+                <div className="flex flex-row items-baseline space-x-2">
+                    <Button content="만들기" disabled={isLoading} onClick={handleSubmit} />
+                    <p>{status}</p>
+                </div>
+            </form>
+        </>
+    )
+}
