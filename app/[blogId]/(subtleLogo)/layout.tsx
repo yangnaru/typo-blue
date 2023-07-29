@@ -24,9 +24,9 @@ export default async function BlogLayout({ children, params }: { children: React
 
     return <BlogLayoutBody>
         {blog &&
-            <div className="my-8 flex flex-row items-baseline space-x-2">
+            <div className="my-8 flex flex-row flex-wrap items-baseline break-keep">
                 {blog && <>
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-2xl font-bold mr-2">
                         <Link href={`/@${blog.slug}`}>
                             {(!blog.name || blog.name === '') ? `@${blog.slug}` : blog.name}
                         </Link>
