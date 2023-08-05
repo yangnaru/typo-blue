@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: { postId: string } 
 
     return {
         title: postTitle,
-        description: blogName + (blogDescription ? ` - ${blogDescription}` : ''),
+        description: blogName + (blogDescription ? ` — ${blogDescription}` : ''),
     }
 }
 
