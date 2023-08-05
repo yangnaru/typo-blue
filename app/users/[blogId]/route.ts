@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: { blogId: 
         "preferredUsername": blogId,
         "name": blogId,
         "summary": blog.description,
-        "url": `${url}/users/${blogId}`,
+        "url": `${url}/@${blogId}`,
         "manuallyApprovesFollowers": false,
         "discoverable": true,
         "published": blog.createdAt,
