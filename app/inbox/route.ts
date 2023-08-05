@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
-export function POST(request: NextRequest) {
+export async function POST(request: NextRequest) {
     console.log('server inbox');
     console.log(request.headers);
-    console.log(request.json());
+    console.log(await request.json());
 }
