@@ -5,7 +5,34 @@ import { encodePostId, getCurrentUser } from "@/lib/server-util";
 import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export async function generateMetadata({ params }: { params: { postId: string } }): Promise<Metadata> {
+    const post = await prisma.post.findUnique({
+        where: {
+            uuid: Buffer.from(decode(params.postId)).toString('hex')
+        },
+        include: {
+            blog: true,
+        }
+    });
+
+    if (!post || !post.publishedAt || !post.blog) {
+        return {
+            title: '존재하지 않는 글입니다.',
+        }
+    }
+
+    const blogName = post.blog.name ?? `@${post.blog.slug}`;
+    const blogDescription = post.blog.description ?? '';
+    const postTitle = post.title ?? '무제';
+
+    return {
+        title: postTitle,
+        description: blogName + (blogDescription ? ` - ${blogDescription}` : ''),
+    }
+}
 
 export default async function BlogPost({ params }: { params: { blogId: string, postId: string } }) {
     const currentUser = await getCurrentUser();

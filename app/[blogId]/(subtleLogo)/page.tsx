@@ -2,6 +2,37 @@ import LinkButton from "@/components/LinkButton";
 import PostList from "@/components/PostList";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/server-util";
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: { blogId: string } }): Promise<Metadata> {
+    const blogId = decodeURIComponent(params.blogId)
+    if (!blogId.startsWith('@')) {
+        return {
+            title: '존재하지 않는 블로그입니다.',
+        }
+    }
+
+    const slug = blogId.replace('@', '');
+    const blog = await prisma.blog.findUnique({
+        where: {
+            slug: slug
+        },
+        include: {
+            user: true,
+        }
+    });
+
+    if (!blog) {
+        return {
+            title: '존재하지 않는 블로그입니다.',
+        }
+    }
+
+    return {
+        title: blog.name ?? `@${blog.slug}`,
+        description: blog.description,
+    }
+}
 
 export default async function BlogHome({ params }: { params: { blogId: string } }) {
     const currentUser = await getCurrentUser();
