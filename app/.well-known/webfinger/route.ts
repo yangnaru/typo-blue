@@ -48,5 +48,10 @@ export async function GET(req: NextRequest) {
         ],
     };
 
-    return NextResponse.json(response);
+    return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: {
+            "Content-Type": "application/jrd+json",
+        },
+    });
 }
