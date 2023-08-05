@@ -2,11 +2,12 @@ import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: { blogId: string }}) {
+    const url = process.env.NEXT_PUBLIC_URL;
+
     if (request.headers.get("accept") !== "application/activity+json") {
-        return NextResponse.redirect(`/@${params.blogId}`);
+        return NextResponse.redirect(`${url}/@${params.blogId}`);
     }
 
-    const url = process.env.NEXT_PUBLIC_URL;
     const blogId = params.blogId;
 
     const blog = await prisma.blog.findUnique({
