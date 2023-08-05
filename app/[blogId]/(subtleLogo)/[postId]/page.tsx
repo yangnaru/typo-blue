@@ -5,9 +5,7 @@ import { encodePostId, getCurrentUser } from "@/lib/server-util";
 import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
-import format from "date-fns/format";
 import Link from "next/link";
-import { env } from "process";
 
 export default async function BlogPost({ params }: { params: { blogId: string, postId: string } }) {
     const currentUser = await getCurrentUser();
