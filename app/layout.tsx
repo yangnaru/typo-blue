@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'typo.blue',
-  description: 'text-only blogging',
+  title: '타이포 블루',
+  description: '타이포 블루는 글로 자신을 표현하는 공간입니다.',
 }
 
 export default function RootLayout({
