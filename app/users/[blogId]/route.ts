@@ -28,13 +28,17 @@ export async function GET(request: NextRequest, { params }: { params: { blogId: 
         "type": "Person",
         "following": `${url}/users/${blogId}/following`,
         "followers": `${url}/users/${blogId}/followers`,
-        "inbox": `${url}/inbox`,
+        "inbox": `${url}/users/${blogId}/inbox`,
+        "outbox": `${url}/users/${blogId}/outbox`,
         "preferredUsername": blogId,
         "name": blogId,
         "summary": blog.description,
         "url": `${url}/@${blogId}`,
         "manuallyApprovesFollowers": false,
-        "discoverable": true,
+        "discoverable": false,
         "published": blog.createdAt,
+        "endpoints": {
+            "sharedInbox": `${url}/inbox`
+        }
     })
 }
