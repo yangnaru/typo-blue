@@ -31,6 +31,17 @@ export async function generateMetadata({ params }: { params: { blogId: string } 
     return {
         title: blog.name ?? `@${blog.slug}`,
         description: blog.description,
+        alternates: {
+            canonical: `${process.env.NEXT_PUBLIC_URL}/${blogId}`,
+            types: {
+                'application/atom+xml': [
+                    {
+                        title: blog.name ?? blogId,
+                        url: `${process.env.NEXT_PUBLIC_URL}/${blogId}/feed.xml`,
+                    }
+                ]
+            },
+        },
     }
 }
 
@@ -62,7 +73,7 @@ export default async function BlogHome({ params }: { params: { blogId: string } 
     const isCurrentUserBlogOwner = blog.user.email === currentUser?.email;
     const draftPosts = blog.posts.filter((post) => post.publishedAt === null);
     const publishedPosts = blog.posts.filter((post) => post.publishedAt !== null);
-    
+
     return <div className="space-y-8">
         {isCurrentUserBlogOwner && <PostList name="임시 저장된 글 목록" blog={blog} posts={draftPosts} showTitle={isCurrentUserBlogOwner} />}
         <PostList name="발행된 글 목록" blog={blog} posts={publishedPosts} showTitle={isCurrentUserBlogOwner} />
