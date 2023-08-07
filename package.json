@@ -35,6 +35,7 @@
     "remixicon": "^3.4.0",
     "sanitize-html": "^2.11.0",
     "tailwindcss": "^3.3.3",
+    "tsx": "^3.12.7",
     "typescript": "5.1.6",
     "xmlbuilder2": "^3.1.1"
   },

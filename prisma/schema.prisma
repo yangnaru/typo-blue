@@ -44,6 +44,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   blogs         Blog[]
+  follows       Follow[]
 }
 
 model VerificationToken {
@@ -74,6 +75,19 @@ model Blog {
   name        String?
   description String?
   userId      Int
+  privateKey  String?
+  publicKey   String?
   posts       Post[]
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model Follow {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  accountId       Int
+  targetAccountId String
+  follow          User     @relation(fields: [accountId], references: [id])
+
+  @@unique([accountId, targetAccountId])
 }

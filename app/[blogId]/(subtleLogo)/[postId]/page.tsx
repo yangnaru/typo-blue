@@ -9,7 +9,15 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export async function generateMetadata({ params }: { params: { postId: string } }): Promise<Metadata> {
-    const uuid = Buffer.from(decode(params.postId)).toString('hex');
+    let uuid;
+    try {
+        uuid = Buffer.from(decode(params.postId)).toString('hex');
+    } catch (e) {
+        return {
+            title: '존재하지 않는 글입니다.',
+        }
+    }
+
     if (uuid.length !== 32) {
         return {
             title: '존재하지 않는 글입니다.',

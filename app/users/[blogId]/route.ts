@@ -3,13 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: { blogId: string }}) {
     const url = process.env.NEXT_PUBLIC_URL;
-
-    if (request.headers.get("accept") !== "application/activity+json") {
+    
+    const accept = request.headers.get("accept")?.split(',').map((item) => item.trim());
+    console.log('accept', accept);
+    if (!(accept?.includes("application/ld+json") || accept?.includes("application/json"))) {
         return NextResponse.redirect(`${url}/@${params.blogId}`);
     }
 
     const blogId = params.blogId;
-
     const blog = await prisma.blog.findUnique({
         where: {
             slug: blogId
