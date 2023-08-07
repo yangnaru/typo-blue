@@ -24,7 +24,7 @@ export default async function FollowersPage({ params }: { params: { blogId: stri
 
         <ul>
             {follows.map((follow) => {
-                return <li><Link href={follow.targetAccountId}>{follow.targetAccountId}</Link></li>
+                return <li key={follow.targetAccountId}><Link href={follow.targetAccountId}>{follow.targetAccountId}</Link></li>
             })}
         </ul>
     </div>;
