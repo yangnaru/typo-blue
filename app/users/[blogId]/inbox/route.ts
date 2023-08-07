@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
 import { parseSignatureHeader, verifyRequestSignature } from "@/lib/server-util";
-import crypto, { KeyLike, createSign, getHashes, webcrypto } from "crypto";
+import crypto, { webcrypto } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest, { params }: { params: { blogId: string } }) {
-    console.log('user inbox');
-    const { type, object } = await request.json();
-
+    const json = await request.json();
+    console.log('json', json)
+    const { type, object } = json;
     const keyId = parseSignatureHeader(request.headers.get('Signature')!).keyId;
     const actor = await (await fetch(keyId, {
         headers: {
@@ -15,87 +15,133 @@ export async function POST(request: NextRequest, { params }: { params: { blogId:
     })).json();
     const actorPublicKey = actor.publicKey.publicKeyPem;
     const verified = await verifyRequestSignature(request, actorPublicKey);
-    console.log('verified', verified)
 
     if (!verified) {
         return NextResponse.json({ message: 'Signature verification failed' }, { status: 400 });
     }
 
+    const blog = await prisma.blog.findUnique({
+        where: {
+            slug: params.blogId,
+        },
+    });
+
+    if (!blog) {
+        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+
     if (type === 'Follow') {
-        console.log('follow: ', object)
+        console.log('follow', json, object);
 
-        const blog = await prisma.blog.findUnique({
-            where: {
-                slug: params.blogId,
-            },
-        });
 
-        if (!blog) {
-            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        try {
+            console.log('creating follow row')
+            await prisma.follow.create({
+                data: {
+                    accountId: blog.id,
+                    targetAccountId: json.actor,
+                },
+            });
+        } catch (e) {
+            console.log(e);
         }
-
-        console.log(blog.slug)
 
         const entity = {
             '@context': 'https://www.w3.org/ns/activitystreams',
             type: 'Accept',
-            actor: `${process.env.NEXT_PUBLIC_URL}/blog/${blog.slug}`,
-            object: actor.id,
+            actor: `${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}`,
+            object: {
+                '@context': 'https://www.w3.org/ns/activitystreams',
+                id: json.id,
+                type: 'Follow',
+                actor: json.actor,
+                object: json.object,
+            }
         };
-        const digest = await webcrypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(entity)));
-        const base64Digest = Buffer.from(digest).toString('base64')
-
-        const now = new Date();
-        const foreignPathName = new URL(actor.inbox).pathname;
-        const foreignDomain = new URL(actor.inbox).host;
-        const dateString = now.toUTCString();
+        console.log(entity)
 
         const digestHash = crypto
             .createHash('sha256')
             .update(JSON.stringify(entity))
             .digest('base64');
         const digestHeader = `SHA-256=${digestHash}`;
-        const stringToSign = `(request-target): post ${foreignPathName}\nhost: ${foreignDomain}\ndate: ${dateString}\ndigest: SHA-256=${digestHash}`;
-        const signature = await sign(stringToSign, blog.privateKey!);
-        console.log('follor: ', signature);
 
+
+        const now = new Date();
+        const request: Request = new Request(actor.inbox, {
+            method: 'POST',
+            headers: {
+                'Host': new URL(actor.inbox).host,
+                'Content-Type': 'application/activity+json',
+                'Date': now.toUTCString(),
+                'Digest': digestHeader,
+            },
+            body: JSON.stringify(entity),
+        })
+
+        const includeHeaders = ['(request-target)', 'host', 'date', 'digest'];
+        const stringToSign = getStringToSign(request, includeHeaders);
+        const privateKey = crypto.createPrivateKey(blog.privateKey!);
+        const signature = crypto.sign('sha256', Buffer.from(stringToSign), {
+            key: privateKey,
+        }).toString('base64');
+    
+        console.log('stringToSign:', stringToSign);
+        console.log('signature:', signature);
+        console.log('public key:', blog.publicKey!)
+
+        const keyId = getKeyIdForBlog(blog.slug);
+        console.log('keyId', keyId)
+        const signatureHeader = `keyId="${keyId}",algorithm="rsa-sha256",headers="${includeHeaders.join(' ')}",signature="${signature}"`;
         const r = await fetch(actor.inbox, {
             method: 'POST',
             headers: {
+                'Host': new URL(actor.inbox).host,
                 'Content-Type': 'application/activity+json',
-                'Date': dateString,
+                'Date': now.toUTCString(),
                 'Digest': digestHeader,
-                'Signature': `keyId="${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}/main-key",algorithm="rsa-sha256",headers="(request-target) host date digest",signature="${signature}"`,
+                'Signature': signatureHeader,
             },
             body: JSON.stringify(entity),
         });
-        console.log('follow: ', await r.json())
+        console.log('???', r.statusText, r.status)
 
         return NextResponse.json({ message: 'Success' });
     } else if (type === 'Undo' && object.type === 'Follow') {
-        console.log('undo follow', object)
+        console.log('undo follow', object);
+        try {
+            console.log('deleting follow row')
+            await prisma.follow.delete({
+                where: {
+                    accountId_targetAccountId: {
+                        accountId: blog.id,
+                        targetAccountId: object.actor,
+                    },
+                },
+            });
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     return NextResponse.json({ message: 'ok' });
 }
 
-async function sign(stringToBeSigned: string, pem: string) {
-    // fetch the part of the PEM string between header and footer
-    const pemHeader = "-----BEGIN PRIVATE KEY-----";
-    const pemFooter = "-----END PRIVATE KEY-----";
-    const pemContents = pem.substring(
-        pemHeader.length,
-        pem.length - pemFooter.length,
-    ).replaceAll('\n', '');
+function getKeyIdForBlog(blogId: string) {
+    return `${process.env.NEXT_PUBLIC_URL}/users/${blogId}#main-key`;
+}
 
+function getStringToSign(request: Request, includeHeaders: string[]) {
+    const headers = request.headers;
+    const includeHeaderStrings = includeHeaders.map((header) => {
+        if (header === '(request-target)') {
+            const url = new URL(request.url);
+            return `(request-target): ${request.method.toLowerCase()} ${url.pathname}${url.search}`;
+        } else {
+            return `${header}: ${headers.get(header)}`;
+        }
+    });
 
-    const pk = await webcrypto.subtle.importKey('pkcs8', Buffer.from(pemContents, 'base64'), {
-        name: 'RSASSA-PKCS1-v1_5',
-        hash: 'SHA-256',
-    }, true, ['sign']);
-    console.log('sign: ', pk)
-
-    const signature = await webcrypto.subtle.sign('RSASSA-PKCS1-v1_5', pk, Buffer.from(stringToBeSigned));
-    console.log('sign: signature: ', signature)
-    return Buffer.from(signature).toString('base64');
+    return includeHeaderStrings.join('\n');
 }

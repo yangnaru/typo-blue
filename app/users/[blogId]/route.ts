@@ -5,7 +5,6 @@ export async function GET(request: NextRequest, { params }: { params: { blogId: 
     const url = process.env.NEXT_PUBLIC_URL;
     
     const accept = request.headers.get("accept")?.split(',').map((item) => item.trim());
-    console.log('accept', accept);
     if (!(accept?.includes("application/ld+json") || accept?.includes("application/json"))) {
         return NextResponse.redirect(`${url}/@${params.blogId}`);
     }
@@ -41,6 +40,11 @@ export async function GET(request: NextRequest, { params }: { params: { blogId: 
         "published": blog.createdAt,
         "endpoints": {
             "sharedInbox": `${url}/inbox`
-        }
+        },
+        "publicKey": {
+            id: `${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}#main-key`,
+            owner: `${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}`,
+            publicKeyPem: blog.publicKey,
+        },
     })
 }

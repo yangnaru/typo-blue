@@ -42,7 +42,6 @@ export async function verifyRequestSignature(request: NextRequest, actorPublicKe
     const keyId = signatureHeader['keyId'];
     const headers = signatureHeader['headers'];
     const signature = signatureHeader['signature'];
-    console.log('their sig', signature)
 
     const comparisonString = headers.split(' ').map((item) => {
         if (item === '(request-target)') {

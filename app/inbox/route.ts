@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
             'Accept': 'application/activity+json',
         },
     })).json();
+    console.log(actor);
     const actorPublicKey = actor.publicKey.publicKeyPem;
     const verified = await verifyRequestSignature(request, actorPublicKey);
 
@@ -54,12 +55,12 @@ export async function POST(request: NextRequest) {
             },
         });
         if (follow && type === 'Undo' && object.type === 'Follow') {
+            console.log('undo follow')
             await prisma.follow.delete({
                 where: {
                     id: follow.id,
                 },
             });
-            console.log('undo follow')
             return NextResponse.json({ message: 'Success' });
         } else if (!follow && type === 'Follow') {
             await prisma.follow.create({
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
         const newSignatureStringSignature = await webcrypto.subtle.sign(
             'RSASSA-PKCS1-v1_5',
             followeePrivateKey,
-            new TextEncoder().encode(newSignatureString)
+            Buffer.from(newSignatureString)
         )
         const hashBuffer_ = await webcrypto.subtle.digest("SHA-256", newSignatureStringSignature); // hash the message
         const newSignature_ = Buffer.from(hashBuffer_).toString('base64'); // base64 encode the hash
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
                 'Content-Type': 'application/activity+json',
                 'Date': now.toUTCString(),
                 'Digest': 'sha-256=' + base64Digest,
-                'Signature': `keyId="${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}/main-key",headers="(request-target) host date digest",signature="${newSignature_}"`,
+                'Signature': `keyId="${process.env.NEXT_PUBLIC_URL}/users/${blog.slug}#main-key",headers="(request-target) host date digest",signature="${newSignature_}"`,
             },
             body: body,
         });
