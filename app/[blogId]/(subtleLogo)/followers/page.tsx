@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
+import Link from "next/link";
 
-export default async function FollowersPage({ params }: { params: { blogId: string }}) {
+export default async function FollowersPage({ params }: { params: { blogId: string } }) {
     const blogSlug = decodeURIComponent(params.blogId).replace('@', '')
     const blog = await prisma.blog.findUnique({
         where: {
@@ -17,14 +18,14 @@ export default async function FollowersPage({ params }: { params: { blogId: stri
             accountId: blog.id,
         },
     })
-    console.log(follows);
 
     return <div>
-        <h2>Followers</h2>
+        <h2>팔로워 {follows.length}명</h2>
 
-        {follows.map((follow) => {
-            return <p>{follow.targetAccountId}</p>
-        })
-        }
+        <ul>
+            {follows.map((follow) => {
+                return <li><Link href={follow.targetAccountId}>{follow.targetAccountId}</Link></li>
+            })}
+        </ul>
     </div>;
 }
