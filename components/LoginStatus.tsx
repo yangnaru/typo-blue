@@ -1,14 +1,16 @@
-"use client";
+"use server";
 
-import { useSession } from "next-auth/react";
+import { validateRequest } from "@/lib/auth";
 import LinkButton from "./LinkButton";
 
-export default function LoginStatus() {
-    const session = useSession();
+export default async function LoginStatus() {
+  console.log("test");
+  const { user } = await validateRequest();
+  console.log(user);
 
-    return session.data === undefined
-        ? <></>
-        : session.data
-            ? <LinkButton href="/account">{session.data.user?.email ?? ''}</LinkButton>
-            : <LinkButton href="/auth/signin">로그인</LinkButton>
+  return user ? (
+    <LinkButton href="/account">{user.email ?? ""}</LinkButton>
+  ) : (
+    <LinkButton href="/auth/signin">로그인</LinkButton>
+  );
 }

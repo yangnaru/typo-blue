@@ -1,45 +1,74 @@
-import EmailProvider from "next-auth/providers/email";
-import { prisma } from "./db";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { createTransport } from "nodemailer"
+import { Lucia, Session, User } from "lucia";
+import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
+import { PrismaClient } from "@prisma/client";
+import { cache } from "react";
+import { cookies } from "next/headers";
 
-export const authOptions = {
-    pages: {
-        signIn: '/auth/signin',
-        error: '/auth/error'
+const client = new PrismaClient();
+
+const adapter = new PrismaAdapter(client.session, client.user);
+
+export const lucia = new Lucia(adapter, {
+  sessionCookie: {
+    // this sets cookies with super long expiration
+    // since Next.js doesn't allow Lucia to extend cookie expiration when rendering pages
+    expires: false,
+    attributes: {
+      // set to `true` when using HTTPS
+      secure: process.env.NODE_ENV === "production",
     },
-    adapter: PrismaAdapter(prisma),
-    providers: [
-        EmailProvider({
-            server: {
-                host: process.env.EMAIL_SERVER_HOST,
-                port: Number(process.env.EMAIL_SERVER_PORT),
-                auth: {
-                    user: process.env.EMAIL_SERVER_USER,
-                    pass: process.env.EMAIL_SERVER_PASSWORD,
-                },
-            },
-            from: process.env.EMAIL_FROM,
-            async sendVerificationRequest(params) {
-                const { identifier, url, provider } = params;
+  },
+  getUserAttributes: (attributes) => {
+    return {
+      // we don't need to expose the hashed password!
+      email: attributes.email,
+    };
+  },
+});
 
-                const transport = createTransport(provider.server);
-                const result = await transport.sendMail({
-                    to: identifier,
-                    from: provider.from,
-                    subject: '타이포 블루 로그인 링크',
-                    text: text(url),
-                })
+export const validateRequest = cache(
+  async (): Promise<
+    { user: User; session: Session } | { user: null; session: null }
+  > => {
+    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    if (!sessionId) {
+      return {
+        user: null,
+        session: null,
+      };
+    }
 
-                const failed = result.rejected.concat(result.pending).filter(Boolean)
-                if (failed.length) {
-                    throw new Error(`Email(s) (${failed.join(", ")}) could not be sent`)
-                }
-            },
-        })
-    ],
-};
+    const result = await lucia.validateSession(sessionId);
+    // next.js throws when you attempt to set cookie when rendering page
+    try {
+      if (result.session && result.session.fresh) {
+        const sessionCookie = lucia.createSessionCookie(result.session.id);
+        cookies().set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes
+        );
+      }
+      if (!result.session) {
+        const sessionCookie = lucia.createBlankSessionCookie();
+        cookies().set(
+          sessionCookie.name,
+          sessionCookie.value,
+          sessionCookie.attributes
+        );
+      }
+    } catch {}
+    return result;
+  }
+);
 
-function text(url: string) {
-    return `타이포 블루 로그인 링크:\n\n${url}`
+// IMPORTANT!
+declare module "lucia" {
+  interface Register {
+    Lucia: typeof lucia;
+    UserId: number;
+    DatabaseUserAttributes: {
+      email: string;
+    };
+  }
 }

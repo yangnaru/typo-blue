@@ -1,11 +1,9 @@
-"use client";
-
 import LinkButton from "@/components/LinkButton";
 import LoginStatus from "@/components/LoginStatus";
 import Logo from "@/components/Logo";
-import { Blog } from "@/types/Blog";
-import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { validateRequest } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+// import { useEffect, useState } from "react";
 
 export default function Home() {
   return (
@@ -14,37 +12,42 @@ export default function Home() {
       <p>타이포 블루는 글로 자신을 표현하는 공간입니다.</p>
 
       <nav className="space-x-2 flex">
-        <SessionProvider>
-          <HomeWithSession />
-        </SessionProvider>
+        <HomeWithSession />
       </nav>
     </main>
-  )
+  );
 }
 
-function HomeWithSession() {
-  const { data: session, status } = useSession();
-  const [blogs, setBlogs] = useState<Blog[] | null>(null);
+async function HomeWithSession() {
+  const { user } = await validateRequest();
 
-  useEffect(() => {
-    fetch('/api/blogs', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
+  let blogs;
+
+  if (user) {
+    blogs = await prisma.blog.findMany({
+      where: {
+        user: {
+          email: user.email,
+        },
       },
-    })
-      .then(response => response.json())
-      .then(data => {
-        setBlogs(data.blogs);
-      });
-  }, []);
+      include: {
+        posts: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+  }
 
   return (
     <div>
       <div className="flex flex-row items-baseline space-x-2">
-        {session?.user && blogs && blogs.length === 0 && <LinkButton href="/blogs/new">블로그 만들기</LinkButton>}
+        {user && blogs && blogs.length === 0 && (
+          <LinkButton href="/blogs/new">블로그 만들기</LinkButton>
+        )}
         <LoginStatus />
       </div>
     </div>
-  )
+  );
 }
