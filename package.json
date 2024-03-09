@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.9",
-    "@types/nodemailer": "^6.4.8",
+    "@types/nodemailer": "^6.4.14",
     "@types/sanitize-html": "^2.9.0",
     "prisma": "^5.10.2"
   }
