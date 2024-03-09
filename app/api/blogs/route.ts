@@ -1,9 +1,9 @@
+import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const currentUser = await getCurrentUser();
+  const { user: currentUser } = await validateRequest();
 
   if (!currentUser?.email) {
     return NextResponse.json(
