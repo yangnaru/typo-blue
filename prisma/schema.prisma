@@ -7,24 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Account {
-  id                Int     @id @default(autoincrement())
-  userId            Int
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
 model Session {
   id           Int      @id @default(autoincrement())
   sessionToken String   @unique
@@ -41,7 +23,6 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  accounts      Account[]
   sessions      Session[]
   blogs         Blog[]
   follows       Follow[]
@@ -60,7 +41,7 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
-  uuid        String    @unique @db.Uuid @default(uuid())
+  uuid        String    @unique @default(uuid()) @db.Uuid
   title       String?
   content     String
   blogId      Int
