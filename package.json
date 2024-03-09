@@ -10,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@lucia-auth/adapter-prisma": "^4.0.0",
+    "@lucia-auth/adapter-prisma": "^4.0.1",
     "@prisma/client": "^5.0.0",
     "@tiptap/extension-link": "^2.0.3",
     "@tiptap/extension-placeholder": "^2.0.3",
