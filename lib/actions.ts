@@ -8,6 +8,10 @@ import { lucia, validateRequest } from "./auth";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import sanitize from "sanitize-html";
+import { decode, encode } from "@urlpack/base62";
+import { encodePostId } from "./server-util";
 
 export async function sendEmailVerificationCode(
   email: string
@@ -188,4 +192,126 @@ export async function deleteBlog(blogId: string) {
   revalidatePath("/account");
 
   return { status: "success" };
+}
+
+export async function writeToGuestbook(formData: FormData) {
+  const blogId = formData.get("blogId") as string;
+  const content = formData.get("content") as string;
+
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const blog = await prisma.blog.findUnique({
+    where: {
+      slug: blogId,
+    },
+  });
+
+  if (!blog) {
+    return { error: "블로그를 찾을 수 없습니다." };
+  }
+
+  if (user.id === blog.userId) {
+    return { error: "자신의 블로그에는 방명록을 남길 수 없습니다." };
+  }
+
+  const guestbook = await prisma.guestbook.create({
+    data: {
+      content: sanitize(content),
+      blog: {
+        connect: {
+          slug: blogId,
+        },
+      },
+      author: {
+        connect: {
+          email: user.email,
+        },
+      },
+    },
+  });
+
+  revalidatePath(`/@${blogId}/guestbook`);
+
+  redirect(`/@${blogId}/guestbook/${encodePostId(guestbook.uuid)}`);
+}
+
+export async function saveGuestbookReply(formData: FormData) {
+  const content = formData.get("content") as string;
+  const guestbookId = formData.get("guestbookId") as string;
+
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const guestbook = await prisma.guestbook.findUnique({
+    where: {
+      uuid: guestbookId,
+    },
+    include: {
+      blog: true,
+    },
+  });
+
+  if (!guestbook) {
+    return { error: "방명록 게시글을 찾을 수 없습니다." };
+  }
+
+  if (user.id !== guestbook.blog.userId) {
+    return { error: "권한이 없습니다." };
+  }
+
+  await prisma.guestbook.update({
+    where: {
+      uuid: guestbookId,
+    },
+    data: {
+      reply: sanitize(content),
+      repliedAt: new Date(),
+    },
+  });
+
+  revalidatePath(`/@${guestbook.blog.slug}/guestbook`);
+
+  redirect(`/@${guestbook.blog.slug}/guestbook/${encodePostId(guestbookId)}`);
+}
+
+export async function deleteGuestbook(uuid: string) {
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const guestbook = await prisma.guestbook.findUnique({
+    where: {
+      uuid,
+    },
+    include: {
+      blog: true,
+    },
+  });
+
+  if (!guestbook) {
+    return { error: "방명록 게시글을 찾을 수 없습니다." };
+  }
+
+  if (user.id !== guestbook.blog.userId) {
+    return { error: "권한이 없습니다." };
+  }
+
+  await prisma.guestbook.delete({
+    where: {
+      uuid,
+    },
+  });
+
+  revalidatePath(`/@${guestbook.blog.slug}/guestbook`);
+
+  redirect(`/@${guestbook.blog.slug}/guestbook`);
 }

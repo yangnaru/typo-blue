@@ -15,16 +15,17 @@ model Session {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   name          String?
-  email         String    @unique
+  email         String      @unique
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   sessions      Session[]
   blogs         Blog[]
   follows       Follow[]
+  guestbook     Guestbook[]
 }
 
 model EmailVerificationChallenge {
@@ -47,17 +48,31 @@ model Post {
 }
 
 model Blog {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  slug        String   @unique
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  slug        String      @unique
   name        String?
   description String?
   userId      Int
   privateKey  String?
   publicKey   String?
   posts       Post[]
-  user        User     @relation(fields: [userId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  guestbook   Guestbook[]
+}
+
+model Guestbook {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(uuid()) @db.Uuid
+  createdAt DateTime  @default(now())
+  repliedAt DateTime?
+  content   String
+  reply     String?
+  authorId  Int
+  blogId    Int
+  author    User      @relation(fields: [authorId], references: [id])
+  blog      Blog      @relation(fields: [blogId], references: [id], onDelete: Cascade)
 }
 
 model Follow {

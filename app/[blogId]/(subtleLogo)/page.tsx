@@ -70,6 +70,14 @@ export default async function BlogHome({
           createdAt: "desc",
         },
       },
+      guestbook: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          author: true,
+        },
+      },
       user: true,
     },
   });
@@ -92,12 +100,17 @@ export default async function BlogHome({
           showTitle={isCurrentUserBlogOwner}
         />
       )}
+
       <PostList
         name="발행된 글 목록"
         blog={blog}
         posts={publishedPosts}
         showTitle={isCurrentUserBlogOwner}
       />
+
+      <div>
+        <LinkButton href={`/@${blog.slug}/guestbook`}>방명록</LinkButton>
+      </div>
 
       {isCurrentUserBlogOwner && (
         <div className="space-x-2">
