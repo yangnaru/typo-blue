@@ -58,14 +58,18 @@ export default async function BlogHome({
   params: { blogId: string };
 }) {
   const { user } = await validateRequest();
-  const currentUser = await prisma.user.findUnique({
-    where: {
-      id: user?.id,
-    },
-    include: {
-      blog: true,
-    },
-  });
+
+  let currentUser;
+  if (user) {
+    currentUser = await prisma.user.findUnique({
+      where: {
+        id: user?.id,
+      },
+      include: {
+        blog: true,
+      },
+    });
+  }
 
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
