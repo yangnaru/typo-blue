@@ -106,8 +106,8 @@ export default async function BlogPost({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-row space-x-2 items-baseline">
-        <h3 className="text-2xl">
+      <div className="flex flex-row gap-2 items-baseline flex-wrap">
+        <h3 className="text-2xl break-keep">
           <Link href={`/@${blog.slug}/${encodePostId(post.uuid)}`}>
             {post.title === "" ? "무제" : post.title}
           </Link>
