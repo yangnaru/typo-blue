@@ -6,6 +6,9 @@ import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export default async function Home() {
+  const userCount = await prisma.user.count();
+  const totalPosts = await prisma.post.count();
+
   let officialBlog;
   if (process.env.OFFICIAL_BLOG_SLUG) {
     officialBlog = await prisma.blog.findUnique({
@@ -31,6 +34,9 @@ export default async function Home() {
     <main className="space-y-4">
       <Logo />
       <p>타이포 블루는 글로 자신을 표현하는 공간입니다.</p>
+      <p>
+        지금까지 {userCount}명이 쓴 {totalPosts}개의 글과 함께하고 있습니다.
+      </p>
 
       <nav className="space-x-2 flex">
         <HomeWithSession />
