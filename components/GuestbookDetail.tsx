@@ -60,14 +60,17 @@ export default function GuestbookDetail({
             {guestbook.createdAt.toLocaleString()} 작성
           </Link>
         </div>
-        <div>
-          <button
-            className="border border-red-500 rounded-sm p-1 hover:bg-red-300 hover:text-black w-24"
-            onClick={handleDeleteGuestbook}
-          >
-            방명록 삭제
-          </button>
-        </div>
+        {((currentUser?.id === guestbook.authorId && !guestbook.repliedAt) ||
+          isReplyable) && (
+          <div>
+            <button
+              className="border border-red-500 rounded-sm p-1 hover:bg-red-300 hover:text-black w-24"
+              onClick={handleDeleteGuestbook}
+            >
+              방명록 삭제
+            </button>
+          </div>
+        )}
       </div>
 
       <div

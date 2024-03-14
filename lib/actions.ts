@@ -305,8 +305,12 @@ export async function deleteGuestbook(uuid: string) {
     return { error: "방명록 게시글을 찾을 수 없습니다." };
   }
 
-  if (user.id !== guestbook.blog.userId) {
+  if (!(user.id === guestbook.blog.userId || user.id === guestbook.authorId)) {
     return { error: "권한이 없습니다." };
+  }
+
+  if (user.id === guestbook.authorId && guestbook.repliedAt) {
+    return { error: "답변이 달린 방명록은 삭제할 수 없습니다." };
   }
 
   await prisma.guestbook.delete({
