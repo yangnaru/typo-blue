@@ -152,7 +152,11 @@ export async function createBlog(blogId: string) {
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002") {
-        return { error: "이미 존재하는 블로그 ID입니다." };
+        if (e.message.includes("userId")) {
+          return { error: "이미 블로그를 만들었습니다." };
+        } else {
+          return { error: "이미 존재하는 블로그 ID입니다." };
+        }
       }
     }
     return { error: "알 수 없는 오류가 발생했습니다." };

@@ -1,7 +1,6 @@
 import BlogInfo from "@/components/BlogInfo";
 import LinkButton from "@/components/LinkButton";
 import { lucia, validateRequest } from "@/lib/auth";
-import { MAX_BLOGS_PER_USER } from "@/lib/const";
 import { prisma } from "@/lib/db";
 import format from "date-fns/format";
 import { cookies } from "next/headers";
@@ -13,28 +12,23 @@ export default async function AccountHome() {
   if (!currentUser) {
     return <p>로그인이 필요합니다.</p>;
   }
-  console.log(currentUser);
 
   const user = await prisma.user.findUnique({
     where: {
       email: currentUser.email,
     },
-  });
-
-  const blogs = await prisma.blog.findMany({
-    where: {
-      user: {
-        email: currentUser.email,
-      },
-    },
     include: {
-      posts: {
-        select: {
-          id: true,
+      blog: {
+        include: {
+          posts: true,
         },
       },
     },
   });
+
+  if (!user) {
+    return <p>로그인이 필요합니다.</p>;
+  }
 
   return (
     <div>
@@ -59,22 +53,15 @@ export default async function AccountHome() {
         )}
 
         <div className="space-y-4">
-          <h3 className="text-lg">개설된 블로그</h3>
+          <h3 className="text-lg">내 블로그</h3>
           <div className="space-y-4">
-            {blogs?.length !== 0 ? (
-              blogs?.map((blog) => <BlogInfo key={blog.slug} blog={blog} />)
+            {user.blog ? (
+              <BlogInfo key={user.blog.slug} blog={user.blog} />
             ) : (
-              <p>개설된 블로그가 없습니다.</p>
+              <LinkButton href="/blogs/new" className="p-2">
+                블로그 만들기
+              </LinkButton>
             )}
-            <div>
-              {blogs && blogs.length >= MAX_BLOGS_PER_USER ? (
-                <p>최대 개설 가능한 블로그 수에 도달했습니다.</p>
-              ) : (
-                <LinkButton href="/blogs/new" className="p-2">
-                  새 블로그 만들기
-                </LinkButton>
-              )}
-            </div>
           </div>
         </div>
       </div>

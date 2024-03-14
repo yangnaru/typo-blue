@@ -3,7 +3,6 @@ import LoginStatus from "@/components/LoginStatus";
 import Logo from "@/components/Logo";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-// import { useEffect, useState } from "react";
 
 export default function Home() {
   return (
@@ -21,14 +20,12 @@ export default function Home() {
 async function HomeWithSession() {
   const { user } = await validateRequest();
 
-  let blogs;
+  let blog;
 
   if (user) {
-    blogs = await prisma.blog.findMany({
+    blog = await prisma.blog.findUnique({
       where: {
-        user: {
-          email: user.email,
-        },
+        userId: user.id,
       },
       include: {
         posts: {
@@ -43,7 +40,7 @@ async function HomeWithSession() {
   return (
     <div>
       <div className="flex flex-row items-baseline space-x-2">
-        {user && blogs && blogs.length === 0 && (
+        {user && !blog && (
           <LinkButton href="/blogs/new">블로그 만들기</LinkButton>
         )}
         <LoginStatus />
