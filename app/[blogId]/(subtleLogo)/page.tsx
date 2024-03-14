@@ -2,6 +2,7 @@ import LinkButton from "@/components/LinkButton";
 import PostList from "@/components/PostList";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { incrementVisitorCount } from "@/lib/server-util";
 import { Metadata } from "next";
 
 export async function generateMetadata({
@@ -85,6 +86,8 @@ export default async function BlogHome({
   if (!blog) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
+
+  await incrementVisitorCount(blog.id);
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
   const draftPosts = blog.posts.filter((post) => post.publishedAt === null);

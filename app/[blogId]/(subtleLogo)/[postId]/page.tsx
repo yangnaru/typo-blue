@@ -2,7 +2,7 @@ import LinkButton from "@/components/LinkButton";
 import PublishPostButton from "@/components/PublishPostButton";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { encodePostId } from "@/lib/server-util";
+import { encodePostId, incrementVisitorCount } from "@/lib/server-util";
 import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
@@ -101,6 +101,8 @@ export default async function BlogPost({
   if (!post || (!post.publishedAt && !isCurrentUserBlogOwner)) {
     return <p>글이 존재하지 않습니다.</p>;
   }
+
+  await incrementVisitorCount(blog.id);
 
   return (
     <div className="space-y-8">

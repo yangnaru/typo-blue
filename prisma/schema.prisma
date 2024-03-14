@@ -48,18 +48,19 @@ model Post {
 }
 
 model Blog {
-  id          Int         @id @default(autoincrement())
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  slug        String      @unique
-  name        String?
-  description String?
-  userId      Int
-  privateKey  String?
-  publicKey   String?
-  posts       Post[]
-  user        User        @relation(fields: [userId], references: [id])
-  guestbook   Guestbook[]
+  id           Int         @id @default(autoincrement())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  slug         String      @unique
+  name         String?
+  description  String?
+  userId       Int
+  privateKey   String?
+  publicKey    String?
+  visitorCount Int         @default(0)
+  posts        Post[]
+  user         User        @relation(fields: [userId], references: [id])
+  guestbook    Guestbook[]
 }
 
 model Guestbook {

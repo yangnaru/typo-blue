@@ -4,6 +4,7 @@ import {
 } from "@urlpack/base62";
 import crypto from "crypto";
 import { NextRequest } from "next/server";
+import { prisma } from "./db";
 
 export function encodePostId(uuid: string) {
   return base62encode(Buffer.from(uuid.replaceAll("-", ""), "hex"));
@@ -62,4 +63,17 @@ export async function verifyRequestSignature(
 
   const verified = verify.verify(actorPublicKey, signature, "base64");
   return verified;
+}
+
+export async function incrementVisitorCount(blogId: number) {
+  await prisma.blog.update({
+    where: {
+      id: blogId,
+    },
+    data: {
+      visitorCount: {
+        increment: 1,
+      },
+    },
+  });
 }
