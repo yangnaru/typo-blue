@@ -1,10 +1,32 @@
 import LinkButton from "@/components/LinkButton";
 import LoginStatus from "@/components/LoginStatus";
 import Logo from "@/components/Logo";
+import PostList from "@/components/PostList";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-export default function Home() {
+export default async function Home() {
+  let officialBlog;
+  if (process.env.OFFICIAL_BLOG_SLUG) {
+    officialBlog = await prisma.blog.findUnique({
+      where: {
+        slug: process.env.OFFICIAL_BLOG_SLUG,
+      },
+      include: {
+        posts: {
+          where: {
+            publishedAt: {
+              not: null,
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+    });
+  }
+
   return (
     <main className="space-y-4">
       <Logo />
@@ -13,6 +35,16 @@ export default function Home() {
       <nav className="space-x-2 flex">
         <HomeWithSession />
       </nav>
+
+      {officialBlog && (
+        <PostList
+          name="공식 블로그 소식"
+          posts={officialBlog.posts}
+          showTitle={true}
+          blog={officialBlog}
+          titleClassName="text-normal font-bold"
+        />
+      )}
     </main>
   );
 }
