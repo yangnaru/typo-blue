@@ -319,3 +319,111 @@ export async function deleteGuestbook(uuid: string) {
 
   redirect(`/@${guestbook.blog.slug}/guestbook`);
 }
+
+export async function followBlog(formData: FormData) {
+  const blogId = formData.get("blogId") as string;
+
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+    },
+    include: {
+      blog: true,
+    },
+  });
+
+  if (!currentUser) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (!currentUser.blog) {
+    return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
+  }
+
+  const blog = await prisma.blog.findUnique({
+    where: {
+      slug: blogId,
+    },
+  });
+
+  if (!blog) {
+    return { error: "블로그를 찾을 수 없습니다." };
+  }
+
+  if (user.id === blog.userId) {
+    return { error: "자신의 블로그를 팔로우할 수 없습니다." };
+  }
+
+  try {
+    await prisma.follow.create({
+      data: {
+        followerId: currentUser.blog.id,
+        followingId: blog.id,
+      },
+    });
+  } catch {}
+
+  revalidatePath(`/@${blogId}`);
+  redirect(`/@${blogId}`);
+}
+
+export async function unfollowBlog(formData: FormData) {
+  const blogId = formData.get("blogId") as string;
+
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+    },
+    include: {
+      blog: true,
+    },
+  });
+
+  if (!currentUser) {
+    return { error: "로그인이 필요합니다." };
+  }
+
+  if (!currentUser.blog) {
+    return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
+  }
+
+  const blog = await prisma.blog.findUnique({
+    where: {
+      slug: blogId,
+    },
+  });
+
+  if (!blog) {
+    return { error: "블로그를 찾을 수 없습니다." };
+  }
+
+  if (user.id === blog.userId) {
+    return { error: "자신의 블로그를 팔로우할 수 없습니다." };
+  }
+
+  try {
+    await prisma.follow.delete({
+      where: {
+        followerId_followingId: {
+          followerId: currentUser.blog.id,
+          followingId: blog.id,
+        },
+      },
+    });
+  } catch {}
+
+  revalidatePath(`/@${blogId}`);
+  redirect(`/@${blogId}`);
+}

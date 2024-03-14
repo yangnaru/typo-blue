@@ -1,3 +1,4 @@
+import LinkButton from "@/components/LinkButton";
 import { prisma } from "@/lib/db";
 import { Blog } from "@prisma/client";
 import Link from "next/link";
@@ -25,6 +26,11 @@ export default async function BlogLayout({
           createdAt: "desc",
         },
       },
+      followings: {
+        include: {
+          following: true,
+        },
+      },
     },
   });
 
@@ -48,6 +54,24 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
+      {blog?.followings && blog.followings.length > 0 && (
+        <div className="mt-8">
+          <hr className="bg-neutral-500" />
+          <div className="mt-8 space-y-4">
+            <h2 className="text-xl font-bold">파도타기</h2>
+            <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
+              {blog.followings.map((following) => (
+                <LinkButton
+                  key={following.following.slug}
+                  href={`/@${following.following.slug}`}
+                >
+                  {`@${following.following.slug}`}
+                </LinkButton>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </BlogLayoutBody>
   );
 }

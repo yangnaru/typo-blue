@@ -24,7 +24,6 @@ model User {
   updatedAt     DateTime    @updatedAt
   sessions      Session[]
   blog          Blog?
-  follows       Follow[]
   guestbook     Guestbook[]
 }
 
@@ -61,6 +60,8 @@ model Blog {
   posts        Post[]
   user         User        @relation(fields: [userId], references: [id])
   guestbook    Guestbook[]
+  followers    Follow[]    @relation("Following")
+  followings   Follow[]    @relation("Follower")
 }
 
 model Guestbook {
@@ -77,12 +78,13 @@ model Guestbook {
 }
 
 model Follow {
-  id              Int      @id @default(autoincrement())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  accountId       Int
-  targetAccountId String
-  follow          User     @relation(fields: [accountId], references: [id])
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  followerId  Int
+  followingId Int
+  follower    Blog     @relation("Follower", fields: [followerId], references: [id])
+  following   Blog     @relation("Following", fields: [followingId], references: [id])
 
-  @@unique([accountId, targetAccountId])
+  @@unique([followerId, followingId])
 }

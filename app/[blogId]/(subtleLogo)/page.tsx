@@ -1,5 +1,7 @@
+import Button from "@/components/Button";
 import LinkButton from "@/components/LinkButton";
 import PostList from "@/components/PostList";
+import { followBlog, unfollowBlog } from "@/lib/actions";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { incrementVisitorCount } from "@/lib/server-util";
@@ -56,6 +58,14 @@ export default async function BlogHome({
   params: { blogId: string };
 }) {
   const { user } = await validateRequest();
+  const currentUser = await prisma.user.findUnique({
+    where: {
+      id: user?.id,
+    },
+    include: {
+      blog: true,
+    },
+  });
 
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
@@ -87,6 +97,16 @@ export default async function BlogHome({
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
+  const isCurrentlyFollowing =
+    currentUser &&
+    currentUser.blog &&
+    (await prisma.follow.findFirst({
+      where: {
+        followerId: currentUser.blog.id,
+        followingId: blog.id,
+      },
+    })) !== null;
+
   await incrementVisitorCount(blog.id);
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
@@ -111,8 +131,32 @@ export default async function BlogHome({
         showTitle={isCurrentUserBlogOwner}
       />
 
-      <div>
+      <div className="flex flex-row space-x-2">
         <LinkButton href={`/@${blog.slug}/guestbook`}>방명록</LinkButton>
+
+        {blog.id !== currentUser?.blog?.id &&
+          currentUser?.blog &&
+          (isCurrentlyFollowing ? (
+            <form action={unfollowBlog}>
+              <input type="hidden" name="blogId" value={blog.slug} />
+              <button
+                className="border rounded-sm p-1 border-red-500 hover:text-black hover:bg-red-300"
+                type="submit"
+              >
+                파도타기 삭제
+              </button>
+            </form>
+          ) : (
+            <form action={followBlog}>
+              <input type="hidden" name="blogId" value={blog.slug} />
+              <button
+                className="border border-blue-500 p-1 rounded-sm hover:bg-blue-300 hover:text-black"
+                type="submit"
+              >
+                파도타기 추가
+              </button>
+            </form>
+          ))}
       </div>
 
       {isCurrentUserBlogOwner && (
