@@ -32,11 +32,11 @@ export default function PostList({
               <li key={encodePostId(post.uuid)}>
                 <Link href={`/@${blog.slug}/${base62}`}>
                   {post.publishedAt ? (
-                    <span className="font-bold">
+                    <span className="font-bold tabular-nums">
                       {format(new Date(post.publishedAt), "yyyy-MM-dd HH:mm")}
                     </span>
                   ) : (
-                    <span className="font-bold">
+                    <span className="font-bold tabular-nums">
                       {format(new Date(post.updatedAt), "yyyy-MM-dd HH:mm")}
                     </span>
                   )}{" "}
