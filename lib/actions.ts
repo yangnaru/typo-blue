@@ -42,8 +42,6 @@ export async function sendEmailVerificationCode(
     text: code,
   });
 
-  console.log("Message sent: %s", info.messageId);
-
   return challenge.id;
 }
 
