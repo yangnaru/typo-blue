@@ -49,6 +49,7 @@ export default async function Home() {
           showTitle={true}
           blog={officialBlog}
           titleClassName="text-normal font-bold"
+          showTime={false}
         />
       )}
     </main>

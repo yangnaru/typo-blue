@@ -8,14 +8,18 @@ export default function PostList({
   blog,
   posts,
   showTitle,
+  showTime = true,
   titleClassName,
 }: {
   name: string;
   blog: Blog;
   posts: Post[];
   showTitle: boolean;
+  showTime?: boolean;
   titleClassName?: string;
 }) {
+  const dateFormat = showTime ? "yyyy-MM-dd HH:mm" : "yyyy-MM-dd";
+
   return (
     <>
       {showTitle && (
@@ -33,11 +37,11 @@ export default function PostList({
                 <Link href={`/@${blog.slug}/${base62}`}>
                   {post.publishedAt ? (
                     <span className="font-bold tabular-nums">
-                      {format(new Date(post.publishedAt), "yyyy-MM-dd HH:mm")}
+                      {format(new Date(post.publishedAt), dateFormat)}
                     </span>
                   ) : (
                     <span className="font-bold tabular-nums">
-                      {format(new Date(post.updatedAt), "yyyy-MM-dd HH:mm")}
+                      {format(new Date(post.updatedAt), dateFormat)}
                     </span>
                   )}{" "}
                   {post.title?.length === 0 ? "무제" : post.title}
