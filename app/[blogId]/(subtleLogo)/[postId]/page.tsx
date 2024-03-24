@@ -115,7 +115,7 @@ export default async function BlogPost({
         <span className="text-neutral-500">
           {formatInTimeZone(
             post.publishedAt ?? post.updatedAt,
-            process.env.TZ!,
+            "Asia/Seoul",
             "yyyy-MM-dd HH:mm"
           )}
         </span>
