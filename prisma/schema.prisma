@@ -54,8 +54,6 @@ model Blog {
   name         String?
   description  String?
   userId       Int         @unique
-  privateKey   String?
-  publicKey    String?
   visitorCount Int         @default(0)
   posts        Post[]
   user         User        @relation(fields: [userId], references: [id])
