@@ -55,6 +55,7 @@ model Blog {
   description  String?
   userId       Int         @unique
   visitorCount Int         @default(0)
+  discoverable Boolean     @default(false)
   posts        Post[]
   user         User        @relation(fields: [userId], references: [id])
   guestbook    Guestbook[]

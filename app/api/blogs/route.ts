@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
         createdAt: blog.createdAt,
         updatedAt: blog.updatedAt,
         postCount: blog.posts.length,
+        discoverable: blog.discoverable,
       };
     }),
     user: {

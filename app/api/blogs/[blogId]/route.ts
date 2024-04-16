@@ -28,6 +28,7 @@ export async function GET(
     slug: blog.slug,
     name: blog.name,
     description: blog.description,
+    discoverable: blog.discoverable,
     postCount: blog.posts.length,
   });
 }
@@ -135,6 +136,7 @@ export async function PUT(
         slug: json.slug,
         name: json.name,
         description: json.description,
+        discoverable: json.discoverable,
       },
     });
 
@@ -142,6 +144,7 @@ export async function PUT(
       slug: newBlog.slug,
       name: newBlog.name,
       description: newBlog.description,
+      discoverable: newBlog.discoverable,
       message: "블로그 정보가 변경되었습니다.",
     });
   } catch (e) {
