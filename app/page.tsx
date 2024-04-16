@@ -8,6 +8,29 @@ import { prisma } from "@/lib/db";
 export default async function Home() {
   const userCount = await prisma.user.count();
   const totalPosts = await prisma.post.count();
+  const recentlyActiveDiscoverableBlogs = await prisma.blog.findMany({
+    where: {
+      discoverable: true,
+    },
+    include: {
+      user: true,
+      posts: {
+        where: {
+          publishedAt: {
+            not: null,
+          },
+        },
+        orderBy: {
+          publishedAt: "desc",
+        },
+        take: 5,
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+    take: 5,
+  });
 
   let officialBlog;
   if (process.env.OFFICIAL_BLOG_SLUG) {
@@ -41,6 +64,16 @@ export default async function Home() {
       <nav className="space-x-2 flex">
         <HomeWithSession />
       </nav>
+
+      <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
+
+      <div className="flex flex-row gap-2 flex-wrap">
+        {recentlyActiveDiscoverableBlogs.map((blog) => (
+          <LinkButton key={blog.id} href={`/@${blog.slug}`}>
+            @{blog.slug}
+          </LinkButton>
+        ))}
+      </div>
 
       {officialBlog && (
         <PostList
