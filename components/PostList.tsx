@@ -1,5 +1,6 @@
 import { encodePostId } from "@/lib/server-util";
 import { Blog, Post } from "@prisma/client";
+import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import format from "date-fns/format";
 import Link from "next/link";
 
@@ -37,11 +38,19 @@ export default function PostList({
                 <Link href={`/@${blog.slug}/${base62}`}>
                   {post.publishedAt ? (
                     <span className="font-bold tabular-nums">
-                      {format(new Date(post.publishedAt), dateFormat)}
+                      {formatInTimeZone(
+                        post.publishedAt,
+                        "Asia/Seoul",
+                        dateFormat
+                      )}
                     </span>
                   ) : (
                     <span className="font-bold tabular-nums">
-                      {format(new Date(post.updatedAt), dateFormat)}
+                      {formatInTimeZone(
+                        post.updatedAt,
+                        "Asia/Seoul",
+                        dateFormat
+                      )}
                     </span>
                   )}{" "}
                   {post.title?.length === 0 ? "무제" : post.title}
