@@ -10,7 +10,6 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sanitize from "sanitize-html";
-import { decode, encode } from "@urlpack/base62";
 import { encodePostId } from "./server-util";
 
 export async function sendEmailVerificationCode(
@@ -43,6 +42,100 @@ export async function sendEmailVerificationCode(
   });
 
   return challenge.id;
+}
+
+export async function sendEmailVerificationCodeForEmailChange(
+  email: string
+): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (user) {
+    throw new Error("이미 존재하는 이메일 주소입니다.");
+  }
+
+  const code = generateRandomString(6, alphabet("0-9"));
+
+  const challenge = await prisma.emailVerificationChallenge.create({
+    data: {
+      email,
+      code,
+      expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
+    },
+  });
+
+  const transporter = createTransport({
+    host: process.env.EMAIL_SERVER_HOST,
+    port: process.env.EMAIL_SERVER_PORT,
+    auth: {
+      user: process.env.EMAIL_SERVER_USER,
+      pass: process.env.EMAIL_SERVER_PASSWORD,
+    },
+  } as TransportOptions);
+
+  const info: any = await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: "타이포 블루 이메일 변경 코드",
+    text: code,
+  });
+
+  return challenge.id;
+}
+
+export async function verifyEmailVerificationCodeAndChangeAccountEmail(
+  challengeId: string,
+  code: string
+) {
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return false;
+  }
+
+  const challenge = await prisma.emailVerificationChallenge.findUnique({
+    where: {
+      id: challengeId,
+    },
+  });
+
+  if (!challenge) {
+    return false;
+  }
+
+  if (!isWithinExpirationDate(challenge.expiresAt)) {
+    return false;
+  }
+
+  if (challenge.code !== code) {
+    return false;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({
+      where: {
+        email: challenge.email,
+      },
+    });
+
+    if (existingUser) {
+      return false;
+    }
+
+    await tx.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        email: challenge.email,
+      },
+    });
+  });
+
+  return true;
 }
 
 export async function verifyEmailVerificationCode(

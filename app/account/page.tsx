@@ -36,18 +36,23 @@ export default async function AccountHome() {
         {user && (
           <div className="space-y-4">
             <h3 className="text-lg">계정 정보</h3>
-            <div className="flex flex-row place-content-between justify-self-auto items-center">
+            <div className="flex flex-col gap-4">
               <div>
                 <p>이메일 주소: {user.email}</p>
                 <p>
                   가입일: {format(new Date(user.createdAt), "yyyy년 M월 d일")}
                 </p>
               </div>
-              <form action={logout}>
-                <button className="border border-red-500 rounded-sm p-1">
-                  로그아웃
-                </button>
-              </form>
+              <div className="flex flex-row space-x-2 items-center align-baseline">
+                <form action={logout}>
+                  <button className="border border-red-500 rounded-sm p-2">
+                    로그아웃
+                  </button>
+                </form>
+                <LinkButton href="/account/change-email" className="p-2">
+                  이메일 변경
+                </LinkButton>
+              </div>
             </div>
           </div>
         )}
