@@ -65,15 +65,19 @@ export default async function Home() {
         <HomeWithSession />
       </nav>
 
-      <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
+      {recentlyActiveDiscoverableBlogs.length > 0 && (
+        <>
+          <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
 
-      <div className="flex flex-row gap-2 flex-wrap">
-        {recentlyActiveDiscoverableBlogs.map((blog) => (
-          <LinkButton key={blog.id} href={`/@${blog.slug}`}>
-            @{blog.slug}
-          </LinkButton>
-        ))}
-      </div>
+          <div className="flex flex-row gap-2 flex-wrap">
+            {recentlyActiveDiscoverableBlogs.map((blog) => (
+              <LinkButton key={blog.id} href={`/@${blog.slug}`}>
+                @{blog.slug}
+              </LinkButton>
+            ))}
+          </div>
+        </>
+      )}
 
       {officialBlog && (
         <PostList
