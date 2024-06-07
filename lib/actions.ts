@@ -11,6 +11,38 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sanitize from "sanitize-html";
 import { encodePostId } from "./server-util";
+import { hash, verify } from "@node-rs/argon2";
+
+export async function setPassword(prevState: any, formData: FormData) {
+  const { user } = await validateRequest();
+
+  if (!user) {
+    return { message: "로그인이 필요합니다." };
+  }
+
+  const password = formData.get("password") as string;
+  const passwordConfirm = formData.get("password_confirm") as string;
+
+  if (password.length < 8) {
+    return { message: "비밀번호는 8자 이상이어야 합니다." };
+  }
+
+  if (password !== passwordConfirm) {
+    return { message: "비밀번호가 일치하지 않습니다." };
+  }
+
+  const passwordHash = await hash(password);
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      passwordHash,
+    },
+  });
+
+  redirect("/account");
+}
 
 export async function sendEmailVerificationCode(
   email: string
@@ -134,6 +166,42 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
       },
     });
   });
+
+  return true;
+}
+
+export async function verifyPassword(
+  email: string,
+  password: string
+): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    return false;
+  }
+
+  if (!user.passwordHash) {
+    return false;
+  }
+
+  const passwordVerified = await verify(user.passwordHash, password);
+
+  if (!passwordVerified) {
+    return false;
+  }
+
+  const session = await lucia.createSession(user.id, {});
+  const sessionCookie = lucia.createSessionCookie(session.id);
+
+  cookies().set(
+    sessionCookie.name,
+    sessionCookie.value,
+    sessionCookie.attributes
+  );
 
   return true;
 }

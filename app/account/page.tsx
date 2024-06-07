@@ -52,6 +52,9 @@ export default async function AccountHome() {
                 <LinkButton href="/account/change-email" className="p-2">
                   이메일 변경
                 </LinkButton>
+                <LinkButton href="/account/set-password" className="p-2">
+                  비밀번호 설정
+                </LinkButton>
               </div>
             </div>
           </div>

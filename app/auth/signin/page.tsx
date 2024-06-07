@@ -3,10 +3,16 @@
 import {
   sendEmailVerificationCode,
   verifyEmailVerificationCode,
+  verifyPassword,
 } from "@/lib/actions";
 import { useState } from "react";
 
 export default function Login() {
+  const [usingPassword, setUsingPassword] = useState<undefined | boolean>(
+    undefined
+  );
+  const [password, setPassword] = useState("");
+
   const [email, setEmail] = useState("");
   const [emailInputDisabled, setEmailInputDisabled] = useState(false);
   const [buttonText, setButtonText] = useState("로그인 코드 보내기");
@@ -23,26 +29,8 @@ export default function Login() {
       return;
     }
 
-    if (challengeId === null) {
-      setLoginButtonDisabled(true);
-      setButtonText("로그인 코드 보내는 중...");
-
-      try {
-        const challengeId = await sendEmailVerificationCode(email);
-        alert("로그인 코드를 보냈습니다. 이메일을 확인해 주세요.");
-        setEmailInputDisabled(true);
-        setButtonText("로그인 코드 인증");
-        setLoginButtonDisabled(false);
-        setChallengeId(challengeId);
-      } catch (e) {
-        alert("로그인에 실패했습니다. 다시 시도해주세요.");
-        setLoginButtonDisabled(false);
-        setButtonText("로그인 링크 보내기");
-      }
-    }
-
-    if (challengeId) {
-      verifyEmailVerificationCode(challengeId, code).then((verified) => {
+    if (usingPassword) {
+      verifyPassword(email, password).then((verified) => {
         if (verified) {
           alert("로그인에 성공했습니다.");
           window.location.href = "/";
@@ -52,6 +40,38 @@ export default function Login() {
           alert("로그인에 실패했습니다. 다시 시도해주세요.");
         }
       });
+    } else {
+      if (challengeId === null) {
+        setLoginButtonDisabled(true);
+        setUsingPassword(false);
+        setButtonText("로그인 코드 보내는 중...");
+
+        try {
+          const challengeId = await sendEmailVerificationCode(email);
+          alert("로그인 코드를 보냈습니다. 이메일을 확인해 주세요.");
+          setEmailInputDisabled(true);
+          setButtonText("로그인 코드 인증");
+          setLoginButtonDisabled(false);
+          setChallengeId(challengeId);
+        } catch (e) {
+          alert("로그인에 실패했습니다. 다시 시도해주세요.");
+          setLoginButtonDisabled(false);
+          setButtonText("로그인 링크 보내기");
+        }
+      }
+
+      if (challengeId) {
+        verifyEmailVerificationCode(challengeId, code).then((verified) => {
+          if (verified) {
+            alert("로그인에 성공했습니다.");
+            window.location.href = "/";
+
+            return;
+          } else {
+            alert("로그인에 실패했습니다. 다시 시도해주세요.");
+          }
+        });
+      }
     }
   }
 
@@ -67,6 +87,19 @@ export default function Login() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       ></input>
+      {usingPassword && (
+        <>
+          <input
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            className="border border-blue-500 p-1 rounded-sm dark:bg-black dark:text-white"
+            placeholder="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </>
+      )}
       {challengeId && (
         <input
           type="text"
@@ -85,6 +118,28 @@ export default function Login() {
         value={buttonText}
         disabled={loginButtonDisabled}
       />
+      {usingPassword === true && (
+        <input
+          type="button"
+          className="text-blue-500 cursor-pointer"
+          value="로그인 코드로 로그인"
+          onClick={() => {
+            setUsingPassword(undefined);
+            setButtonText("로그인 코드 보내기");
+          }}
+        />
+      )}
+      {usingPassword === undefined && (
+        <input
+          type="button"
+          className="text-blue-500 cursor-pointer"
+          value="비밀번호로 로그인"
+          onClick={() => {
+            setUsingPassword(true);
+            setButtonText("로그인");
+          }}
+        />
+      )}
     </form>
   );
 }
