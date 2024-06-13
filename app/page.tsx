@@ -8,29 +8,32 @@ import { prisma } from "@/lib/db";
 export default async function Home() {
   const userCount = await prisma.user.count();
   const totalPosts = await prisma.post.count();
-  const recentlyActiveDiscoverableBlogs = await prisma.blog.findMany({
-    where: {
-      discoverable: true,
+
+  const latestPublishedPostsFromDiscoverableBlogs = await prisma.post.findMany({
+    orderBy: {
+      publishedAt: "desc",
     },
-    include: {
-      user: true,
-      posts: {
-        where: {
-          publishedAt: {
-            not: null,
-          },
-        },
-        orderBy: {
-          publishedAt: "desc",
-        },
-        take: 5,
+    where: {
+      publishedAt: {
+        not: null,
+      },
+      blog: {
+        discoverable: true,
       },
     },
-    orderBy: {
-      updatedAt: "desc",
+    include: {
+      blog: {
+        select: {
+          slug: true,
+        },
+      },
     },
-    take: 5,
+    take: 100,
   });
+
+  const discoverableBlogSlugs = latestPublishedPostsFromDiscoverableBlogs
+    .map((post) => post.blog.slug)
+    .filter((slug, index, self) => self.indexOf(slug) === index);
 
   let officialBlog;
   if (process.env.OFFICIAL_BLOG_SLUG) {
@@ -65,14 +68,14 @@ export default async function Home() {
         <HomeWithSession />
       </nav>
 
-      {recentlyActiveDiscoverableBlogs.length > 0 && (
+      {discoverableBlogSlugs.length > 0 && (
         <>
           <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
 
           <div className="flex flex-row gap-2 flex-wrap">
-            {recentlyActiveDiscoverableBlogs.map((blog) => (
-              <LinkButton key={blog.id} href={`/@${blog.slug}`}>
-                @{blog.slug}
+            {discoverableBlogSlugs.map((slug) => (
+              <LinkButton key={slug} href={`/@${slug}`}>
+                @{slug}
               </LinkButton>
             ))}
           </div>
