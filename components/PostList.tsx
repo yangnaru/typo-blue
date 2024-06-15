@@ -1,7 +1,6 @@
 import { encodePostId } from "@/lib/server-util";
 import { Blog, Post } from "@prisma/client";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
-import format from "date-fns/format";
 import Link from "next/link";
 
 export default function PostList({
@@ -9,6 +8,7 @@ export default function PostList({
   blog,
   posts,
   showTitle,
+  embed = false,
   showTime = true,
   titleClassName,
 }: {
@@ -16,6 +16,7 @@ export default function PostList({
   blog: Blog;
   posts: Post[];
   showTitle: boolean;
+  embed?: boolean;
   showTime?: boolean;
   titleClassName?: string;
 }) {
@@ -35,7 +36,10 @@ export default function PostList({
 
             return (
               <li key={encodePostId(post.uuid)}>
-                <Link href={`/@${blog.slug}/${base62}`}>
+                <Link
+                  href={`/@${blog.slug}/${base62}`}
+                  target={embed ? "_blank" : "_self"}
+                >
                   {post.publishedAt ? (
                     <span className="font-bold tabular-nums">
                       {formatInTimeZone(
