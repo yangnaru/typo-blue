@@ -32,7 +32,6 @@ export default function Login() {
     if (usingPassword) {
       verifyPassword(email, password).then((verified) => {
         if (verified) {
-          alert("로그인에 성공했습니다.");
           window.location.href = "/";
 
           return;
@@ -63,7 +62,6 @@ export default function Login() {
       if (challengeId) {
         verifyEmailVerificationCode(challengeId, code).then((verified) => {
           if (verified) {
-            alert("로그인에 성공했습니다.");
             window.location.href = "/";
 
             return;
