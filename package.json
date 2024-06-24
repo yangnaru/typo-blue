@@ -12,7 +12,7 @@
   "dependencies": {
     "@lucia-auth/adapter-prisma": "^4.0.1",
     "@node-rs/argon2": "^1.8.3",
-    "@prisma/client": "^5.11.0",
+    "@prisma/client": "^5.15.1",
     "@tiptap/extension-document": "^2.2.4",
     "@tiptap/extension-link": "^2.0.3",
     "@tiptap/extension-paragraph": "^2.2.4",
@@ -51,6 +51,6 @@
     "@types/html-to-text": "^9.0.4",
     "@types/nodemailer": "^6.4.14",
     "@types/sanitize-html": "^2.9.0",
-    "prisma": "^5.11.0"
+    "prisma": "^5.15.1"
   }
 }
