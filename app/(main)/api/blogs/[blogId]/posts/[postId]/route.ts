@@ -84,9 +84,14 @@ export async function DELETE(
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  await prisma.post.delete({
+  await prisma.post.update({
     where: {
       uuid,
+    },
+    data: {
+      title: null,
+      content: null,
+      deletedAt: new Date(),
     },
   });
 

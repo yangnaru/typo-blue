@@ -14,6 +14,7 @@ export default async function Home() {
       publishedAt: "desc",
     },
     where: {
+      deletedAt: null,
       publishedAt: {
         not: null,
       },
@@ -44,6 +45,7 @@ export default async function Home() {
       include: {
         posts: {
           where: {
+            deletedAt: null,
             publishedAt: {
               not: null,
             },

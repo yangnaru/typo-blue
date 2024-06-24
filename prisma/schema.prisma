@@ -40,8 +40,9 @@ model Post {
   createdAt   DateTime  @default(now()) @db.Timestamptz()
   updatedAt   DateTime  @updatedAt @db.Timestamptz()
   publishedAt DateTime? @db.Timestamptz()
+  deletedAt   DateTime? @db.Timestamptz()
   title       String?
-  content     String
+  content     String?
   blogId      Int
   blog        Blog      @relation(fields: [blogId], references: [id], onDelete: Cascade)
 }

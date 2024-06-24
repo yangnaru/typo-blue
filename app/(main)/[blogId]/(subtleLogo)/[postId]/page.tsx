@@ -122,7 +122,7 @@ export default async function BlogPost({
       </div>
       <div
         className="prose dark:prose-invert break-keep"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+        dangerouslySetInnerHTML={{ __html: post.content ?? "" }}
       />
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">

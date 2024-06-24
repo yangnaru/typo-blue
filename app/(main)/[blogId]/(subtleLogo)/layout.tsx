@@ -22,6 +22,9 @@ export default async function BlogLayout({
     },
     include: {
       posts: {
+        where: {
+          deletedAt: null,
+        },
         orderBy: {
           createdAt: "desc",
         },

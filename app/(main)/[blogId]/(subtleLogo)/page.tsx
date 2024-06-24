@@ -81,6 +81,9 @@ export default async function BlogHome({
     },
     include: {
       posts: {
+        where: {
+          deletedAt: null,
+        },
         orderBy: {
           createdAt: "desc",
         },
