@@ -10,7 +10,7 @@ datasource db {
 model Session {
   id        String   @id
   userId    Int
-  expiresAt DateTime @db.Timestamptz()
+  expiresAt DateTime @db.Timestamptz
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -18,11 +18,11 @@ model User {
   id            Int         @id @default(autoincrement())
   name          String?
   email         String      @unique
-  emailVerified DateTime?   @db.Timestamptz()
+  emailVerified DateTime?   @db.Timestamptz
   passwordHash  String?
   image         String?
-  createdAt     DateTime    @default(now()) @db.Timestamptz()
-  updatedAt     DateTime    @updatedAt @db.Timestamptz()
+  createdAt     DateTime    @default(now()) @db.Timestamptz
+  updatedAt     DateTime    @updatedAt @db.Timestamptz
   sessions      Session[]
   blog          Blog?
   guestbook     Guestbook[]
@@ -32,15 +32,15 @@ model EmailVerificationChallenge {
   id        String   @id @default(uuid()) @db.Uuid
   code      String
   email     String
-  expiresAt DateTime @db.Timestamptz()
+  expiresAt DateTime @db.Timestamptz
 }
 
 model Post {
   uuid        String    @id @default(uuid()) @db.Uuid
-  createdAt   DateTime  @default(now()) @db.Timestamptz()
-  updatedAt   DateTime  @updatedAt @db.Timestamptz()
-  publishedAt DateTime? @db.Timestamptz()
-  deletedAt   DateTime? @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
+  publishedAt DateTime? @db.Timestamptz
+  deletedAt   DateTime? @db.Timestamptz
   title       String?
   content     String?
   blogId      Int
@@ -49,8 +49,8 @@ model Post {
 
 model Blog {
   id           Int         @id @default(autoincrement())
-  createdAt    DateTime    @default(now()) @db.Timestamptz()
-  updatedAt    DateTime    @updatedAt @db.Timestamptz()
+  createdAt    DateTime    @default(now()) @db.Timestamptz
+  updatedAt    DateTime    @updatedAt @db.Timestamptz
   slug         String      @unique
   name         String?
   description  String?
@@ -67,8 +67,8 @@ model Blog {
 model Guestbook {
   id        Int       @id @default(autoincrement())
   uuid      String    @unique @default(uuid()) @db.Uuid
-  createdAt DateTime  @default(now()) @db.Timestamptz()
-  repliedAt DateTime? @db.Timestamptz()
+  createdAt DateTime  @default(now()) @db.Timestamptz
+  repliedAt DateTime? @db.Timestamptz
   content   String
   reply     String?
   authorId  Int
@@ -79,8 +79,8 @@ model Guestbook {
 
 model Follow {
   id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now()) @db.Timestamptz()
-  updatedAt   DateTime @updatedAt @db.Timestamptz()
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
   followerId  Int
   followingId Int
   follower    Blog     @relation("Follower", fields: [followerId], references: [id])
