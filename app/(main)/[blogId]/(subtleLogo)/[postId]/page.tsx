@@ -84,6 +84,7 @@ export default async function BlogPost({
   try {
     post = await prisma.post.findUnique({
       where: {
+        deletedAt: null,
         uuid: Buffer.from(decode(params.postId)).toString("hex"),
       },
     });
