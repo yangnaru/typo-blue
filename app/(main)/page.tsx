@@ -4,8 +4,13 @@ import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { encodePostId } from "@/lib/server-util";
+import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import Link from "next/link";
 
 export default async function Home() {
+  const { user } = await validateRequest();
+
   const userCount = await prisma.user.count();
   const totalPosts = await prisma.post.count();
 
@@ -35,6 +40,37 @@ export default async function Home() {
   const discoverableBlogSlugs = latestPublishedPostsFromDiscoverableBlogs
     .map((post) => post.blog.slug)
     .filter((slug, index, self) => self.indexOf(slug) === index);
+
+  let followingBlogPosts;
+  if (user) {
+    followingBlogPosts = await prisma.post.findMany({
+      orderBy: {
+        publishedAt: "desc",
+      },
+      where: {
+        deletedAt: null,
+        publishedAt: {
+          not: null,
+        },
+        blog: {
+          followers: {
+            some: {
+              followerId: user.id,
+            },
+          },
+        },
+      },
+      take: 100,
+      include: {
+        blog: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    });
+  }
+  const dateFormat = "yyyy-MM-dd";
 
   let officialBlog;
   if (process.env.OFFICIAL_BLOG_SLUG) {
@@ -93,6 +129,43 @@ export default async function Home() {
           titleClassName="text-normal font-bold"
           showTime={false}
         />
+      )}
+
+      {followingBlogPosts && followingBlogPosts.length > 0 && (
+        <>
+          <h3 className="text-normal font-bold">파도타기 블로그 소식</h3>
+
+          <ul className="space-y-2">
+            {followingBlogPosts.map((post) => {
+              const base62 = encodePostId(post.uuid);
+
+              return (
+                <li key={encodePostId(post.uuid)}>
+                  <Link href={`/@${post.blog.slug}/${base62}`}>
+                    {post.publishedAt ? (
+                      <span className="font-bold tabular-nums">
+                        {formatInTimeZone(
+                          post.publishedAt,
+                          "Asia/Seoul",
+                          dateFormat
+                        )}
+                      </span>
+                    ) : (
+                      <span className="font-bold tabular-nums">
+                        {formatInTimeZone(
+                          post.updatedAt,
+                          "Asia/Seoul",
+                          dateFormat
+                        )}
+                      </span>
+                    )}{" "}
+                    {post.title?.length === 0 ? "무제" : post.title}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </main>
   );
