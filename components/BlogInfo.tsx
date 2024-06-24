@@ -9,7 +9,7 @@ import { Blog } from "@prisma/client";
 export default function BlogInfo({
   blog,
 }: {
-  blog: Blog & { posts: { id: number }[] };
+  blog: Blog & { posts: { uuid: string }[] };
 }) {
   function handleDeleteBlog() {
     let confirmDelete;

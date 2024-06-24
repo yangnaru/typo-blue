@@ -109,7 +109,7 @@ async function HomeWithSession() {
       include: {
         posts: {
           select: {
-            id: true,
+            uuid: true,
           },
         },
       },

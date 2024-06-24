@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     include: {
       posts: {
         select: {
-          id: true,
+          uuid: true,
         },
       },
     },
