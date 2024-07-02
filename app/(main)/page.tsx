@@ -12,7 +12,11 @@ export default async function Home() {
   const { user } = await validateRequest();
 
   const userCount = await prisma.user.count();
-  const totalPosts = await prisma.post.count();
+  const totalNotDeletedPosts = await prisma.post.count({
+    where: {
+      deletedAt: null,
+    },
+  });
 
   const latestPublishedPostsFromDiscoverableBlogs = await prisma.post.findMany({
     orderBy: {
@@ -99,7 +103,8 @@ export default async function Home() {
       <Logo />
       <p>타이포 블루는 글로 자신을 표현하는 공간입니다.</p>
       <p>
-        지금까지 {userCount}명이 쓴 {totalPosts}개의 글과 함께하고 있습니다.
+        지금까지 {userCount}명이 쓴 {totalNotDeletedPosts}개의 글과 함께하고
+        있습니다.
       </p>
 
       <nav className="space-x-2 flex">
