@@ -2,12 +2,18 @@ import LinkButton from "@/components/LinkButton";
 import PublishPostButton from "@/components/PublishPostButton";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { encodePostId, incrementVisitorCount } from "@/lib/server-util";
+import {
+  encodePostId,
+  incrementVisitorCount,
+  logView,
+} from "@/lib/server-util";
 import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
+import { NextRequest } from "next/server";
 
 export async function generateMetadata({
   params,
@@ -104,6 +110,9 @@ export default async function BlogPost({
   }
 
   await incrementVisitorCount(blog.id);
+
+  const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
+  await logView(ip, blog.id, post.uuid);
 
   return (
     <div className="space-y-8">

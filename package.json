@@ -12,6 +12,7 @@
   "dependencies": {
     "@lucia-auth/adapter-prisma": "^4.0.1",
     "@node-rs/argon2": "^1.8.3",
+    "@opensearch-project/opensearch": "^2.10.0",
     "@prisma/client": "^5.15.1",
     "@tiptap/extension-document": "^2.2.4",
     "@tiptap/extension-link": "^2.0.3",

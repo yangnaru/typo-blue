@@ -4,8 +4,9 @@ import PostList from "@/components/PostList";
 import { followBlog, unfollowBlog } from "@/lib/actions";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { incrementVisitorCount } from "@/lib/server-util";
+import { incrementVisitorCount, logView } from "@/lib/server-util";
 import { Metadata } from "next";
+import { headers } from "next/headers";
 
 export async function generateMetadata({
   params,
@@ -115,6 +116,9 @@ export default async function BlogHome({
     })) !== null;
 
   await incrementVisitorCount(blog.id);
+
+  const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
+  await logView(ip, blog.id, null);
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
   const draftPosts = blog.posts.filter((post) => post.publishedAt === null);
