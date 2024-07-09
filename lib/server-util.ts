@@ -21,6 +21,9 @@ export async function logView(
 ) {
   const client = new Client({
     node: process.env.OPENSEARCH_NODE,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 
   await client.index({
