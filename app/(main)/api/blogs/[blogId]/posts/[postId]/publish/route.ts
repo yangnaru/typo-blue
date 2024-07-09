@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { decodePostId } from "@/lib/server-util";
+import { decodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(

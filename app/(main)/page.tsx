@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { encodePostId } from "@/lib/server-util";
+import { encodePostId } from "@/lib/utils";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
 

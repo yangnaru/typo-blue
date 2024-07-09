@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import sanitize from "sanitize-html";
-import { encodePostId } from "./server-util";
+import { encodePostId } from "./utils";
 import { hash, verify } from "@node-rs/argon2";
 
 export async function setPassword(prevState: any, formData: FormData) {

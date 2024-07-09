@@ -1,4 +1,4 @@
-import { encodePostId } from "@/lib/server-util";
+import { encodePostId } from "@/lib/utils";
 import { Blog, Guestbook, User } from "@prisma/client";
 import GuestbookDetail from "./GuestbookDetail";
 import { User as LuciaUser } from "lucia";

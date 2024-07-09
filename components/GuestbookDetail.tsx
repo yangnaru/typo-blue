@@ -1,6 +1,6 @@
 "use client";
 
-import { encodePostId } from "@/lib/server-util";
+import { encodePostId } from "@/lib/utils";
 import { Blog, Guestbook, User } from "@prisma/client";
 import Link from "next/link";
 import GuestbookTiptap from "./GuestbookTiptap";

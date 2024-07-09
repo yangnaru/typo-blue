@@ -2,18 +2,14 @@ import LinkButton from "@/components/LinkButton";
 import PublishPostButton from "@/components/PublishPostButton";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import {
-  encodePostId,
-  incrementVisitorCount,
-  logView,
-} from "@/lib/server-util";
+import { encodePostId } from "@/lib/utils";
+import { incrementVisitorCount, logView } from "@/lib/server-util";
 import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { NextRequest } from "next/server";
 
 export async function generateMetadata({
   params,

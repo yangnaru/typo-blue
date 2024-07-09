@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { decodePostId, encodePostId } from "@/lib/server-util";
+import { decodePostId, encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import sanitize from "sanitize-html";
 

@@ -1,4 +1,4 @@
-import { encodePostId } from "@/lib/server-util";
+import { encodePostId } from "@/lib/utils";
 import { Blog, Post } from "@prisma/client";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
