@@ -108,7 +108,13 @@ export default async function BlogPost({
   await incrementVisitorCount(blog.id);
 
   const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  await logView(ip, blog.id, post.uuid);
+  const userAgent = headers().get("user-agent") ?? "";
+  await logView({
+    ip,
+    userAgent,
+    blogId: blog.id,
+    postId: post.uuid,
+  });
 
   return (
     <div className="space-y-8">

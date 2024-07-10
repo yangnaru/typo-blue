@@ -14,11 +14,17 @@ export async function incrementVisitorCount(blogId: number) {
   });
 }
 
-export async function logView(
-  ip: string,
-  blogId: number,
-  postId: string | null
-) {
+export async function logView({
+  ip,
+  userAgent,
+  blogId,
+  postId = null,
+}: {
+  ip: string;
+  userAgent: string;
+  blogId: number;
+  postId?: string | null;
+}) {
   const client = new Client({
     node: process.env.OPENSEARCH_NODE,
     ssl: {
@@ -30,6 +36,7 @@ export async function logView(
     index: process.env.OPENSEARCH_VIEWS_INDEX!,
     body: {
       ip,
+      user_agent: userAgent,
       blog_id: blogId,
       post_id: postId,
       "@timestamp": new Date().toISOString(),

@@ -118,7 +118,12 @@ export default async function BlogHome({
   await incrementVisitorCount(blog.id);
 
   const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  await logView(ip, blog.id, null);
+  const userAgent = headers().get("user-agent") ?? "";
+  await logView({
+    ip,
+    userAgent,
+    blogId: blog.id,
+  });
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
   const draftPosts = blog.posts.filter((post) => post.publishedAt === null);
