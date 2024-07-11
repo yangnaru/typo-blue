@@ -54,7 +54,7 @@ export default async function AdminRootPage() {
                 <TableCell>
                   {blog.posts[0] ? (
                     <Link href={`/@${blog.slug}/${encodedLatestPostId}`}>
-                      {blog.posts[0].title}
+                      {blog.posts[0].title || "무제"}
                     </Link>
                   ) : (
                     "글 없음"
