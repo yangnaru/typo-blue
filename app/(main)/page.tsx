@@ -1,5 +1,4 @@
 import LinkButton from "@/components/LinkButton";
-import LoginStatus from "@/components/LoginStatus";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { validateRequest } from "@/lib/auth";

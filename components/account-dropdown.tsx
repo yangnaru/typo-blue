@@ -35,7 +35,7 @@ export default function AccountDropdown({
         <DropdownMenuSeparator />
 
         {blogs.map((blog) => (
-          <DropdownMenuItem className="cursor-pointer" asChild>
+          <DropdownMenuItem key={blog.id} className="cursor-pointer" asChild>
             <Link href={`/@${blog.slug}`}>
               {blog.name || "제목 없는 블로그"} (@{blog.slug})
             </Link>
