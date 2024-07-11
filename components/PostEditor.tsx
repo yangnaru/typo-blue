@@ -1,111 +1,74 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useState } from "react";
 import Button from "./Button";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
+import { deletePost, upsertPost } from "@/lib/actions/blog";
 
 export default function PostEditor({
   blogId,
   existingPostId = null,
+  existingTitle = "",
+  existingContent = "",
+  existingPublishedAt = null,
 }: {
   blogId: string;
   existingPostId?: string | null;
+  existingTitle?: string;
+  existingContent?: string;
+  existingPublishedAt?: Date | null;
 }) {
   const [postId, setPostId] = useState(existingPostId);
-  const [content, setContent] = useState("");
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(existingTitle);
+  const [content, setContent] = useState(existingContent);
+  const [publishedAt, setPublishedAt] = useState<Date | null>(
+    existingPublishedAt
+  );
+
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [publishedAt, setPublishedAt] = useState<Date | null>(null);
 
-  function savePost(status: "save" | "publish" = "save") {
+  async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
 
-    fetch(`/api/blogs/${blogId}/posts/${postId ?? ""}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        postId: postId,
-        title: title,
-        content: content,
-        status: status,
-      }),
-    })
-      .then(async (res) => {
-        const json = await res.json();
+    const publishedAt = status === "publish" ? new Date() : null;
+    const res = await upsertPost(blogId, publishedAt, postId, title, content);
 
-        if (res.ok) {
-          setPostId(json.postId);
+    if (res.success) {
+      setPostId(res.postId);
 
-          const now = new Date();
-          setStatus(
-            format(now, "yyyy년 MM월 dd일 HH시 mm분") +
-              ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
-          );
-          setIsLoading(false);
+      if (publishedAt) {
+        setPublishedAt(publishedAt);
+      }
 
-          if (status === "publish" || (status === "save" && existingPostId)) {
-            window.location.href = `/@${blogId}/${json.postId}`;
-          }
-        } else {
-          setStatus("❗️");
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        setStatus("❗️");
-        setIsLoading(false);
-      });
+      const now = new Date();
+      setStatus(
+        format(now, "yyyy년 MM월 dd일 HH시 mm분") +
+          ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
+      );
+      setIsLoading(false);
+
+      if (status === "publish" || (status === "save" && existingPostId)) {
+        window.location.href = `/@${blogId}/${res.postId}`;
+      }
+    } else {
+      setStatus("❗️");
+      setIsLoading(false);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (confirm("정말로 삭제하시겠습니까?")) {
-      fetch(`/api/blogs/${blogId}/posts/${postId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then(async (res) => {
-          if (res.ok) {
-            window.location.href = `/@${blogId}`;
-          } else {
-            setStatus("❗️");
-          }
-        })
-        .catch((err) => {
-          setStatus("❗️");
-        });
+      const res = await deletePost(blogId, existingPostId!);
+
+      if (res.success) {
+        window.location.href = `/@${blogId}`;
+      } else {
+        alert("삭제에 실패했습니다.");
+      }
     }
   }
-
-  useEffect(() => {
-    if (existingPostId) {
-      fetch(`/api/blogs/${blogId}/posts/${existingPostId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then(async (res) => {
-          const json = await res.json();
-
-          if (res.ok) {
-            setContent(json.content);
-            setTitle(json.title);
-            setPublishedAt(
-              json.publishedAt ? new Date(json.publishedAt) : null
-            );
-          } else {
-            setStatus("❗️");
-          }
-        })
-        .catch((err) => {
-          setStatus("❗️");
-        });
-    }
-  }, [blogId, existingPostId]);
 
   return (
     <div className="space-y-2">
@@ -141,13 +104,13 @@ export default function PostEditor({
       <div className="flex flex-row space-x-2 items-baseline">
         <Button
           disabled={isLoading}
-          onClick={() => savePost("save")}
+          onClick={() => handleSavePost("save")}
           content="저장"
         />
         {publishedAt === null && (
           <Button
             disabled={isLoading}
-            onClick={() => savePost("publish")}
+            onClick={() => handleSavePost("publish")}
             content="발행"
           />
         )}

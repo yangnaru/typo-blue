@@ -1,6 +1,6 @@
 "use client";
 
-import { setPassword } from "@/lib/actions";
+import { setPassword } from "@/lib/actions/account";
 import { SubmitButton } from "./submit-button";
 import { useFormState } from "react-dom";
 

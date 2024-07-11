@@ -4,7 +4,7 @@ import {
   sendEmailVerificationCode,
   verifyEmailVerificationCode,
   verifyPassword,
-} from "@/lib/actions";
+} from "@/lib/actions/account";
 import { useState } from "react";
 
 export default function Login() {

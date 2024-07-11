@@ -1,179 +1,46 @@
-"use client";
+import BlogEditForm from "@/components/BlogEditForm";
+import { validateRequest } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
-import BlogSlugInput from "@/components/BlogSlugInput";
-import { useEffect, useState } from "react";
-
-interface Blog {
-  slug: string | null;
-  name: string | null;
-  description: string | null;
-  discoverable: boolean | null;
-  postCount: number | null;
-}
-
-export default function EditBlogPage({
+export default async function EditBlogPage({
   params,
 }: {
   params: { blogId: string };
 }) {
-  const [blog, setBlog] = useState<Blog>({
-    slug: null,
-    name: null,
-    description: null,
-    discoverable: null,
-    postCount: null,
+  const { user } = await validateRequest();
+  if (!user) {
+    return <p>로그인이 필요합니다.</p>;
+  }
+
+  const blogSlug = decodeURIComponent(params.blogId).replace("@", "");
+  const blog = await prisma.blog.findUnique({
+    where: {
+      slug: blogSlug,
+      userId: user.id,
+    },
+    include: {
+      _count: {
+        select: {
+          posts: true,
+        },
+      },
+    },
   });
 
-  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setBlog({
-      ...blog,
-      [event.target.name]: event.target.value,
-    });
+  if (!blog) {
+    return <p>블로그를 찾을 수 없습니다.</p>;
   }
-
-  function handleDiscoverableChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    setBlog({
-      ...blog,
-      [event.target.name]: event.target.checked,
-    });
-  }
-
-  function handleSubmit(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-    e.preventDefault();
-
-    fetch(`/api/blogs/${params.blogId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(blog),
-    }).then(async (response) => {
-      const json = await response.json();
-
-      if (!response.ok) {
-        alert(json.error);
-      } else {
-        alert(json.message);
-
-        window.location.href = `/@${json.slug}`;
-      }
-    });
-  }
-
-  function handleDelete() {
-    let confirmDelete;
-    if (blog.postCount !== 0) {
-      confirmDelete =
-        prompt(
-          `정말 블로그 "${blog.slug}"를 삭제하시겠습니까?\n\n삭제하시려면 "${blog.slug}" 라고 입력해 주세요.`
-        ) === blog.slug;
-    } else {
-      confirmDelete = true;
-    }
-
-    if (confirmDelete) {
-      fetch(`/api/blogs/${blog.slug}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.status === "success") {
-            alert("블로그가 삭제되었습니다.");
-            window.location.href = "/account";
-          } else {
-            alert("블로그 삭제에 실패했습니다.");
-          }
-        });
-    }
-  }
-
-  useEffect(() => {
-    fetch(`/api/blogs/${params.blogId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setBlog({
-          slug: data.slug,
-          name: data.name,
-          description: data.description,
-          discoverable: data.discoverable,
-          postCount: data.postCount,
-        });
-      });
-  }, [params.blogId]);
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg">블로그 정보 수정</h3>
-      {blog && (
-        <form className="flex flex-col space-y-4 items-start">
-          <div className="flex flex-col">
-            <label htmlFor="slug">블로그 주소</label>
-            {(blog.slug || blog.slug === "") && (
-              <BlogSlugInput
-                value={blog.slug}
-                handleChange={(e) => handleChange(e)}
-                className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-              />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="name">블로그 제목</label>
-            <input
-              type="text"
-              placeholder="블로그 제목을 적어 주세요."
-              className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-              onChange={handleChange}
-              name="name"
-              value={blog.name ?? ""}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="description">블로그 설명</label>
-            <input
-              type="text"
-              placeholder="블로그 설명을 적어 주세요."
-              className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-              onChange={handleChange}
-              name="description"
-              value={blog.description ?? ""}
-            />
-          </div>
-          <div className="flex flex-row items-center gap-4">
-            <label htmlFor="description">검색 및 발견 허용</label>
-            <input
-              type="checkbox"
-              placeholder="블로그 검색 및 발견 허용 여부를 체크해 주세요."
-              className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-              onChange={handleDiscoverableChange}
-              name="discoverable"
-              checked={blog.discoverable ?? false}
-            />
-          </div>
-          <button
-            className="p-2 border rounded-sm"
-            type="submit"
-            onClick={(e) => handleSubmit(e)}
-          >
-            저장
-          </button>
-          <button
-            className="p-2 border rounded-sm border-red-500 hover:bg-red-300 hover:text-black"
-            onClick={handleDelete}
-          >
-            블로그 삭제
-          </button>
-        </form>
-      )}
+      <BlogEditForm
+        slug={blog.slug}
+        name={blog.name ?? ""}
+        description={blog.description ?? ""}
+        discoverable={blog.discoverable}
+        postCount={blog._count.posts}
+      />
     </div>
   );
 }

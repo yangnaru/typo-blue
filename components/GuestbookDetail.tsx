@@ -5,7 +5,7 @@ import { Blog, Guestbook, User } from "@prisma/client";
 import Link from "next/link";
 import GuestbookTiptap from "./GuestbookTiptap";
 import { useState } from "react";
-import { deleteGuestbook, saveGuestbookReply } from "@/lib/actions";
+import { deleteGuestbook, saveGuestbookReply } from "@/lib/actions/blog";
 import { useFormStatus } from "react-dom";
 import { User as LuciaUser } from "lucia";
 

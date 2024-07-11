@@ -1,6 +1,6 @@
 import GuestbookEditor from "@/components/GuestbookEditor";
 import GuestbookList from "@/components/GuestbookList";
-import { writeToGuestbook } from "@/lib/actions";
+import { writeToGuestbook } from "@/lib/actions/blog";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Link from "next/link";

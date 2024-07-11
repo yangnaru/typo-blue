@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Button from "./Button";
 import BlogSlugInput from "./BlogSlugInput";
-import { createBlog } from "@/lib/actions";
+import { createBlog } from "@/lib/actions/blog";
 
 export default function CreateNewBlogForm() {
   const [form, setForm] = useState({ blogId: "" });

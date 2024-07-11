@@ -1,7 +1,6 @@
-import Button from "@/components/Button";
 import LinkButton from "@/components/LinkButton";
 import PostList from "@/components/PostList";
-import { followBlog, unfollowBlog } from "@/lib/actions";
+import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { incrementVisitorCount, logView } from "@/lib/server-util";

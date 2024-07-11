@@ -38,7 +38,9 @@ export default async function BlogLayout({
     <>
       <Logo />
       <h2 className="text-2xl my-4 font-bold">
-        <Link href={`/@${blog.slug}`}>{blog.name ?? "@" + blog.slug}</Link>
+        <Link href={`/@${blog.slug}`}>
+          @{blog.slug} {blog.name && `(${blog.name})`}
+        </Link>
       </h2>
 
       {children}
