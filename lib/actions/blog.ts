@@ -470,6 +470,8 @@ export async function upsertPost(
     });
   }
 
+  revalidatePath(`/@${blogSlug}`);
+
   return {
     success: true,
     postId: encodePostId(post.uuid),
