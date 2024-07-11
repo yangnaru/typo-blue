@@ -19,6 +19,12 @@ export default async function AdminRootPage() {
   const blogs = await prisma.blog.findMany({
     include: {
       posts: {
+        where: {
+          publishedAt: {
+            not: null,
+          },
+          deletedAt: null,
+        },
         orderBy: {
           publishedAt: "desc",
         },
