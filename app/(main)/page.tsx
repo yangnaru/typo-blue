@@ -203,7 +203,6 @@ async function HomeWithSession() {
         {user && !blog && (
           <LinkButton href="/blogs/new">블로그 만들기</LinkButton>
         )}
-        <LoginStatus />
       </div>
     </div>
   );

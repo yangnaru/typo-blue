@@ -44,11 +44,6 @@ export default async function AccountHome() {
                 </p>
               </div>
               <div className="flex flex-row space-x-2 items-center align-baseline">
-                <form action={logout}>
-                  <button className="border border-red-500 rounded-sm p-2">
-                    로그아웃
-                  </button>
-                </form>
                 <LinkButton href="/account/change-email" className="p-2">
                   이메일 변경
                 </LinkButton>
@@ -75,24 +70,4 @@ export default async function AccountHome() {
       </div>
     </div>
   );
-}
-
-async function logout() {
-  "use server";
-  const { session } = await validateRequest();
-  if (!session) {
-    return {
-      error: "Unauthorized",
-    };
-  }
-
-  await lucia.invalidateSession(session.id);
-
-  const sessionCookie = lucia.createBlankSessionCookie();
-  cookies().set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
-  return redirect("/");
 }
