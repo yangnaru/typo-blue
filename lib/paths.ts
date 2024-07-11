@@ -3,7 +3,7 @@ export function getRootPath() {
 }
 
 export function getLoginPath() {
-  return "/login";
+  return "/auth/signin";
 }
 
 export function getAccountPath() {
