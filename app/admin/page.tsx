@@ -44,7 +44,9 @@ export default async function AdminRootPage() {
         </TableHeader>
         <TableBody>
           {blogs.map((blog) => {
-            const encodedLatestPostId = encodePostId(blog.posts[0]?.uuid);
+            const encodedLatestPostId = blog.posts[0]
+              ? encodePostId(blog.posts[0].uuid)
+              : "";
 
             return (
               <TableRow key={blog.id}>
