@@ -4,18 +4,15 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import GuestbookTiptap from "./GuestbookTiptap";
 import { User } from "lucia";
+import { Button } from "./ui/button";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="border border-blue-500 p-1 rounded-sm hover:bg-blue-300 hover:text-black"
-      type="submit"
-      aria-disabled={pending}
-    >
+    <Button type="submit" aria-disabled={pending}>
       방명록 남기기
-    </button>
+    </Button>
   );
 }
 

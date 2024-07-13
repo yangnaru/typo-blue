@@ -8,18 +8,15 @@ import { useState } from "react";
 import { deleteGuestbook, saveGuestbookReply } from "@/lib/actions/blog";
 import { useFormStatus } from "react-dom";
 import { User as LuciaUser } from "lucia";
+import { Button } from "./ui/button";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="border border-blue-500 p-1 rounded-sm hover:bg-blue-300 hover:text-black"
-      type="submit"
-      aria-disabled={pending}
-    >
+    <Button type="submit" aria-disabled={pending}>
       답글 남기기
-    </button>
+    </Button>
   );
 }
 
@@ -63,12 +60,9 @@ export default function GuestbookDetail({
         {((currentUser?.id === guestbook.authorId && !guestbook.repliedAt) ||
           isReplyable) && (
           <div>
-            <button
-              className="border border-red-500 rounded-sm p-1 hover:bg-red-300 hover:text-black w-24"
-              onClick={handleDeleteGuestbook}
-            >
+            <Button variant="destructive" onClick={handleDeleteGuestbook}>
               방명록 삭제
-            </button>
+            </Button>
           </div>
         )}
       </div>

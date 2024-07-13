@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { editBlogInfo, deleteBlog } from "@/lib/actions/blog";
 import { getAccountPath } from "@/lib/paths";
+import { Button } from "./ui/button";
 
 interface Blog {
   slug: string;
@@ -123,20 +124,14 @@ export default function BlogEditForm({
           checked={blog.discoverable ?? false}
         />
       </div>
-      <button
-        className="p-2 border rounded-sm"
-        type="submit"
-        onClick={(e) => handleSubmit(e)}
-      >
-        저장
-      </button>
-      <button
-        type="button"
-        className="p-2 border rounded-sm border-red-500 hover:bg-red-300 hover:text-black"
-        onClick={handleDelete}
-      >
-        블로그 삭제
-      </button>
+      <div className="flex flex-row gap-2">
+        <Button type="submit" onClick={(e) => handleSubmit(e)}>
+          저장
+        </Button>
+        <Button type="button" variant="destructive" onClick={handleDelete}>
+          블로그 삭제
+        </Button>
+      </div>
     </form>
   );
 }

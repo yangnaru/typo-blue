@@ -162,22 +162,14 @@ export default async function BlogHome({
           (isCurrentlyFollowing ? (
             <form action={unfollowBlog}>
               <input type="hidden" name="blogId" value={blog.slug} />
-              <button
-                className="border rounded-sm p-1 border-red-500 hover:text-black hover:bg-red-300"
-                type="submit"
-              >
+              <Button variant="destructive" type="submit">
                 파도타기 삭제
-              </button>
+              </Button>
             </form>
           ) : (
             <form action={followBlog}>
               <input type="hidden" name="blogId" value={blog.slug} />
-              <button
-                className="border border-blue-500 p-1 rounded-sm hover:bg-blue-300 hover:text-black"
-                type="submit"
-              >
-                파도타기 추가
-              </button>
+              <Button type="submit">파도타기 추가</Button>
             </form>
           ))}
       </div>
