@@ -1,11 +1,17 @@
-import LinkButton from "@/components/LinkButton";
 import PostList from "@/components/PostList";
+import { Button } from "@/components/ui/button";
 import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  getBlogEditPath,
+  getBlogGuestbookPath,
+  getBlogNewPostPath,
+} from "@/lib/paths";
 import { incrementVisitorCount, logView } from "@/lib/server-util";
 import { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export async function generateMetadata({
   params,
@@ -147,7 +153,9 @@ export default async function BlogHome({
       />
 
       <div className="flex flex-row space-x-2">
-        <LinkButton href={`/@${blog.slug}/guestbook`}>방명록</LinkButton>
+        <Button variant="outline" asChild>
+          <Link href={getBlogGuestbookPath(blog.slug)}>방명록</Link>
+        </Button>
 
         {blog.id !== currentUser?.blog?.id &&
           currentUser?.blog &&
@@ -176,8 +184,12 @@ export default async function BlogHome({
 
       {isCurrentUserBlogOwner && (
         <div className="space-x-2">
-          <LinkButton href={`/@${blog.slug}/new-post`}>새 글 쓰기</LinkButton>
-          <LinkButton href={`/@${blog.slug}/edit`}>블로그 관리</LinkButton>
+          <Button>
+            <Link href={getBlogNewPostPath(blog.slug)}>새 글 쓰기</Link>
+          </Button>
+          <Button>
+            <Link href={getBlogEditPath(blog.slug)}>블로그 관리 </Link>
+          </Button>
         </div>
       )}
     </div>

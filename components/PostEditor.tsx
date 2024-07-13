@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Button from "./Button";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
 import { deletePost, upsertPost } from "@/lib/actions/blog";
+import { Button } from "./ui/button";
 
 export default function PostEditor({
   blogId,
@@ -102,25 +102,21 @@ export default function PostEditor({
       )}
 
       <div className="flex flex-row space-x-2 items-baseline">
-        <Button
-          disabled={isLoading}
-          onClick={() => handleSavePost("save")}
-          content="저장"
-        />
+        <Button disabled={isLoading} onClick={() => handleSavePost("save")}>
+          저장
+        </Button>
         {publishedAt === null && (
           <Button
             disabled={isLoading}
             onClick={() => handleSavePost("publish")}
-            content="발행"
-          />
+          >
+            발행
+          </Button>
         )}
         {postId !== null && (
-          <button
-            className="border border-red-500 p-1 rounded-sm hover:bg-red-300 hover:text-black"
-            onClick={handleDelete}
-          >
+          <Button variant="destructive" onClick={handleDelete}>
             삭제
-          </button>
+          </Button>
         )}
         <p>{status}</p>
       </div>

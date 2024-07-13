@@ -1,10 +1,14 @@
 import BlogInfo from "@/components/BlogInfo";
-import LinkButton from "@/components/LinkButton";
-import { lucia, validateRequest } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  getAccountChangeEmailPath,
+  getAccountSetPasswordPath,
+  getBlogNewPath,
+} from "@/lib/paths";
 import format from "date-fns/format";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function AccountHome() {
   const { user: currentUser } = await validateRequest();
@@ -44,12 +48,12 @@ export default async function AccountHome() {
                 </p>
               </div>
               <div className="flex flex-row space-x-2 items-center align-baseline">
-                <LinkButton href="/account/change-email" className="p-2">
-                  이메일 변경
-                </LinkButton>
-                <LinkButton href="/account/set-password" className="p-2">
-                  비밀번호 설정
-                </LinkButton>
+                <Button asChild>
+                  <Link href={getAccountChangeEmailPath()}>이메일 변경</Link>
+                </Button>
+                <Button asChild>
+                  <Link href={getAccountSetPasswordPath()}>비밀번호 설정</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -61,9 +65,9 @@ export default async function AccountHome() {
             {user.blog ? (
               <BlogInfo key={user.blog.slug} blog={user.blog} />
             ) : (
-              <LinkButton href="/blogs/new" className="p-2">
-                블로그 만들기
-              </LinkButton>
+              <Button asChild>
+                <Link href={getBlogNewPath()}>블로그 만들기</Link>
+              </Button>
             )}
           </div>
         </div>

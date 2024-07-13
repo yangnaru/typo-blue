@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Button from "./Button";
 import BlogSlugInput from "./BlogSlugInput";
 import { createBlog } from "@/lib/actions/blog";
+import { Button } from "./ui/button";
 
 export default function CreateNewBlogForm() {
   const [form, setForm] = useState({ blogId: "" });
@@ -47,11 +47,9 @@ export default function CreateNewBlogForm() {
         </div>
 
         <div className="flex flex-row items-baseline space-x-2">
-          <Button
-            content="만들기"
-            disabled={isLoading}
-            onClick={handleSubmit}
-          />
+          <Button disabled={isLoading} onClick={handleSubmit}>
+            만들기
+          </Button>
           <p>{status}</p>
         </div>
       </form>

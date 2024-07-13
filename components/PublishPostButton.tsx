@@ -1,6 +1,7 @@
 "use client";
 
 import { publishPost, unPublishPost } from "@/lib/actions/blog";
+import { Button } from "./ui/button";
 
 export default function PublishPostButton({
   slug,
@@ -21,11 +22,8 @@ export default function PublishPostButton({
   }
 
   return (
-    <button
-      onClick={handlePublish}
-      className="border rounded-sm p-1 border-red-500 hover:text-black hover:bg-red-300"
-    >
+    <Button variant="destructive" onClick={handlePublish}>
       {publishedAt ? "발행 취소" : "발행"}
-    </button>
+    </Button>
   );
 }

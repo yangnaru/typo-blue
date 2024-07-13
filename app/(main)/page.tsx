@@ -1,8 +1,9 @@
-import LinkButton from "@/components/LinkButton";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
+import { Button } from "@/components/ui/button";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getBlogHomePath } from "@/lib/paths";
 import { encodePostId } from "@/lib/utils";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
@@ -117,9 +118,9 @@ export default async function Home() {
 
           <div className="flex flex-row gap-2 flex-wrap">
             {discoverableBlogSlugs.map((slug) => (
-              <LinkButton key={slug} href={`/@${slug}`}>
-                @{slug}
-              </LinkButton>
+              <Button key={slug} variant="outline" asChild>
+                <Link href={getBlogHomePath(slug)}>@{slug}</Link>
+              </Button>
             ))}
           </div>
         </>
@@ -200,7 +201,9 @@ async function HomeWithSession() {
     <div>
       <div className="flex flex-row items-baseline space-x-2">
         {user && !blog && (
-          <LinkButton href="/blogs/new">블로그 만들기</LinkButton>
+          <Button asChild>
+            <Link href="/blogs/new">블로그 만들기</Link>
+          </Button>
         )}
       </div>
     </div>

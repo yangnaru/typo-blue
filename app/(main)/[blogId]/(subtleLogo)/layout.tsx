@@ -1,5 +1,6 @@
-import LinkButton from "@/components/LinkButton";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
+import { getBlogHomePath } from "@/lib/paths";
 import { Blog } from "@prisma/client";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -64,12 +65,15 @@ export default async function BlogLayout({
             <h2 className="text-xl font-bold">파도타기</h2>
             <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
               {blog.followings.map((following) => (
-                <LinkButton
+                <Button
                   key={following.following.slug}
-                  href={`/@${following.following.slug}`}
+                  variant="outline"
+                  asChild
                 >
-                  {`@${following.following.slug}`}
-                </LinkButton>
+                  <Link href={getBlogHomePath(following.following.slug)}>
+                    @{following.following.slug}
+                  </Link>
+                </Button>
               ))}
             </div>
           </div>

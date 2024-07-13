@@ -1,4 +1,3 @@
-import LinkButton from "@/components/LinkButton";
 import PublishPostButton from "@/components/PublishPostButton";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -10,6 +9,8 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { getBlogPostEditPath } from "@/lib/paths";
 
 export async function generateMetadata({
   params,
@@ -138,12 +139,10 @@ export default async function BlogPost({
       />
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">
-          <LinkButton
-            href={`/${blogId}/${params.postId}/edit`}
-            className="flex"
-          >
-            수정
-          </LinkButton>
+          <Button asChild>
+            <Link href={getBlogPostEditPath(slug, params.postId)}>수정</Link>
+          </Button>
+
           <PublishPostButton
             slug={blog.slug}
             postId={encodePostId(post.uuid)}
