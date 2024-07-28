@@ -1,4 +1,3 @@
-import PublishPostButton from "@/components/PublishPostButton";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { encodePostId } from "@/lib/utils";
@@ -17,6 +16,8 @@ export async function generateMetadata({
 }: {
   params: { postId: string };
 }): Promise<Metadata> {
+  const { user } = await validateRequest();
+
   let uuid;
   try {
     uuid = Buffer.from(decode(params.postId)).toString("hex");
@@ -41,7 +42,13 @@ export async function generateMetadata({
     },
   });
 
-  if (!post || !post.publishedAt || !post.blog) {
+  if (!post || !post.blog) {
+    return {
+      title: "존재하지 않는 글입니다.",
+    };
+  }
+
+  if (!post.publishedAt && post.blog.userId !== user?.id) {
     return {
       title: "존재하지 않는 글입니다.",
     };
@@ -49,7 +56,7 @@ export async function generateMetadata({
 
   const blogName = post.blog.name ?? `@${post.blog.slug}`;
   const blogDescription = post.blog.description ?? "";
-  const postTitle = post.title ?? "무제";
+  const postTitle = post.title === "" ? "무제" : post.title;
 
   return {
     title: postTitle,
@@ -142,12 +149,6 @@ export default async function BlogPost({
           <Button asChild>
             <Link href={getBlogPostEditPath(slug, params.postId)}>수정</Link>
           </Button>
-
-          <PublishPostButton
-            slug={blog.slug}
-            postId={encodePostId(post.uuid)}
-            publishedAt={post.publishedAt}
-          />
         </div>
       )}
     </div>

@@ -4,6 +4,18 @@ import { useState } from "react";
 import { editBlogInfo, deleteBlog } from "@/lib/actions/blog";
 import { getAccountPath } from "@/lib/paths";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "./ui/checkbox";
+import { toast } from "sonner";
 
 interface Blog {
   slug: string;
@@ -35,12 +47,10 @@ export default function BlogEditForm({
     });
   }
 
-  function handleDiscoverableChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  function handleDiscoverableChange(checked: boolean) {
     setBlog({
       ...blog,
-      [event.target.name]: event.target.checked,
+      discoverable: checked,
     });
   }
 
@@ -63,7 +73,7 @@ export default function BlogEditForm({
 
         window.location.href = getAccountPath();
       } else {
-        alert("블로그 삭제에 실패했습니다.");
+        toast("블로그 삭제에 실패했습니다.");
       }
     }
   }
@@ -81,57 +91,81 @@ export default function BlogEditForm({
     );
 
     if (res.success) {
-      alert("블로그 정보가 수정되었습니다.");
+      toast("블로그 정보가 수정되었습니다.");
     } else {
-      alert("블로그 정보 수정에 실패했습니다.");
+      toast("블로그 정보 수정에 실패했습니다.");
     }
-
-    window.location.reload();
   }
 
   return (
-    <form className="flex flex-col space-y-4 items-start">
-      <div className="flex flex-col">
-        <label htmlFor="name">블로그 제목</label>
-        <input
-          type="text"
-          placeholder="블로그 제목을 적어 주세요."
-          className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-          onChange={handleChange}
-          name="name"
-          value={blog.name ?? ""}
-        />
-      </div>
-      <div className="flex flex-col">
-        <label htmlFor="description">블로그 설명</label>
-        <input
-          type="text"
-          placeholder="블로그 설명을 적어 주세요."
-          className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-          onChange={handleChange}
-          name="description"
-          value={blog.description ?? ""}
-        />
-      </div>
-      <div className="flex flex-row items-center gap-4">
-        <label htmlFor="description">검색 및 발견 허용</label>
-        <input
-          type="checkbox"
-          placeholder="블로그 검색 및 발견 허용 여부를 체크해 주세요."
-          className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
-          onChange={handleDiscoverableChange}
-          name="discoverable"
-          checked={blog.discoverable ?? false}
-        />
-      </div>
-      <div className="flex flex-row gap-2">
-        <Button type="submit" onClick={(e) => handleSubmit(e)}>
-          저장
-        </Button>
-        <Button type="button" variant="destructive" onClick={handleDelete}>
-          블로그 삭제
-        </Button>
-      </div>
+    <form>
+      <Card x-chunk="dashboard-05-chunk-3">
+        <CardHeader className="px-7">
+          <CardTitle>블로그 설정</CardTitle>
+          <CardDescription>각종 블로그 설정</CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>블로그 제목</CardTitle>
+              <CardDescription>블로그 제목을 적어 주세요.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                onChange={handleChange}
+                name="name"
+                value={blog.name ?? ""}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>블로그 설명</CardTitle>
+              <CardDescription>블로그 설명을 적어 주세요.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                onChange={handleChange}
+                name="description"
+                value={blog.description ?? ""}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="items-top flex space-x-2">
+            <Checkbox
+              name="discoverable"
+              checked={blog.discoverable ?? false}
+              onCheckedChange={(checked) => handleDiscoverableChange(!!checked)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="terms1"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                검색 및 발견 허용
+              </label>
+              <p className="text-sm text-muted-foreground">
+                타이포 블루 메인에 노출되거나 검색 엔진에 의해 발견될 수
+                있습니다.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter>
+          <div className="flex flex-row gap-2">
+            <Button type="submit" onClick={(e) => handleSubmit(e)}>
+              저장
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>
+              블로그 삭제
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
     </form>
   );
 }

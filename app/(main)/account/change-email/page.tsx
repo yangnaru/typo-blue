@@ -5,6 +5,7 @@ import {
   verifyEmailVerificationCodeAndChangeAccountEmail,
 } from "@/lib/actions/account";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function Login() {
     e.preventDefault();
 
     if (!email) {
-      alert("이메일 주소를 입력해주세요.");
+      toast("이메일 주소를 입력해주세요.");
       return;
     }
 
@@ -31,13 +32,13 @@ export default function Login() {
         const challengeId = await sendEmailVerificationCodeForEmailChange(
           email
         );
-        alert("이메일 변경 코드를 보냈습니다. 이메일을 확인해 주세요.");
+        toast("이메일 변경 코드를 보냈습니다. 이메일을 확인해 주세요.");
         setEmailInputDisabled(true);
         setButtonText("이메일 변경 코드 인증");
         setLoginButtonDisabled(false);
         setChallengeId(challengeId);
       } catch (e) {
-        alert("이메일 변경에 실패했습니다. 다시 시도해주세요.");
+        toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
         setLoginButtonDisabled(false);
         setButtonText("이메일 변경 코드 보내기");
       }
@@ -47,12 +48,11 @@ export default function Login() {
       verifyEmailVerificationCodeAndChangeAccountEmail(challengeId, code).then(
         (verified) => {
           if (verified) {
-            alert("이메일 변경에 성공했습니다.");
-            window.location.href = "/account";
+            toast("이메일 변경에 성공했습니다.");
 
             return;
           } else {
-            alert("이메일 변경에 실패했습니다. 다시 시도해주세요.");
+            toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
           }
         }
       );

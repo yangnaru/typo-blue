@@ -67,50 +67,54 @@ function Tiptap({
   }
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <div className="[&>*]:text-xl space-x-1 pl-1">
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
-          className="ri-h-1"
+          className="ri-h-1 text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
-          className="ri-h-2"
+          className="ri-h-2 text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
-          className="ri-h-3"
+          className="ri-h-3 text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className="ri-bold"
+          className="ri-bold text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className="ri-italic"
+          className="ri-italic text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className="ri-list-unordered"
+          className="ri-list-unordered text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className="ri-list-ordered"
+          className="ri-list-ordered text-muted-foreground hover:text-foreground"
         ></button>
         <button
           onClick={setLink}
-          className={editor.isActive("link") ? "is-active ri-link" : "ri-link "}
+          className={
+            editor.isActive("link")
+              ? "is-active ri-link text-muted-foreground hover:text-foreground"
+              : "ri-link text-muted-foreground hover:text-foreground"
+          }
         ></button>
         <button
           onClick={() => editor.chain().focus().unsetLink().run()}
           disabled={!editor.isActive("link")}
-          className="ri-link-unlink"
+          className="ri-link-unlink text-muted-foreground hover:text-foreground"
         ></button>
       </div>
       <EditorContent editor={editor} />

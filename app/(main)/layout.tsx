@@ -1,6 +1,7 @@
 import "../globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           <div className="mx-auto max-w-prose p-2">
             <main>{children}</main>
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

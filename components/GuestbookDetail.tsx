@@ -9,6 +9,7 @@ import { deleteGuestbook, saveGuestbookReply } from "@/lib/actions/blog";
 import { useFormStatus } from "react-dom";
 import { User as LuciaUser } from "lucia";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -39,7 +40,7 @@ export default function GuestbookDetail({
     if (confirm("정말 방명록을 삭제하시겠습니까?")) {
       deleteGuestbook(guestbook.uuid).then((data) => {
         if (data && data.error) {
-          alert(`방명록 삭제에 실패했습니다: ${data.error}`);
+          toast(`방명록 삭제에 실패했습니다: ${data.error}`);
         }
       });
     }

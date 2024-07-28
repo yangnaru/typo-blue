@@ -1,4 +1,11 @@
 import BlogEditForm from "@/components/BlogEditForm";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -32,15 +39,12 @@ export default async function EditBlogPage({
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg">블로그 정보 수정</h3>
-      <BlogEditForm
-        slug={blog.slug}
-        name={blog.name ?? ""}
-        description={blog.description ?? ""}
-        discoverable={blog.discoverable}
-        postCount={blog._count.posts}
-      />
-    </div>
+    <BlogEditForm
+      slug={blog.slug}
+      name={blog.name ?? ""}
+      description={blog.description ?? ""}
+      discoverable={blog.discoverable}
+      postCount={blog._count.posts}
+    />
   );
 }

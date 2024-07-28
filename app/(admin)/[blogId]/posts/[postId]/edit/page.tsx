@@ -27,22 +27,26 @@ export default async function EditPost({
         userId: user.id,
       },
     },
+    include: {
+      blog: true,
+    },
   });
+
+  if (post?.blog.userId !== user.id) {
+    redirect(getRootPath());
+  }
+
   if (!post) {
     redirect(getRootPath());
   }
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-xl">글 수정</h2>
-
-      <PostEditor
-        blogId={slug}
-        existingTitle={post.title ?? ""}
-        existingContent={post.content ?? ""}
-        existingPostId={params.postId}
-        existingPublishedAt={post.publishedAt}
-      />
-    </div>
+    <PostEditor
+      blogId={slug}
+      existingTitle={post.title ?? ""}
+      existingContent={post.content ?? ""}
+      existingPostId={params.postId}
+      existingPublishedAt={post.publishedAt}
+    />
   );
 }

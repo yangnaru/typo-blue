@@ -3,8 +3,18 @@
 import { useState } from "react";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
-import { deletePost, upsertPost } from "@/lib/actions/blog";
+import { deletePost, unPublishPost, upsertPost } from "@/lib/actions/blog";
 import { Button } from "./ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Input } from "./ui/input";
+import { getBlogDashboardPath } from "@/lib/paths";
+import { toast } from "sonner";
 
 export default function PostEditor({
   blogId,
@@ -25,8 +35,6 @@ export default function PostEditor({
   const [publishedAt, setPublishedAt] = useState<Date | null>(
     existingPublishedAt
   );
-
-  const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSavePost(status: "save" | "publish" = "save") {
@@ -43,17 +51,13 @@ export default function PostEditor({
       }
 
       const now = new Date();
-      setStatus(
+      toast(
         format(now, "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
       setIsLoading(false);
-
-      if (status === "publish" || (status === "save" && existingPostId)) {
-        window.location.href = `/@${blogId}/${res.postId}`;
-      }
     } else {
-      setStatus("❗️");
+      toast("❗️");
       setIsLoading(false);
     }
   }
@@ -63,63 +67,83 @@ export default function PostEditor({
       const res = await deletePost(blogId, existingPostId!);
 
       if (res.success) {
-        window.location.href = `/@${blogId}`;
-      } else {
-        alert("삭제에 실패했습니다.");
+        alert("삭제되었습니다.");
+
+        window.location.href = getBlogDashboardPath(blogId);
       }
     }
   }
 
   return (
-    <div className="space-y-2">
-      <input
-        type="text"
-        className="border border-black p-2 min-w-full dark:bg-black dark:border-white rounded-sm"
-        placeholder="제목"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-
-      {existingPostId && content && (
-        <Tiptap
-          name="content"
-          content={content}
-          className="p-2 prose dark:prose-invert border border-black rounded-sm dark:border-white min-h-[50vh]"
-          onChange={(_name, html) => {
-            setContent(html);
-          }}
+    <Card>
+      <CardHeader>
+        <CardTitle>{existingPostId ? "글 수정" : "새 글 작성"}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <Input
+          type="text"
+          className="prose dark:prose-invert"
+          placeholder="제목"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
-      )}
-      {!existingPostId && (
-        <Tiptap
-          name="content"
-          content={""}
-          className="p-2 prose dark:prose-invert border border-black rounded-sm dark:border-white min-h-[50vh]"
-          onChange={(_name, html) => {
-            setContent(html);
-          }}
-        />
-      )}
 
-      <div className="flex flex-row space-x-2 items-baseline">
-        <Button disabled={isLoading} onClick={() => handleSavePost("save")}>
-          저장
-        </Button>
-        {publishedAt === null && (
-          <Button
-            disabled={isLoading}
-            onClick={() => handleSavePost("publish")}
-          >
-            발행
-          </Button>
+        {existingPostId && content && (
+          <Tiptap
+            name="content"
+            content={content}
+            className="prose dark:prose-invert min-h-[50vh] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(_name, html) => {
+              setContent(html);
+            }}
+          />
         )}
-        {postId !== null && (
-          <Button variant="destructive" onClick={handleDelete}>
-            삭제
-          </Button>
+        {!existingPostId && (
+          <Tiptap
+            name="content"
+            content={""}
+            className="prose dark:prose-invert min-h-[50vh] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(_name, html) => {
+              setContent(html);
+            }}
+          />
         )}
-        <p>{status}</p>
-      </div>
-    </div>
+      </CardContent>
+      <CardFooter>
+        <div className="flex flex-row space-x-2 items-baseline">
+          <Button disabled={isLoading} onClick={() => handleSavePost("save")}>
+            저장
+          </Button>
+          {publishedAt === null && (
+            <Button
+              disabled={isLoading}
+              onClick={() => handleSavePost("publish")}
+            >
+              발행
+            </Button>
+          )}
+          {publishedAt !== null && (
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const res = await unPublishPost(blogId, postId!);
+
+                if (res.success) {
+                  setPublishedAt(null);
+                  toast("발행 취소 완료 ✅");
+                }
+              }}
+            >
+              발행 취소
+            </Button>
+          )}
+          {postId !== null && (
+            <Button variant="destructive" onClick={handleDelete}>
+              삭제
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

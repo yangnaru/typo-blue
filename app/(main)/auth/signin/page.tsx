@@ -6,6 +6,7 @@ import {
   verifyPassword,
 } from "@/lib/actions/account";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [usingPassword, setUsingPassword] = useState<undefined | boolean>(
@@ -25,7 +26,7 @@ export default function Login() {
     e.preventDefault();
 
     if (!email) {
-      alert("이메일 주소를 입력해주세요.");
+      toast("이메일 주소를 입력해주세요.");
       return;
     }
 
@@ -36,7 +37,7 @@ export default function Login() {
 
           return;
         } else {
-          alert("로그인에 실패했습니다. 다시 시도해주세요.");
+          toast("로그인에 실패했습니다. 다시 시도해주세요.");
         }
       });
     } else {
@@ -47,13 +48,13 @@ export default function Login() {
 
         try {
           const challengeId = await sendEmailVerificationCode(email);
-          alert("로그인 코드를 보냈습니다. 이메일을 확인해 주세요.");
+          toast("로그인 코드를 보냈습니다. 이메일을 확인해 주세요.");
           setEmailInputDisabled(true);
           setButtonText("로그인 코드 인증");
           setLoginButtonDisabled(false);
           setChallengeId(challengeId);
         } catch (e) {
-          alert("로그인에 실패했습니다. 다시 시도해주세요.");
+          toast("로그인에 실패했습니다. 다시 시도해주세요.");
           setLoginButtonDisabled(false);
           setButtonText("로그인 링크 보내기");
         }
@@ -66,7 +67,7 @@ export default function Login() {
 
             return;
           } else {
-            alert("로그인에 실패했습니다. 다시 시도해주세요.");
+            toast("로그인에 실패했습니다. 다시 시도해주세요.");
           }
         });
       }

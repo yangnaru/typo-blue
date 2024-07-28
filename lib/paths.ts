@@ -18,20 +18,28 @@ export function getBlogHomePath(slug: string) {
   return `/@${slug}`;
 }
 
+export function getBlogPostPath(slug: string, encodedPostId: string) {
+  return `/@${slug}/${encodedPostId}`;
+}
+
 export function getBlogGuestbookPath(slug: string) {
   return `/@${slug}/guestbook`;
 }
 
 export function getBlogNewPostPath(slug: string) {
-  return `/@${slug}/new-post`;
+  return `/@${slug}/posts/new`;
 }
 
 export function getBlogPostEditPath(slug: string, encodedPostId: string) {
-  return `/@${slug}/${encodedPostId}/edit`;
+  return `/@${slug}/posts/${encodedPostId}/edit`;
 }
 
-export function getBlogEditPath(slug: string) {
-  return `/@${slug}/edit`;
+export function getBlogDashboardPath(slug: string) {
+  return `/@${slug}/dashboard`;
+}
+
+export function getBlogSettingsPath(slug: string) {
+  return `/@${slug}/settings`;
 }
 
 export function getAccountChangeEmailPath() {

@@ -3,7 +3,7 @@
 import format from "date-fns/format";
 import Link from "next/link";
 import { Blog } from "@prisma/client";
-import { getBlogEditPath, getBlogHomePath } from "@/lib/paths";
+import { getBlogDashboardPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";
 
 export default function BlogInfo({
@@ -24,8 +24,11 @@ export default function BlogInfo({
       </div>
       <div className="flex flex-col space-y-2 items-end">
         <Button asChild>
-          <Link href={getBlogEditPath(blog.slug)} className="w-24 text-center">
-            정보 수정
+          <Link
+            href={getBlogDashboardPath(blog.slug)}
+            className="w-24 text-center"
+          >
+            블로그 관리
           </Link>
         </Button>
       </div>

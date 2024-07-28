@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { lucia } from "../auth";
 import { redirect } from "next/navigation";
+import { getRootPath } from "../paths";
 
 export async function impersonateUser(userId: number) {
   const session = await lucia.createSession(userId, {});
@@ -14,5 +15,5 @@ export async function impersonateUser(userId: number) {
     sessionCookie.attributes
   );
 
-  redirect("/");
+  redirect(getRootPath());
 }

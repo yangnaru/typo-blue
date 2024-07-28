@@ -396,6 +396,10 @@ export async function unPublishPost(blogId: string, postId: string) {
       publishedAt: null,
     },
   });
+
+  return {
+    success: true,
+  };
 }
 
 export async function deletePost(blogId: string, postId: string) {

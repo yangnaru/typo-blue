@@ -3,11 +3,7 @@ import { Button } from "@/components/ui/button";
 import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import {
-  getBlogEditPath,
-  getBlogGuestbookPath,
-  getBlogNewPostPath,
-} from "@/lib/paths";
+import { getBlogDashboardPath, getBlogGuestbookPath } from "@/lib/paths";
 import { incrementVisitorCount, logView } from "@/lib/server-util";
 import { Metadata } from "next";
 import { headers } from "next/headers";
@@ -89,6 +85,9 @@ export default async function BlogHome({
       posts: {
         where: {
           deletedAt: null,
+          publishedAt: {
+            not: null,
+          },
         },
         orderBy: {
           createdAt: "desc",
@@ -131,31 +130,29 @@ export default async function BlogHome({
   });
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
-  const draftPosts = blog.posts.filter((post) => post.publishedAt === null);
-  const publishedPosts = blog.posts.filter((post) => post.publishedAt !== null);
+  const publishedPosts = blog.posts;
 
   return (
     <div className="space-y-8">
-      {isCurrentUserBlogOwner && (
-        <PostList
-          name="임시 저장된 글 목록"
-          blog={blog}
-          posts={draftPosts}
-          showTitle={isCurrentUserBlogOwner}
-        />
-      )}
-
       <PostList
         name="발행된 글 목록"
         blog={blog}
         posts={publishedPosts}
-        showTitle={isCurrentUserBlogOwner}
+        showTitle={false}
       />
 
       <div className="flex flex-row space-x-2">
         <Button variant="outline" asChild>
           <Link href={getBlogGuestbookPath(blog.slug)}>방명록</Link>
         </Button>
+
+        {isCurrentUserBlogOwner && (
+          <div className="space-x-2">
+            <Button>
+              <Link href={getBlogDashboardPath(blog.slug)}>블로그 관리</Link>
+            </Button>
+          </div>
+        )}
 
         {blog.id !== currentUser?.blog?.id &&
           currentUser?.blog &&
@@ -173,17 +170,6 @@ export default async function BlogHome({
             </form>
           ))}
       </div>
-
-      {isCurrentUserBlogOwner && (
-        <div className="space-x-2">
-          <Button>
-            <Link href={getBlogNewPostPath(blog.slug)}>새 글 쓰기</Link>
-          </Button>
-          <Button>
-            <Link href={getBlogEditPath(blog.slug)}>블로그 관리 </Link>
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

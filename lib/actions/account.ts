@@ -8,6 +8,7 @@ import { lucia, validateRequest } from "../auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { hash, verify } from "@node-rs/argon2";
+import { getAccountPath, getRootPath } from "../paths";
 
 export async function setPassword(prevState: any, formData: FormData) {
   const { user } = await validateRequest();
@@ -37,7 +38,7 @@ export async function setPassword(prevState: any, formData: FormData) {
     },
   });
 
-  redirect("/account");
+  redirect(getAccountPath());
 }
 
 export async function sendEmailVerificationCode(
@@ -267,5 +268,5 @@ export async function logout() {
     sessionCookie.value,
     sessionCookie.attributes
   );
-  return redirect("/");
+  return redirect(getRootPath());
 }
