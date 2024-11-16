@@ -78,6 +78,7 @@
     "@types/html-to-text": "^9.0.4",
     "@types/nodemailer": "^6.4.14",
     "@types/sanitize-html": "^2.9.0",
+    "drizzle-kit": "^0.28.1",
     "prisma": "^5.17.0"
   }
 }
