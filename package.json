@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fedify/fedify": "^1.2.5",
+    "@fedify/postgres": "^0.2.1",
     "@hookform/resolvers": "^3.9.0",
     "@lucia-auth/adapter-prisma": "^4.0.1",
     "@node-rs/argon2": "^1.8.3",
