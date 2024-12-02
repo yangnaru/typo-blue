@@ -1,12 +1,9 @@
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import { encodePostId } from "@/lib/utils";
-import { incrementVisitorCount, logView } from "@/lib/server-util";
-import { Prisma } from "@prisma/client";
+import { incrementVisitorCount } from "@/lib/server-util";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getBlogPostEditPath } from "@/lib/paths";
@@ -16,7 +13,7 @@ export async function generateMetadata({
 }: {
   params: { postId: string };
 }): Promise<Metadata> {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   let uuid;
   try {
@@ -69,7 +66,7 @@ export default async function BlogPost({
 }: {
   params: { blogId: string; postId: string };
 }) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
@@ -114,15 +111,6 @@ export default async function BlogPost({
   }
 
   await incrementVisitorCount(blog.id);
-
-  const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  const userAgent = headers().get("user-agent") ?? "";
-  await logView({
-    ip,
-    userAgent,
-    blogId: blog.id,
-    postId: post.uuid,
-  });
 
   return (
     <div className="space-y-8">

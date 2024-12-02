@@ -1,5 +1,5 @@
+import { Post } from "@/lib/schema";
 import { encodePostId } from "@/lib/utils";
-import { Blog, Post } from "@prisma/client";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
 
@@ -13,7 +13,7 @@ export default function PostList({
   titleClassName,
 }: {
   name: string;
-  blog: Blog;
+  blog: any;
   posts: Post[];
   showTitle: boolean;
   embed?: boolean;

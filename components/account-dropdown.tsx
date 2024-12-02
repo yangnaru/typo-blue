@@ -13,8 +13,7 @@ import { User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
 import { getAccountPath } from "@/lib/paths";
-import { User } from "lucia";
-import { Blog } from "@prisma/client";
+import { Blog, User } from "@/lib/schema";
 
 export default function AccountDropdown({
   user,

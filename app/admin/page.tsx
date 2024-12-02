@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { prisma } from "@/lib/db";
 import ImpersonateButton from "./impersonate-button";
 import Link from "next/link";
 import { encodePostId } from "@/lib/utils";

@@ -1,8 +1,7 @@
 import GuestbookEditor from "@/components/GuestbookEditor";
 import GuestbookList from "@/components/GuestbookList";
 import { writeToGuestbook } from "@/lib/actions/blog";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import Link from "next/link";
 
 export default async function GuestbookPage({
@@ -10,7 +9,7 @@ export default async function GuestbookPage({
 }: {
   params: { blogId: string };
 }) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   const blog = await prisma.blog.findUnique({
     where: {

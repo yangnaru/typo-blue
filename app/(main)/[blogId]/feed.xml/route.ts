@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/db";
 import { encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";

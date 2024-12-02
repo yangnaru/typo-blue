@@ -1,7 +1,6 @@
 "use server";
 
-import { prisma } from "../db";
-import { validateRequest } from "../auth";
+import { getCurrentSession } from "../auth";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -9,7 +8,7 @@ import sanitize from "sanitize-html";
 import { decodePostId, encodePostId } from "../utils";
 
 export async function createBlog(blogId: string) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -76,7 +75,7 @@ export async function createBlog(blogId: string) {
 }
 
 export async function deleteBlog(blogId: string) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -114,7 +113,7 @@ export async function writeToGuestbook(formData: FormData) {
   const blogId = formData.get("blogId") as string;
   const content = formData.get("content") as string;
 
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -159,7 +158,7 @@ export async function saveGuestbookReply(formData: FormData) {
   const content = formData.get("content") as string;
   const guestbookId = formData.get("guestbookId") as string;
 
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -198,7 +197,7 @@ export async function saveGuestbookReply(formData: FormData) {
 }
 
 export async function deleteGuestbook(uuid: string) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -239,7 +238,7 @@ export async function deleteGuestbook(uuid: string) {
 export async function followBlog(formData: FormData) {
   const blogId = formData.get("blogId") as string;
 
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -292,7 +291,7 @@ export async function followBlog(formData: FormData) {
 export async function unfollowBlog(formData: FormData) {
   const blogId = formData.get("blogId") as string;
 
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
@@ -348,7 +347,7 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   blogId: string,
   postId: string
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     throw new Error("사용자가 없습니다.");
   }
@@ -429,7 +428,7 @@ export async function upsertPost(
   title: string,
   content: string
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     throw new Error("사용자가 없습니다.");
   }
@@ -488,7 +487,7 @@ export async function editBlogInfo(
   description: string,
   discoverable: boolean
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     throw new Error("사용자가 없습니다.");
   }

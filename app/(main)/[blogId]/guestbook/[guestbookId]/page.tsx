@@ -1,6 +1,5 @@
 import GuestbookDetail from "@/components/GuestbookDetail";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import { decode } from "@urlpack/base62";
 
 export default async function GuestbookDetailPage({
@@ -8,7 +7,7 @@ export default async function GuestbookDetailPage({
 }: {
   params: { blogId: string; guestbookId: string };
 }) {
-  const { user: currentUser } = await validateRequest();
+  const { user: currentUser } = await getCurrentSession();
 
   const blog = await prisma.blog.findUnique({
     where: {

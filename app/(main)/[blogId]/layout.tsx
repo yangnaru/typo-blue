@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/db";
 import { getBlogHomePath } from "@/lib/paths";
-import { Blog } from "@prisma/client";
 import Link from "next/link";
 import { ReactNode } from "react";
 

@@ -1,9 +1,13 @@
-import { PrismaClient } from '@prisma/client'
+import { drizzle } from "drizzle-orm/node-postgres";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
+import type { InferSelectModel } from "drizzle-orm";
+import { user, session } from "./schema";
+import * as schema from "./schema";
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
+export const db = drizzle({
+  connection: process.env.DATABASE_URL!,
+  schema,
+});
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export type User = InferSelectModel<typeof user>;
+export type Session = InferSelectModel<typeof session>;

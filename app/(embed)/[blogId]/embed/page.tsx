@@ -1,6 +1,5 @@
 import PostList from "@/components/PostList";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import { incrementVisitorCount } from "@/lib/server-util";
 
 export default async function BlogHome({
@@ -8,7 +7,7 @@ export default async function BlogHome({
 }: {
   params: { blogId: string };
 }) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   let currentUser;
   if (user) {

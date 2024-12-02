@@ -1,7 +1,6 @@
 import BlogInfo from "@/components/BlogInfo";
 import { Button } from "@/components/ui/button";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import {
   getAccountChangeEmailPath,
   getAccountSetPasswordPath,
@@ -11,7 +10,7 @@ import format from "date-fns/format";
 import Link from "next/link";
 
 export default async function AccountHome() {
-  const { user: currentUser } = await validateRequest();
+  const { user: currentUser } = await getCurrentSession();
 
   if (!currentUser) {
     return <p>로그인이 필요합니다.</p>;

@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
-import { validateRequest } from "./auth";
-import { prisma } from "./db";
-import { Client } from "@opensearch-project/opensearch/.";
+import { getCurrentSession } from "./auth";
 import { getLoginPath, getRootPath } from "./paths";
 
 export async function assertAdmin() {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     redirect(getLoginPath());
@@ -25,36 +23,6 @@ export async function incrementVisitorCount(blogId: number) {
       visitorCount: {
         increment: 1,
       },
-    },
-  });
-}
-
-export async function logView({
-  ip,
-  userAgent,
-  blogId,
-  postId = null,
-}: {
-  ip: string;
-  userAgent: string;
-  blogId: number;
-  postId?: string | null;
-}) {
-  const client = new Client({
-    node: process.env.OPENSEARCH_NODE,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
-
-  await client.index({
-    index: process.env.OPENSEARCH_VIEWS_INDEX!,
-    body: {
-      ip,
-      user_agent: userAgent,
-      blog_id: blogId,
-      post_id: postId,
-      "@timestamp": new Date().toISOString(),
     },
   });
 }

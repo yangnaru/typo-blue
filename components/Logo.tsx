@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { ModeToggle } from "./mode-toggle";
 import AccountDropdown from "./account-dropdown";
-import { validateRequest } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { getLoginPath } from "@/lib/paths";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { eq, inArray } from "drizzle-orm";
+import { blog } from "@/lib/schema";
 
 export default async function Logo() {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   let blogs;
   if (user) {
-    blogs = await prisma.blog.findMany({
-      where: {
-        userId: user.id,
-      },
+    blogs = await db.query.blog.findMany({
+      where: eq(blog.userId, user.id),
     });
   }
 

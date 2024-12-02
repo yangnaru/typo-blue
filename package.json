@@ -6,19 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "prisma generate"
+    "lint": "next lint"
   },
   "dependencies": {
     "@fedify/fedify": "^1.2.5",
     "@fedify/postgres": "^0.2.1",
     "@hookform/resolvers": "^3.9.0",
-    "@lucia-auth/adapter-prisma": "^4.0.1",
     "@node-rs/argon2": "^1.8.3",
-    "@opensearch-project/opensearch": "^2.10.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
-    "@prisma/client": "^5.17.0",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
@@ -46,6 +42,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.0",
+    "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.3",
     "eslint": "^8.45.0",
     "eslint-config-next": "^13.4.12",
@@ -69,7 +66,7 @@
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^3.12.7",
-    "typescript": "5.1.6",
+    "typescript": "^5.6.3",
     "x-forwarded-fetch": "^0.2.0",
     "xmlbuilder2": "^3.1.1",
     "zod": "^3.23.8"
@@ -80,7 +77,6 @@
     "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.11.10",
     "@types/sanitize-html": "^2.9.0",
-    "drizzle-kit": "^0.28.1",
-    "prisma": "^5.17.0"
+    "drizzle-kit": "^0.28.1"
   }
 }
