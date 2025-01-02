@@ -5,13 +5,18 @@ import { Blog } from "@prisma/client";
 import Link from "next/link";
 import { ReactNode } from "react";
 
-export default async function BlogLayout({
-  children,
-  params,
-}: {
-  children: ReactNode;
-  params: { blogId: string };
-}) {
+export default async function BlogLayout(
+  props: {
+    children: ReactNode;
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) {
     return <BlogLayoutBody>👀</BlogLayoutBody>;

@@ -5,11 +5,17 @@ import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
-export default async function GuestbookPage({
-  params: { blogId },
-}: {
-  params: { blogId: string };
-}) {
+export default async function GuestbookPage(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    blogId
+  } = params;
+
   const { user } = await validateRequest();
 
   const blog = await prisma.blog.findUnique({

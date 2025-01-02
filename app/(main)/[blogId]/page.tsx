@@ -9,11 +9,12 @@ import { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { blogId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) {
     return {
@@ -54,11 +55,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogHome({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+export default async function BlogHome(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   let currentUser;
@@ -121,8 +123,8 @@ export default async function BlogHome({
 
   await incrementVisitorCount(blog.id);
 
-  const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  const userAgent = headers().get("user-agent") ?? "";
+  const ip = ((await headers()).get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
+  const userAgent = (await headers()).get("user-agent") ?? "";
   await logView({
     ip,
     userAgent,

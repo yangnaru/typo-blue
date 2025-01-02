@@ -5,11 +5,12 @@ import { getRootPath } from "@/lib/paths";
 import { decodePostId } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
-export default async function EditPost({
-  params,
-}: {
-  params: { blogId: string; postId: string };
-}) {
+export default async function EditPost(
+  props: {
+    params: Promise<{ blogId: string; postId: string }>;
+  }
+) {
+  const params = await props.params;
   const uuid = decodePostId(params.postId);
   const slug = decodeURIComponent(params.blogId).replace("@", "");
 

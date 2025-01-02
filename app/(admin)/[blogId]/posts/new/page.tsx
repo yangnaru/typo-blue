@@ -4,11 +4,12 @@ import { prisma } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 
-export default async function BlogNewPostPage({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+export default async function BlogNewPostPage(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   const blogId = decodeURIComponent(params.blogId).replace("@", "");

@@ -3,11 +3,12 @@ import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { incrementVisitorCount } from "@/lib/server-util";
 
-export default async function BlogHome({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+export default async function BlogHome(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   let currentUser;

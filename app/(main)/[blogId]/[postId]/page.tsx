@@ -11,11 +11,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getBlogPostEditPath } from "@/lib/paths";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { postId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ postId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   let uuid;
@@ -64,11 +65,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogPost({
-  params,
-}: {
-  params: { blogId: string; postId: string };
-}) {
+export default async function BlogPost(
+  props: {
+    params: Promise<{ blogId: string; postId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   const blogId = decodeURIComponent(params.blogId);
@@ -115,8 +117,8 @@ export default async function BlogPost({
 
   await incrementVisitorCount(blog.id);
 
-  const ip = (headers().get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  const userAgent = headers().get("user-agent") ?? "";
+  const ip = ((await headers()).get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
+  const userAgent = (await headers()).get("user-agent") ?? "";
   await logView({
     ip,
     userAgent,

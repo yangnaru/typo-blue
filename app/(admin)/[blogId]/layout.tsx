@@ -40,15 +40,20 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
 };
 
-export default async function RootLayout({
-  params,
-  children,
-}: {
-  params: {
-    blogId: string;
-  };
-  children: React.ReactNode;
-}) {
+export default async function RootLayout(
+  props: {
+    params: Promise<{
+      blogId: string;
+    }>;
+    children: React.ReactNode;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const { user } = await validateRequest();
   const blogId = decodeURIComponent(params.blogId).replace("@", "");
 

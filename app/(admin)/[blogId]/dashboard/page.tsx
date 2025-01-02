@@ -30,11 +30,12 @@ import { encodePostId } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { SquareArrowUpRight } from "lucide-react";
 
-export default async function Dashboard({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+export default async function Dashboard(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
 
   let currentUser;

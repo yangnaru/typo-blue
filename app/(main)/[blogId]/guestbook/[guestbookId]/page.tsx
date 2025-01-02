@@ -3,11 +3,18 @@ import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { decode } from "@urlpack/base62";
 
-export default async function GuestbookDetailPage({
-  params: { blogId, guestbookId },
-}: {
-  params: { blogId: string; guestbookId: string };
-}) {
+export default async function GuestbookDetailPage(
+  props: {
+    params: Promise<{ blogId: string; guestbookId: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    blogId,
+    guestbookId
+  } = params;
+
   const { user: currentUser } = await validateRequest();
 
   const blog = await prisma.blog.findUnique({

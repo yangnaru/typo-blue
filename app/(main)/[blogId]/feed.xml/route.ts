@@ -3,10 +3,8 @@ import { encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { blogId: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ blogId: string }> }) {
+  const params = await props.params;
   const handle = params.blogId;
   const slug = handle.replace("@", "");
   const blog = await prisma.blog.findUnique({

@@ -9,11 +9,12 @@ import {
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-export default async function EditBlogPage({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+export default async function EditBlogPage(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+) {
+  const params = await props.params;
   const { user } = await validateRequest();
   if (!user) {
     return <p>로그인이 필요합니다.</p>;

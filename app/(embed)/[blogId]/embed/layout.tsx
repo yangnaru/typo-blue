@@ -5,11 +5,12 @@ import { prisma } from "@/lib/db";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { blogId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ blogId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) {
     return {
