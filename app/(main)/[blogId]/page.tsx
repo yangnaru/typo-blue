@@ -4,9 +4,8 @@ import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getBlogDashboardPath, getBlogGuestbookPath } from "@/lib/paths";
-import { incrementVisitorCount, logView } from "@/lib/server-util";
+import { incrementVisitorCount } from "@/lib/server-util";
 import { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
 
 export async function generateMetadata(
@@ -122,14 +121,6 @@ export default async function BlogHome(
     })) !== null;
 
   await incrementVisitorCount(blog.id);
-
-  const ip = ((await headers()).get("x-forwarded-for") ?? "127.0.0.1").split(",")[0];
-  const userAgent = (await headers()).get("user-agent") ?? "";
-  await logView({
-    ip,
-    userAgent,
-    blogId: blog.id,
-  });
 
   const isCurrentUserBlogOwner = blog.user.email === user?.email;
   const publishedPosts = blog.posts;
