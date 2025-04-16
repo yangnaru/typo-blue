@@ -184,11 +184,11 @@ export async function verifyPassword(
   email: string,
   password: string
 ): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+  const user = (
+    await db.select().from(userTable).where(eq(userTable.email, email))
+  )[0];
+
+  console.log({ user });
 
   if (!user) {
     return false;

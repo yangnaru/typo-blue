@@ -12,10 +12,7 @@ export default async function Home() {
   const userCount = (await db.select({ count: count() }).from(user))[0].count;
 
   const totalNotDeletedPosts = (
-    await db
-      .select({ count: count() })
-      .from(post)
-      .where(isNotNull(post.deletedAt))
+    await db.select({ count: count() }).from(post).where(isNull(post.deletedAt))
   )[0].count;
 
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -51,6 +48,7 @@ export default async function Home() {
           .from(blog)
           .where(eq(blog.slug, process.env.OFFICIAL_BLOG_SLUG))
       ),
+      orderBy: desc(post.createdAt),
     });
     // blog_id IN (SELECT id AS blogId FROM blog WHERE slug = '..')
   }
