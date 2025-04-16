@@ -2,7 +2,7 @@ import PostEditor from "@/components/PostEditor";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
-import { blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 

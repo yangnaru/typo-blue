@@ -32,7 +32,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 
 const inter = Inter({ subsets: ["latin"] });
 

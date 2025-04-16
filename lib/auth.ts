@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { user as userTable, session as sessionTable } from "./schema";
+import { user as userTable, session as sessionTable } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import {
   encodeBase32LowerCaseNoPadding,
@@ -45,11 +45,14 @@ export async function validateSessionToken(
     return { session: null, user: null };
   }
   const { user, session } = result[0];
-  if (Date.now() >= session.expiresAt.getTime()) {
+  if (Date.now() >= new Date(session.expiresAt).getTime()) {
     await db.delete(sessionTable).where(eq(sessionTable.id, session.id));
     return { session: null, user: null };
   }
-  if (Date.now() >= session.expiresAt.getTime() - 1000 * 60 * 60 * 24 * 15) {
+  if (
+    Date.now() >=
+    new Date(session.expiresAt).getTime() - 1000 * 60 * 60 * 24 * 15
+  ) {
     session.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
     await db
       .update(sessionTable)

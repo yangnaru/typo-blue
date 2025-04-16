@@ -4,7 +4,7 @@ import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getBlogDashboardPath } from "@/lib/paths";
-import { blog, follow, post, user } from "@/lib/schema";
+import { blog, follow, post, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";

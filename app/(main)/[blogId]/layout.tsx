@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { getBlogHomePath } from "@/lib/paths";
-import { Blog, blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -84,7 +84,7 @@ function BlogLayoutBody({
   blog,
 }: {
   children: ReactNode;
-  blog?: Blog | null;
+  blog?: any;
 }) {
   return (
     <>

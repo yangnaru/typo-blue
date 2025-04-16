@@ -18,8 +18,7 @@ import { db } from "../db";
 import {
   emailVerificationChallenge,
   user as userTable,
-  NewEmailVerificationChallenge,
-} from "../schema";
+} from "@/drizzle/schema";
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 
@@ -56,7 +55,7 @@ export async function sendEmailVerificationCode(
   const code = generateRandomString(6, alphabet("0-9"));
 
   const uuid = randomUUID();
-  const challenge: NewEmailVerificationChallenge = {
+  const challenge = {
     id: uuid,
     email,
     code,
@@ -97,7 +96,7 @@ export async function sendEmailVerificationCodeForEmailChange(
   const code = generateRandomString(6, alphabet("0-9"));
 
   const uuid = randomUUID();
-  const challenge: NewEmailVerificationChallenge = {
+  const challenge = {
     id: uuid,
     email,
     code,
@@ -145,7 +144,7 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
-  if (!isWithinExpirationDate(challenge.expiresAt)) {
+  if (!isWithinExpirationDate(new Date(challenge.expiresAt))) {
     return false;
   }
 
@@ -201,7 +200,7 @@ export async function verifyPassword(
   const sessionToken = generateSessionToken();
   const sessionCookie = await createSession(sessionToken, user.id);
 
-  await setSessionTokenCookie(sessionToken, sessionCookie.expiresAt);
+  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expiresAt));
 
   return true;
 }
@@ -221,7 +220,7 @@ export async function verifyEmailVerificationCode(
     return false;
   }
 
-  if (!isWithinExpirationDate(challenge.expiresAt)) {
+  if (!isWithinExpirationDate(new Date(challenge.expiresAt))) {
     return false;
   }
 
@@ -248,12 +247,18 @@ export async function verifyEmailVerificationCode(
     const sessionToken = generateSessionToken();
     const sessionCookie = await createSession(sessionToken, newUser[0].id);
 
-    await setSessionTokenCookie(sessionToken, sessionCookie.expiresAt);
+    await setSessionTokenCookie(
+      sessionToken,
+      new Date(sessionCookie.expiresAt)
+    );
   } else {
     const sessionToken = generateSessionToken();
     const sessionCookie = await createSession(sessionToken, existingUser.id);
 
-    await setSessionTokenCookie(sessionToken, sessionCookie.expiresAt);
+    await setSessionTokenCookie(
+      sessionToken,
+      new Date(sessionCookie.expiresAt)
+    );
   }
 
   return true;

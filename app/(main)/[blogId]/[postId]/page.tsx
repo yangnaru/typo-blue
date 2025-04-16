@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getBlogPostEditPath } from "@/lib/paths";
 import { db } from "@/lib/db";
-import { blog, post } from "@/lib/schema";
+import { blog, post, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 type MetadataParams = Promise<{
@@ -36,25 +36,32 @@ export async function generateMetadata(props: {
 
   const targetPost = await db.query.post.findFirst({
     where: eq(post.uuid, uuid),
-    with: {
-      blog: true,
-    },
   });
 
-  if (!targetPost || !targetPost.blog) {
+  if (!targetPost) {
     return {
       title: "존재하지 않는 글입니다.",
     };
   }
 
-  if (!targetPost.publishedAt && targetPost.blog.userId !== user?.id) {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.id, targetPost?.blogId),
+  });
+
+  if (!targetBlog) {
     return {
       title: "존재하지 않는 글입니다.",
     };
   }
 
-  const blogName = targetPost.blog.name ?? `@${targetPost.blog.slug}`;
-  const blogDescription = targetPost.blog.description ?? "";
+  if (!targetPost.publishedAt && targetBlog.userId !== user?.id) {
+    return {
+      title: "존재하지 않는 글입니다.",
+    };
+  }
+
+  const blogName = targetBlog.name ?? `@${targetBlog.slug}`;
+  const blogDescription = targetBlog.description ?? "";
   const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
 
   return {
@@ -69,7 +76,7 @@ type Params = Promise<{
 }>;
 
 export default async function BlogPost(props: { params: Params }) {
-  const { user } = await getCurrentSession();
+  const { user: sessionUser } = await getCurrentSession();
 
   const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
@@ -86,7 +93,15 @@ export default async function BlogPost(props: { params: Params }) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
-  const isCurrentUserBlogOwner = targetBlog.user.email === user?.email;
+  const targetBlogUser = await db.query.user.findFirst({
+    where: eq(user.id, targetBlog.userId),
+  });
+
+  if (!targetBlogUser) {
+    return <p>블로그 작성자를 찾을 수 없습니다.</p>;
+  }
+
+  const isCurrentUserBlogOwner = targetBlogUser.email === sessionUser?.email;
 
   let targetPost;
   try {

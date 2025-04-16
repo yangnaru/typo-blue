@@ -3,7 +3,7 @@ import PostList from "@/components/PostList";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Blog, blog, Post, post, user } from "@/lib/schema";
+import { blog, post, user } from "@/drizzle/schema";
 import { getBlogHomePath } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull, inArray } from "drizzle-orm";
@@ -37,7 +37,7 @@ export default async function Home() {
     ])
   );
 
-  let officialBlogPosts: (Post & { blog: Blog })[] = [];
+  let officialBlogPosts: any = [];
   if (process.env.OFFICIAL_BLOG_SLUG) {
     officialBlogPosts = await db.query.post.findMany({
       with: { blog: true },

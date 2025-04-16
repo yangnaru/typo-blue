@@ -5,8 +5,8 @@ import { getCurrentSession } from "@/lib/auth";
 import { Button } from "./ui/button";
 import { getLoginPath } from "@/lib/paths";
 import { db } from "@/lib/db";
-import { eq, inArray } from "drizzle-orm";
-import { blog } from "@/lib/schema";
+import { eq } from "drizzle-orm";
+import { blog } from "@/drizzle/schema";
 
 export default async function Logo() {
   const { user } = await getCurrentSession();

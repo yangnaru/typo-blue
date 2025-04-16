@@ -2,7 +2,7 @@ import PostEditor from "@/components/PostEditor";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
-import { blog, post } from "@/lib/schema";
+import { blog, post } from "@/drizzle/schema";
 import { decodePostId } from "@/lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -26,16 +26,17 @@ export default async function EditPost(props: { params: Params }) {
       eq(blog.slug, slug),
       eq(blog.userId, user.id)
     ),
-    with: {
-      blog: true,
-    },
   });
 
-  if (editingPost?.blog.userId !== user.id) {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+  });
+
+  if (targetBlog?.userId !== user.id) {
     redirect(getRootPath());
   }
 
-  if (!post) {
+  if (!editingPost) {
     redirect(getRootPath());
   }
 
@@ -45,7 +46,9 @@ export default async function EditPost(props: { params: Params }) {
       existingTitle={editingPost.title ?? ""}
       existingContent={editingPost.content ?? ""}
       existingPostId={params.postId}
-      existingPublishedAt={editingPost.publishedAt}
+      existingPublishedAt={
+        editingPost.publishedAt ? new Date(editingPost.publishedAt) : null
+      }
     />
   );
 }

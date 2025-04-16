@@ -4,13 +4,8 @@ import format from "date-fns/format";
 import Link from "next/link";
 import { getBlogDashboardPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";
-import { Blog } from "@/lib/schema";
 
-export default function BlogInfo({
-  blog,
-}: {
-  blog: Blog & { posts: { uuid: string }[] };
-}) {
+export default function BlogInfo({ blog }: { blog: any }) {
   return (
     <div className="border rounded-sm p-2 space-y-2 flex flex-row place-content-between items-center">
       <div className="space-y-1">

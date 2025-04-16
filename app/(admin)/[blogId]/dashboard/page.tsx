@@ -30,7 +30,7 @@ import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq } from "drizzle-orm";
-import { blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 
 type PageProps = Promise<{
   blogId: string;

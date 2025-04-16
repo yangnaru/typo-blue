@@ -1,7 +1,7 @@
 import BlogEditForm from "@/components/BlogEditForm";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 type Params = Promise<{

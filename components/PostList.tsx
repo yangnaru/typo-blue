@@ -1,4 +1,3 @@
-import { Post } from "@/lib/schema";
 import { encodePostId } from "@/lib/utils";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
@@ -14,7 +13,7 @@ export default function PostList({
 }: {
   name: string;
   blog: any;
-  posts: Post[];
+  posts: any[];
   showTitle: boolean;
   embed?: boolean;
   showTime?: boolean;

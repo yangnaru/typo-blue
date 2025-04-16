@@ -13,14 +13,13 @@ import { User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
 import { getAccountPath } from "@/lib/paths";
-import { Blog, User } from "@/lib/schema";
 
 export default function AccountDropdown({
   user,
   blogs,
 }: {
-  user: User;
-  blogs: Blog[];
+  user: any;
+  blogs: any;
 }) {
   return (
     <DropdownMenu>
@@ -33,7 +32,7 @@ export default function AccountDropdown({
         <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {blogs.map((blog) => (
+        {blogs.map((blog: any) => (
           <DropdownMenuItem key={blog.id} className="cursor-pointer" asChild>
             <Link href={`/@${blog.slug}`}>
               {blog.name || "제목 없는 블로그"} (@{blog.slug})

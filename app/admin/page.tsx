@@ -13,7 +13,7 @@ import Link from "next/link";
 import { encodePostId } from "@/lib/utils";
 import { and, desc, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { blog, post } from "@/lib/schema";
+import { blog, post } from "@/drizzle/schema";
 
 export default async function AdminRootPage() {
   await assertAdmin();

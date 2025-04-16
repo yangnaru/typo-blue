@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
-import { blog, follow, post, user } from "../schema";
+import { blog, follow, post, user } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
 
 export async function createBlog(blogId: string) {
@@ -45,7 +45,7 @@ export async function createBlog(blogId: string) {
       .values({
         slug: blogId.toLowerCase(),
         userId: user.id,
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       })
       .returning();
 

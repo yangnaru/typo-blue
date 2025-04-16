@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import "../../../globals.css";
 import { Inter } from "next/font/google";
 import { db } from "@/lib/db";
-import { blog } from "@/lib/schema";
+import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 const inter = Inter({ subsets: ["latin"] });

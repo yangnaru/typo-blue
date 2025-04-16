@@ -1,6 +1,6 @@
 import PostList from "@/components/PostList";
 import { db } from "@/lib/db";
-import { blog, post } from "@/lib/schema";
+import { blog, post } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 
 type Params = Promise<{
