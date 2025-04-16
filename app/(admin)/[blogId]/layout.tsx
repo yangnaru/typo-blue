@@ -20,8 +20,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import AccountDropdown from "@/components/account-dropdown";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import {
   getBlogDashboardPath,
@@ -31,6 +29,10 @@ import {
 } from "@/lib/paths";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { blog } from "@/lib/schema";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,7 +51,7 @@ export default async function RootLayout({
   };
   children: React.ReactNode;
 }) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   const blogId = decodeURIComponent(params.blogId).replace("@", "");
 
   if (!user) {
@@ -58,10 +60,8 @@ export default async function RootLayout({
 
   let blogs;
   if (user) {
-    blogs = await prisma.blog.findMany({
-      where: {
-        userId: user.id,
-      },
+    blogs = await db.query.blog.findMany({
+      where: eq(blog.userId, user.id),
     });
   }
 

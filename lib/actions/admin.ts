@@ -1,19 +1,18 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { lucia } from "../auth";
 import { redirect } from "next/navigation";
 import { getRootPath } from "../paths";
+import {
+  createSession,
+  generateSessionToken,
+  setSessionTokenCookie,
+} from "../auth";
 
 export async function impersonateUser(userId: number) {
-  const session = await lucia.createSession(userId, {});
-  const sessionCookie = lucia.createSessionCookie(session.id);
+  const sessionToken = generateSessionToken();
+  const session = await createSession(sessionToken, userId);
 
-  cookies().set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
+  await setSessionTokenCookie(sessionToken, session.expiresAt);
 
   redirect(getRootPath());
 }

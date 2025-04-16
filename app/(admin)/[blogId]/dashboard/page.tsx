@@ -16,8 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
 import {
@@ -29,21 +27,23 @@ import {
 import { encodePostId } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { SquareArrowUpRight } from "lucide-react";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { desc, eq } from "drizzle-orm";
+import { blog, user } from "@/lib/schema";
 
 export default async function Dashboard({
   params,
 }: {
   params: { blogId: string };
 }) {
-  const { user } = await validateRequest();
+  const { user: sessionUser } = await getCurrentSession();
 
   let currentUser;
-  if (user) {
-    currentUser = await prisma.user.findUnique({
-      where: {
-        id: user?.id,
-      },
-      include: {
+  if (sessionUser) {
+    currentUser = await db.query.user.findFirst({
+      where: eq(user.id, sessionUser.id),
+      with: {
         blog: true,
       },
     });
@@ -51,19 +51,11 @@ export default async function Dashboard({
 
   const blogId = decodeURIComponent(params.blogId);
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
-      posts: {
-        where: {
-          deletedAt: null,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
+  const currentBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
+      posts: (posts: any) =>
+        posts.where(eq(posts.deletedAt, null)).orderBy(desc(posts.createdAt)),
       user: true,
     },
   });
@@ -72,7 +64,7 @@ export default async function Dashboard({
     redirect(getRootPath());
   }
 
-  if (!user || user.id !== blog?.userId) {
+  if (!sessionUser || sessionUser.id !== currentBlog?.userId) {
     redirect(getRootPath());
   }
 
@@ -94,7 +86,7 @@ export default async function Dashboard({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {blog.posts.map((post) => {
+            {currentBlog.posts.map((post) => {
               return (
                 <TableRow key={post.uuid} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">

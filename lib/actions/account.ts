@@ -5,11 +5,12 @@ import { generateRandomString, alphabet } from "oslo/crypto";
 import { TransportOptions, createTransport } from "nodemailer";
 import {
   createSession,
+  deleteSessionTokenCookie,
   generateSessionToken,
   getCurrentSession,
+  invalidateSession,
   setSessionTokenCookie,
 } from "../auth";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { hash, verify } from "@node-rs/argon2";
 import { getAccountPath, getRootPath } from "../paths";
@@ -41,14 +42,10 @@ export async function setPassword(prevState: any, formData: FormData) {
   }
 
   const passwordHash = await hash(password);
-  await prisma.user.update({
-    where: {
-      id: user.id,
-    },
-    data: {
-      passwordHash,
-    },
-  });
+  await db
+    .update(userTable)
+    .set({ passwordHash })
+    .where(eq(userTable.id, user.id));
 
   redirect(getAccountPath());
 }
@@ -89,11 +86,9 @@ export async function sendEmailVerificationCode(
 export async function sendEmailVerificationCodeForEmailChange(
   email: string
 ): Promise<string> {
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+  const user = (
+    await db.select().from(userTable).where(eq(userTable.email, email))
+  )[0];
 
   if (user) {
     throw new Error("이미 존재하는 이메일 주소입니다.");
@@ -101,13 +96,14 @@ export async function sendEmailVerificationCodeForEmailChange(
 
   const code = generateRandomString(6, alphabet("0-9"));
 
-  const challenge = await prisma.emailVerificationChallenge.create({
-    data: {
-      email,
-      code,
-      expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
-    },
-  });
+  const uuid = randomUUID();
+  const challenge: NewEmailVerificationChallenge = {
+    id: uuid,
+    email,
+    code,
+    expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
+  };
+  await db.insert(emailVerificationChallenge).values(challenge);
 
   const transporter = createTransport({
     host: process.env.EMAIL_SERVER_HOST,
@@ -138,11 +134,12 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
-  const challenge = await prisma.emailVerificationChallenge.findUnique({
-    where: {
-      id: challengeId,
-    },
-  });
+  const challenge = (
+    await db
+      .select()
+      .from(emailVerificationChallenge)
+      .where(eq(emailVerificationChallenge.id, challengeId))
+  )[0];
 
   if (!challenge) {
     return false;
@@ -156,25 +153,22 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
-  await prisma.$transaction(async (tx) => {
-    const existingUser = await tx.user.findUnique({
-      where: {
-        email: challenge.email,
-      },
-    });
+  await db.transaction(async (tx) => {
+    const existingUser = (
+      await tx
+        .select()
+        .from(userTable)
+        .where(eq(userTable.email, challenge.email))
+    )[0];
 
     if (existingUser) {
       return false;
     }
 
-    await tx.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        email: challenge.email,
-      },
-    });
+    await tx
+      .update(userTable)
+      .set({ email: challenge.email })
+      .where(eq(userTable.id, user.id));
   });
 
   return true;
@@ -273,13 +267,8 @@ export async function logout() {
     };
   }
 
-  await lucia.invalidateSession(session.id);
+  await invalidateSession(session.id);
+  await deleteSessionTokenCookie();
 
-  const sessionCookie = lucia.createBlankSessionCookie();
-  cookies().set(
-    sessionCookie.name,
-    sessionCookie.value,
-    sessionCookie.attributes
-  );
   return redirect(getRootPath());
 }

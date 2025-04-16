@@ -1,15 +1,15 @@
+import { useActionState } from "react";
 "use client";
 
 import { setPassword } from "@/lib/actions/account";
 import { SubmitButton } from "./submit-button";
-import { useFormState } from "react-dom";
 
 const initialState = {
   message: "",
 };
 
 export default function SetPasswordForm({ email }: { email: string }) {
-  const [state, formAction] = useFormState(setPassword, initialState);
+  const [state, formAction] = useActionState(setPassword, initialState);
 
   return (
     <div>

@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { validateRequest } from "@/lib/auth";
+import { getCurrentSession, validateRequest } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export default async function EditBlogPage({
@@ -14,7 +14,7 @@ export default async function EditBlogPage({
 }: {
   params: { blogId: string };
 }) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     return <p>로그인이 필요합니다.</p>;
   }
