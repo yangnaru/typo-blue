@@ -13,16 +13,3 @@ export async function assertAdmin() {
     redirect(getRootPath());
   }
 }
-
-export async function incrementVisitorCount(blogId: number) {
-  await prisma.blog.update({
-    where: {
-      id: blogId,
-    },
-    data: {
-      visitorCount: {
-        increment: 1,
-      },
-    },
-  });
-}

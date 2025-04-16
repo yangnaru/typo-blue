@@ -53,16 +53,16 @@ export default async function Dashboard({
   const slug = blogId.replace("@", "");
   const currentBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, slug),
-    with: {
-      posts: (posts: any) =>
-        posts.where(eq(posts.deletedAt, null)).orderBy(desc(posts.createdAt)),
-      user: true,
-    },
   });
 
-  if (!blog) {
+  if (!currentBlog) {
     redirect(getRootPath());
   }
+
+  const currentBlogPosts = await db.query.post.findMany({
+    where: eq(blog.id, currentBlog.id),
+    orderBy: desc(blog.createdAt),
+  });
 
   if (!sessionUser || sessionUser.id !== currentBlog?.userId) {
     redirect(getRootPath());

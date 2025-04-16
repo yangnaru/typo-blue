@@ -9,10 +9,6 @@
     "editor.formatOnSave": true,
     "editor.indentSize": 2
   },
-  "[prisma]": {
-    "editor.defaultFormatter": "Prisma.prisma",
-    "editor.formatOnSave": true
-  },
   "[typescript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"

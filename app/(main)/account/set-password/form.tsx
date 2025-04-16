@@ -1,5 +1,6 @@
-import { useActionState } from "react";
 "use client";
+
+import { useActionState } from "react";
 
 import { setPassword } from "@/lib/actions/account";
 import { SubmitButton } from "./submit-button";

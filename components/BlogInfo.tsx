@@ -2,9 +2,9 @@
 
 import format from "date-fns/format";
 import Link from "next/link";
-import { Blog } from "@prisma/client";
 import { getBlogDashboardPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";
+import { Blog } from "@/lib/schema";
 
 export default function BlogInfo({
   blog,

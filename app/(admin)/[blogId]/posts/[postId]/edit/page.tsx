@@ -1,8 +1,10 @@
 import PostEditor from "@/components/PostEditor";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
+import { blog, post } from "@/lib/schema";
 import { decodePostId } from "@/lib/utils";
+import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export default async function EditPost({
@@ -13,26 +15,24 @@ export default async function EditPost({
   const uuid = decodePostId(params.postId);
   const slug = decodeURIComponent(params.blogId).replace("@", "");
 
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     redirect(getRootPath());
   }
 
-  const post = await prisma.post.findUnique({
-    where: {
-      uuid,
-      deletedAt: null,
-      blog: {
-        slug,
-        userId: user.id,
-      },
-    },
-    include: {
+  const editingPost = await db.query.post.findFirst({
+    where: and(
+      eq(post.uuid, uuid),
+      isNull(post.deletedAt),
+      eq(blog.slug, slug),
+      eq(blog.userId, user.id)
+    ),
+    with: {
       blog: true,
     },
   });
 
-  if (post?.blog.userId !== user.id) {
+  if (editingPost?.blog.userId !== user.id) {
     redirect(getRootPath());
   }
 
@@ -43,10 +43,10 @@ export default async function EditPost({
   return (
     <PostEditor
       blogId={slug}
-      existingTitle={post.title ?? ""}
-      existingContent={post.content ?? ""}
+      existingTitle={editingPost.title ?? ""}
+      existingContent={editingPost.content ?? ""}
       existingPostId={params.postId}
-      existingPublishedAt={post.publishedAt}
+      existingPublishedAt={editingPost.publishedAt}
     />
   );
 }

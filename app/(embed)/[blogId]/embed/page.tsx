@@ -1,62 +1,36 @@
 import PostList from "@/components/PostList";
-import { getCurrentSession } from "@/lib/auth";
-import { incrementVisitorCount } from "@/lib/server-util";
+import { db } from "@/lib/db";
+import { blog, post } from "@/lib/schema";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 
 export default async function BlogHome({
   params,
 }: {
   params: { blogId: string };
 }) {
-  const { user } = await getCurrentSession();
-
-  let currentUser;
-  if (user) {
-    currentUser = await prisma.user.findUnique({
-      where: {
-        id: user?.id,
-      },
-      include: {
-        blog: true,
-      },
-    });
-  }
-
   const blogId = decodeURIComponent(params.blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
-      posts: {
-        where: {
-          deletedAt: null,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      guestbook: {
-        orderBy: {
-          createdAt: "desc",
-        },
-        include: {
-          author: true,
-        },
-      },
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
-  await incrementVisitorCount(blog.id);
-
-  const publishedPosts = blog.posts.filter((post) => post.publishedAt !== null);
+  const publishedPosts = await db.query.post.findMany({
+    where: and(
+      eq(post.blogId, blog.id),
+      eq(post.publishedAt, isNotNull(post.publishedAt))
+    ),
+    orderBy: desc(post.publishedAt),
+    with: { blog: true },
+  });
 
   return (
     <PostList

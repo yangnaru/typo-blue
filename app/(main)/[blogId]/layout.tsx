@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { db } from "@/lib/db";
 import { getBlogHomePath } from "@/lib/paths";
+import { blog } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
 
@@ -15,21 +18,11 @@ export default async function BlogLayout({
     return <BlogLayoutBody>👀</BlogLayoutBody>;
   }
 
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId.replace("@", ""),
-    },
-    include: {
-      posts: {
-        where: {
-          deletedAt: null,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId.replace("@", "")),
+    with: {
       followings: {
-        include: {
+        with: {
           following: true,
         },
       },
@@ -37,32 +30,34 @@ export default async function BlogLayout({
   });
 
   return (
-    <BlogLayoutBody blog={blog}>
-      {blog && (
+    <BlogLayoutBody blog={targetBlog}>
+      {targetBlog && (
         <div className="my-8 flex flex-row flex-wrap items-baseline break-keep">
-          {blog && (
+          {targetBlog && (
             <>
               <h2 className="text-2xl font-bold mr-2">
-                <Link href={`/@${blog.slug}`}>
-                  {!blog.name || blog.name === "" ? `@${blog.slug}` : blog.name}
+                <Link href={`/@${targetBlog.slug}`}>
+                  {!targetBlog.name || targetBlog.name === ""
+                    ? `@${targetBlog.slug}`
+                    : targetBlog.name}
                 </Link>
               </h2>
 
               {blog.description && (
-                <p className="text-neutral-500">{blog.description}</p>
+                <p className="text-neutral-500">{targetBlog.description}</p>
               )}
             </>
           )}
         </div>
       )}
       {children}
-      {blog?.followings && blog.followings.length > 0 && (
+      {targetBlog?.followings && targetBlog.followings.length > 0 && (
         <div className="mt-8">
           <hr className="bg-neutral-500" />
           <div className="mt-8 space-y-4">
             <h2 className="text-xl font-bold">파도타기</h2>
             <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
-              {blog.followings.map((following) => (
+              {targetBlog.followings.map((following) => (
                 <Button
                   key={following.following.slug}
                   variant="outline"
