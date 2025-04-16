@@ -3,11 +3,12 @@ import { encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { blogId: string } }
-) {
-  const handle = params.blogId;
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export async function GET(req: NextRequest, props: { params: Params }) {
+  const handle = (await props.params).blogId;
   const slug = handle.replace("@", "");
   const targetBlog = await db.query.blog.findFirst({
     where: (blogs, { eq }) => eq(blogs.slug, slug),

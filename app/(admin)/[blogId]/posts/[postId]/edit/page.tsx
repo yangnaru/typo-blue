@@ -7,11 +7,10 @@ import { decodePostId } from "@/lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-export default async function EditPost({
-  params,
-}: {
-  params: { blogId: string; postId: string };
-}) {
+type Params = Promise<{ blogId: string; postId: string }>;
+
+export default async function EditPost(props: { params: Params }) {
+  const params = await props.params;
   const uuid = decodePostId(params.postId);
   const slug = decodeURIComponent(params.blogId).replace("@", "");
 

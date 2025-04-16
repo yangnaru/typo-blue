@@ -7,12 +7,12 @@ import { eq } from "drizzle-orm";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { blogId: string };
+type Params = Promise<{ blogId: string }>;
+
+export async function generateMetadata(props: {
+  params: Params;
 }): Promise<Metadata> {
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) {
     return {
       title: "존재하지 않는 블로그입니다.",

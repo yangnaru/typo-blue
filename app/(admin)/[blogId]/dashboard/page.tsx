@@ -30,27 +30,19 @@ import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq } from "drizzle-orm";
-import { blog, user } from "@/lib/schema";
+import { blog } from "@/lib/schema";
 
-export default async function Dashboard({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+type PageProps = Promise<{
+  blogId: string;
+}>;
+
+export default async function Dashboard(props: { params: PageProps }) {
+  const { blogId } = await props.params;
+
   const { user: sessionUser } = await getCurrentSession();
 
-  let currentUser;
-  if (sessionUser) {
-    currentUser = await db.query.user.findFirst({
-      where: eq(user.id, sessionUser.id),
-      with: {
-        blog: true,
-      },
-    });
-  }
-
-  const blogId = decodeURIComponent(params.blogId);
-  const slug = blogId.replace("@", "");
+  const decodedBlogId = decodeURIComponent(blogId);
+  const slug = decodedBlogId.replace("@", "");
   const currentBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, slug),
   });
@@ -86,7 +78,7 @@ export default async function Dashboard({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentBlog.posts.map((post) => {
+            {currentBlogPosts.map((post) => {
               return (
                 <TableRow key={post.uuid} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">

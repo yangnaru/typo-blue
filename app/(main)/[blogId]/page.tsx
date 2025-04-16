@@ -9,12 +9,14 @@ import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { blogId: string };
+type MetadataParams = Promise<{
+  blogId: string;
+}>;
+
+export async function generateMetadata(props: {
+  params: MetadataParams;
 }): Promise<Metadata> {
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) {
     return {
       title: "존재하지 않는 블로그입니다.",
@@ -52,11 +54,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogHome({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export default async function BlogHome(props: { params: Params }) {
   const { user: sessionUser } = await getCurrentSession();
 
   if (!sessionUser) {
@@ -77,7 +79,7 @@ export default async function BlogHome({
     return <p>👀</p>;
   }
 
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");
@@ -132,14 +134,22 @@ export default async function BlogHome({
         {targetBlog.id !== currentUser.blogs[0].id &&
           currentUser?.blogs[0] &&
           (isCurrentlyFollowing ? (
-            <form action={unfollowBlog}>
+            <form
+              action={async (formData: FormData) => {
+                await unfollowBlog(formData);
+              }}
+            >
               <input type="hidden" name="blogId" value={targetBlog.slug} />
               <Button variant="destructive" type="submit">
                 파도타기 삭제
               </Button>
             </form>
           ) : (
-            <form action={followBlog}>
+            <form
+              action={async (formData: FormData) => {
+                await followBlog(formData);
+              }}
+            >
               <input type="hidden" name="blogId" value={targetBlog.slug} />
               <Button type="submit">파도타기 추가</Button>
             </form>

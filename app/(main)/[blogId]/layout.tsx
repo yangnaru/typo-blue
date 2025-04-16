@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { getBlogHomePath } from "@/lib/paths";
-import { blog } from "@/lib/schema";
+import { Blog, blog } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -21,9 +21,9 @@ export default async function BlogLayout({
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId.replace("@", "")),
     with: {
-      followings: {
+      follows_followingId: {
         with: {
-          following: true,
+          blog_followerId: true,
         },
       },
     },
@@ -51,27 +51,30 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
-      {targetBlog?.followings && targetBlog.followings.length > 0 && (
-        <div className="mt-8">
-          <hr className="bg-neutral-500" />
-          <div className="mt-8 space-y-4">
-            <h2 className="text-xl font-bold">파도타기</h2>
-            <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
-              {targetBlog.followings.map((following) => (
-                <Button
-                  key={following.following.slug}
-                  variant="outline"
-                  asChild
-                >
-                  <Link href={getBlogHomePath(following.following.slug)}>
-                    @{following.following.slug}
-                  </Link>
-                </Button>
-              ))}
+      {targetBlog?.follows_followingId &&
+        targetBlog.follows_followingId.length > 0 && (
+          <div className="mt-8">
+            <hr className="bg-neutral-500" />
+            <div className="mt-8 space-y-4">
+              <h2 className="text-xl font-bold">파도타기</h2>
+              <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
+                {targetBlog.follows_followingId.map((following) => (
+                  <Button
+                    key={following.blog_followerId.slug}
+                    variant="outline"
+                    asChild
+                  >
+                    <Link
+                      href={getBlogHomePath(following.blog_followerId.slug)}
+                    >
+                      @{following.blog_followerId.slug}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </BlogLayoutBody>
   );
 }

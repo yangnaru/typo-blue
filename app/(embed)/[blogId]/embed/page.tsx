@@ -3,12 +3,12 @@ import { db } from "@/lib/db";
 import { blog, post } from "@/lib/schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 
-export default async function BlogHome({
-  params,
-}: {
-  params: { blogId: string };
-}) {
-  const blogId = decodeURIComponent(params.blogId);
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export default async function BlogHome(props: { params: Params }) {
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");

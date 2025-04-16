@@ -4,17 +4,20 @@ import { db } from "@/lib/db";
 import { blog } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export default async function EditBlogPage({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export default async function EditBlogPage(props: { params: Params }) {
   const { user } = await getCurrentSession();
   if (!user) {
     return <p>로그인이 필요합니다.</p>;
   }
 
-  const blogSlug = decodeURIComponent(params.blogId).replace("@", "");
+  const blogSlug = decodeURIComponent((await props.params).blogId).replace(
+    "@",
+    ""
+  );
   const targetBlog = await db.query.blog.findFirst({
     where: and(eq(blog.slug, blogSlug), eq(blog.userId, user.id)),
   });

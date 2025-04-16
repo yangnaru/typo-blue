@@ -10,16 +10,18 @@ import { db } from "@/lib/db";
 import { blog, post } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { postId: string };
+type MetadataParams = Promise<{
+  postId: string;
+}>;
+
+export async function generateMetadata(props: {
+  params: MetadataParams;
 }): Promise<Metadata> {
   const { user } = await getCurrentSession();
 
   let uuid;
   try {
-    uuid = Buffer.from(decode(params.postId)).toString("hex");
+    uuid = Buffer.from(decode((await props.params).postId)).toString("hex");
   } catch (e) {
     return {
       title: "존재하지 않는 글입니다.",
@@ -61,14 +63,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogPost({
-  params,
-}: {
-  params: { blogId: string; postId: string };
-}) {
+type Params = Promise<{
+  blogId: string;
+  postId: string;
+}>;
+
+export default async function BlogPost(props: { params: Params }) {
   const { user } = await getCurrentSession();
 
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");
@@ -87,7 +90,9 @@ export default async function BlogPost({
 
   let targetPost;
   try {
-    const uuid = Buffer.from(decode(params.postId)).toString("hex");
+    const uuid = Buffer.from(decode((await props.params).postId)).toString(
+      "hex"
+    );
     targetPost = await db.query.post.findFirst({
       where: eq(post.uuid, uuid),
     });
@@ -122,7 +127,9 @@ export default async function BlogPost({
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">
           <Button asChild>
-            <Link href={getBlogPostEditPath(slug, params.postId)}>수정</Link>
+            <Link href={getBlogPostEditPath(slug, (await props.params).postId)}>
+              수정
+            </Link>
           </Button>
         </div>
       )}

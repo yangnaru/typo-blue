@@ -6,14 +6,15 @@ import { blog } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-export default async function BlogNewPostPage({
-  params,
-}: {
-  params: { blogId: string };
-}) {
+type Params = Promise<{ blogId: string }>;
+
+export default async function BlogNewPostPage(props: { params: Params }) {
   const { user } = await getCurrentSession();
 
-  const blogId = decodeURIComponent(params.blogId).replace("@", "");
+  const blogId = decodeURIComponent((await props.params).blogId).replace(
+    "@",
+    ""
+  );
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId),
   });
