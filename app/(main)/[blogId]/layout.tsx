@@ -13,7 +13,7 @@ export default async function BlogLayout({
   children: ReactNode;
   params: { blogId: string };
 }) {
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await params).blogId);
   if (!blogId.startsWith("@")) {
     return <BlogLayoutBody>👀</BlogLayoutBody>;
   }
@@ -21,9 +21,9 @@ export default async function BlogLayout({
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId.replace("@", "")),
     with: {
-      follows_followingId: {
+      follows_followerId: {
         with: {
-          blog_followerId: true,
+          blog_followingId: true,
         },
       },
     },
@@ -51,23 +51,23 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
-      {targetBlog?.follows_followingId &&
-        targetBlog.follows_followingId.length > 0 && (
+      {targetBlog?.follows_followerId &&
+        targetBlog.follows_followerId.length > 0 && (
           <div className="mt-8">
             <hr className="bg-neutral-500" />
             <div className="mt-8 space-y-4">
               <h2 className="text-xl font-bold">파도타기</h2>
               <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
-                {targetBlog.follows_followingId.map((following) => (
+                {targetBlog.follows_followerId.map((follower) => (
                   <Button
-                    key={following.blog_followerId.slug}
+                    key={follower.blog_followingId.slug}
                     variant="outline"
                     asChild
                   >
                     <Link
-                      href={getBlogHomePath(following.blog_followerId.slug)}
+                      href={getBlogHomePath(follower.blog_followingId.slug)}
                     >
-                      @{following.blog_followerId.slug}
+                      @{follower.blog_followingId.slug}
                     </Link>
                   </Button>
                 ))}

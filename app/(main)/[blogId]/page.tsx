@@ -68,7 +68,7 @@ export default async function BlogHome(props: { params: Params }) {
   let currentUser;
   if (sessionUser) {
     currentUser = await db.query.user.findFirst({
-      where: eq(user.id, user.id),
+      where: eq(user.id, sessionUser.id),
       with: {
         blogs: true,
       },
@@ -106,7 +106,7 @@ export default async function BlogHome(props: { params: Params }) {
         eq(follow.followerId, currentUser.blogs[0].id),
         eq(follow.followingId, targetBlog.id)
       ),
-    })) !== null;
+    })) !== undefined;
 
   const isCurrentUserBlogOwner = targetBlog.user.email === sessionUser.email;
   const publishedPosts = targetBlog.posts;
@@ -115,7 +115,7 @@ export default async function BlogHome(props: { params: Params }) {
     <div className="space-y-8">
       <PostList
         name="발행된 글 목록"
-        blog={blog}
+        blog={targetBlog}
         posts={publishedPosts}
         showTitle={false}
       />
@@ -136,6 +136,8 @@ export default async function BlogHome(props: { params: Params }) {
           (isCurrentlyFollowing ? (
             <form
               action={async (formData: FormData) => {
+                "use server";
+
                 await unfollowBlog(formData);
               }}
             >
@@ -147,6 +149,8 @@ export default async function BlogHome(props: { params: Params }) {
           ) : (
             <form
               action={async (formData: FormData) => {
+                "use server";
+
                 await followBlog(formData);
               }}
             >

@@ -29,8 +29,8 @@ import { redirect } from "next/navigation";
 import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { desc, eq } from "drizzle-orm";
-import { blog } from "@/drizzle/schema";
+import { desc, eq, isNull } from "drizzle-orm";
+import { blog, post } from "@/drizzle/schema";
 
 type PageProps = Promise<{
   blogId: string;
@@ -45,16 +45,17 @@ export default async function Dashboard(props: { params: PageProps }) {
   const slug = decodedBlogId.replace("@", "");
   const currentBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, slug),
+    with: {
+      posts: {
+        orderBy: (post) => [desc(post.publishedAt)],
+        where: isNull(post.deletedAt),
+      },
+    },
   });
 
   if (!currentBlog) {
     redirect(getRootPath());
   }
-
-  const currentBlogPosts = await db.query.post.findMany({
-    where: eq(blog.id, currentBlog.id),
-    orderBy: desc(blog.createdAt),
-  });
 
   if (!sessionUser || sessionUser.id !== currentBlog?.userId) {
     redirect(getRootPath());
@@ -78,7 +79,7 @@ export default async function Dashboard(props: { params: PageProps }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentBlogPosts.map((post) => {
+            {currentBlog.posts.map((post) => {
               return (
                 <TableRow key={post.uuid} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">

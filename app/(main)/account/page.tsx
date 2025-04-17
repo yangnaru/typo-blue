@@ -61,7 +61,7 @@ export default async function AccountHome() {
         <div className="space-y-4">
           <h3 className="text-lg">내 블로그</h3>
           <div className="space-y-4">
-            {targetUser.blogs ? (
+            {targetUser.blogs.length > 0 ? (
               <BlogInfo
                 key={targetUser.blogs[0].slug}
                 blog={targetUser.blogs[0]}

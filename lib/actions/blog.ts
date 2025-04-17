@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, follow, post, user } from "@/drizzle/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -187,22 +187,24 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   blogId: string,
   postId: string
 ) {
-  const { user } = await getCurrentSession();
-  if (!user) {
+  const { user: sessionUser } = await getCurrentSession();
+  if (!sessionUser) {
     throw new Error("사용자가 없습니다.");
   }
 
   const targetPost = await db.query.post.findFirst({
-    where: and(
-      eq(post.uuid, postId),
-      eq(post.blogId, blog.id),
-      eq(blog.slug, blogId),
-      eq(blog.userId, user.id)
-    ),
+    where: and(eq(post.uuid, postId), isNull(post.deletedAt)),
+    with: {
+      blog: true,
+    },
   });
 
   if (!targetPost) {
     throw new Error("글을 찾을 수 없습니다.");
+  }
+
+  if (targetPost.blog.userId !== sessionUser.id) {
+    throw new Error("권한이 없습니다.");
   }
 
   return targetPost;

@@ -10,9 +10,8 @@ import { redirect } from "next/navigation";
 type Params = Promise<{ blogId: string; postId: string }>;
 
 export default async function EditPost(props: { params: Params }) {
-  const params = await props.params;
-  const uuid = decodePostId(params.postId);
-  const slug = decodeURIComponent(params.blogId).replace("@", "");
+  const uuid = decodePostId((await props.params).postId);
+  const slug = decodeURIComponent((await props.params).blogId).replace("@", "");
 
   const { user } = await getCurrentSession();
   if (!user) {
@@ -20,12 +19,7 @@ export default async function EditPost(props: { params: Params }) {
   }
 
   const editingPost = await db.query.post.findFirst({
-    where: and(
-      eq(post.uuid, uuid),
-      isNull(post.deletedAt),
-      eq(blog.slug, slug),
-      eq(blog.userId, user.id)
-    ),
+    where: and(eq(post.uuid, uuid), isNull(post.deletedAt)),
   });
 
   const targetBlog = await db.query.blog.findFirst({
@@ -45,10 +39,8 @@ export default async function EditPost(props: { params: Params }) {
       blogId={slug}
       existingTitle={editingPost.title ?? ""}
       existingContent={editingPost.content ?? ""}
-      existingPostId={params.postId}
-      existingPublishedAt={
-        editingPost.publishedAt ? new Date(editingPost.publishedAt) : null
-      }
+      existingPostId={(await props.params).postId}
+      existingPublishedAt={editingPost.publishedAt}
     />
   );
 }

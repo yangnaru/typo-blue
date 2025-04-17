@@ -1,6 +1,6 @@
 -- Current sql file was generated after introspecting the database
 -- If you want to run this migration please uncomment this code before executing migrations
-/*
+
 CREATE TABLE IF NOT EXISTS "Follow" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -90,4 +90,3 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Follow_followerId_followingId_key" ON "Follow
 CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User" USING btree ("email" text_ops);--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "Blog_slug_key" ON "Blog" USING btree ("slug" text_ops);--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "Blog_userId_key" ON "Blog" USING btree ("userId" int4_ops);
-*/
