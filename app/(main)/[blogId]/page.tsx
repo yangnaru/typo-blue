@@ -99,8 +99,7 @@ export default async function BlogHome(props: { params: Params }) {
   }
 
   const isCurrentlyFollowing =
-    currentUser &&
-    currentUser.blogs &&
+    currentUser?.blogs?.[0]?.id &&
     (await db.query.follow.findFirst({
       where: and(
         eq(follow.followerId, currentUser.blogs[0].id),
@@ -131,8 +130,8 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
         )}
 
-        {targetBlog.id !== currentUser.blogs[0].id &&
-          currentUser?.blogs[0] &&
+        {currentUser.blogs?.[0] &&
+          targetBlog.id !== currentUser.blogs[0].id &&
           (isCurrentlyFollowing ? (
             <form
               action={async (formData: FormData) => {
