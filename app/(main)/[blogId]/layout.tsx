@@ -1,89 +1,80 @@
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { getBlogHomePath } from "@/lib/paths";
-import { Blog } from "@prisma/client";
+import { blog } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
 
-export default async function BlogLayout(
-  props: {
-    children: ReactNode;
-    params: Promise<{ blogId: string }>;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    children
-  } = props;
-
-  const blogId = decodeURIComponent(params.blogId);
+export default async function BlogLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: { blogId: string };
+}) {
+  const blogId = decodeURIComponent((await params).blogId);
   if (!blogId.startsWith("@")) {
     return <BlogLayoutBody>👀</BlogLayoutBody>;
   }
 
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId.replace("@", ""),
-    },
-    include: {
-      posts: {
-        where: {
-          deletedAt: null,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      followings: {
-        include: {
-          following: true,
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId.replace("@", "")),
+    with: {
+      follows_followerId: {
+        with: {
+          blog_followingId: true,
         },
       },
     },
   });
 
   return (
-    <BlogLayoutBody blog={blog}>
-      {blog && (
+    <BlogLayoutBody blog={targetBlog}>
+      {targetBlog && (
         <div className="my-8 flex flex-row flex-wrap items-baseline break-keep">
-          {blog && (
+          {targetBlog && (
             <>
               <h2 className="text-2xl font-bold mr-2">
-                <Link href={`/@${blog.slug}`}>
-                  {!blog.name || blog.name === "" ? `@${blog.slug}` : blog.name}
+                <Link href={`/@${targetBlog.slug}`}>
+                  {!targetBlog.name || targetBlog.name === ""
+                    ? `@${targetBlog.slug}`
+                    : targetBlog.name}
                 </Link>
               </h2>
 
               {blog.description && (
-                <p className="text-neutral-500">{blog.description}</p>
+                <p className="text-neutral-500">{targetBlog.description}</p>
               )}
             </>
           )}
         </div>
       )}
       {children}
-      {blog?.followings && blog.followings.length > 0 && (
-        <div className="mt-8">
-          <hr className="bg-neutral-500" />
-          <div className="mt-8 space-y-4">
-            <h2 className="text-xl font-bold">파도타기</h2>
-            <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
-              {blog.followings.map((following) => (
-                <Button
-                  key={following.following.slug}
-                  variant="outline"
-                  asChild
-                >
-                  <Link href={getBlogHomePath(following.following.slug)}>
-                    @{following.following.slug}
-                  </Link>
-                </Button>
-              ))}
+      {targetBlog?.follows_followerId &&
+        targetBlog.follows_followerId.length > 0 && (
+          <div className="mt-8">
+            <hr className="bg-neutral-500" />
+            <div className="mt-8 space-y-4">
+              <h2 className="text-xl font-bold">파도타기</h2>
+              <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
+                {targetBlog.follows_followerId.map((follower) => (
+                  <Button
+                    key={follower.blog_followingId.slug}
+                    variant="outline"
+                    asChild
+                  >
+                    <Link
+                      href={getBlogHomePath(follower.blog_followingId.slug)}
+                    >
+                      @{follower.blog_followingId.slug}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </BlogLayoutBody>
   );
 }
@@ -93,7 +84,7 @@ function BlogLayoutBody({
   blog,
 }: {
   children: ReactNode;
-  blog?: Blog | null;
+  blog?: any;
 }) {
   return (
     <>

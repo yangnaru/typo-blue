@@ -20,8 +20,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import AccountDropdown from "@/components/account-dropdown";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import {
   getBlogDashboardPath,
@@ -31,6 +29,10 @@ import {
 } from "@/lib/paths";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Toaster } from "@/components/ui/sonner";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { blog } from "@/drizzle/schema";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,22 +42,17 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
 };
 
-export default async function RootLayout(
-  props: {
-    params: Promise<{
-      blogId: string;
-    }>;
-    children: React.ReactNode;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    children
-  } = props;
-
-  const { user } = await validateRequest();
-  const blogId = decodeURIComponent(params.blogId).replace("@", "");
+export default async function RootLayout({
+  params,
+  children,
+}: {
+  params: {
+    blogId: string;
+  };
+  children: React.ReactNode;
+}) {
+  const { user } = await getCurrentSession();
+  const blogId = decodeURIComponent((await params).blogId).replace("@", "");
 
   if (!user) {
     redirect(getRootPath());
@@ -63,10 +60,8 @@ export default async function RootLayout(
 
   let blogs;
   if (user) {
-    blogs = await prisma.blog.findMany({
-      where: {
-        userId: user.id,
-      },
+    blogs = await db.query.blog.findMany({
+      where: eq(blog.userId, user.id),
     });
   }
 

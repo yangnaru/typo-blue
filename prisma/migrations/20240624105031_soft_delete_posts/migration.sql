@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Post" ADD COLUMN     "deletedAt" TIMESTAMPTZ,
-ALTER COLUMN "content" DROP NOT NULL;

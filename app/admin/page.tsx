@@ -8,31 +8,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { prisma } from "@/lib/db";
 import ImpersonateButton from "./impersonate-button";
 import Link from "next/link";
 import { encodePostId } from "@/lib/utils";
+import { and, desc, isNotNull, isNull } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { blog, post } from "@/drizzle/schema";
 
 export default async function AdminRootPage() {
   await assertAdmin();
 
-  const blogs = await prisma.blog.findMany({
-    include: {
+  const blogs = await db.query.blog.findMany({
+    with: {
       posts: {
-        where: {
-          publishedAt: {
-            not: null,
-          },
-          deletedAt: null,
-        },
-        orderBy: {
-          publishedAt: "desc",
-        },
-      },
-    },
-    orderBy: {
-      posts: {
-        _count: "desc",
+        where: and(isNotNull(post.publishedAt), isNull(post.deletedAt)),
+        orderBy: desc(post.publishedAt),
       },
     },
   });

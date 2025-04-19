@@ -1,20 +1,22 @@
 import PostList from "@/components/PostList";
 import { Button } from "@/components/ui/button";
 import { followBlog, unfollowBlog } from "@/lib/actions/blog";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { getBlogDashboardPath, getBlogGuestbookPath } from "@/lib/paths";
-import { incrementVisitorCount } from "@/lib/server-util";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { getBlogDashboardPath } from "@/lib/paths";
+import { blog, follow, post, user } from "@/drizzle/schema";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ blogId: string }>;
-  }
-): Promise<Metadata> {
-  const params = await props.params;
-  const blogId = decodeURIComponent(params.blogId);
+type MetadataParams = Promise<{
+  blogId: string;
+}>;
+
+export async function generateMetadata(props: {
+  params: MetadataParams;
+}): Promise<Metadata> {
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) {
     return {
       title: "존재하지 않는 블로그입니다.",
@@ -22,30 +24,28 @@ export async function generateMetadata(
   }
 
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return {
       title: "존재하지 않는 블로그입니다.",
     };
   }
 
   return {
-    title: blog.name ?? `@${blog.slug}`,
-    description: blog.description,
+    title: targetBlog.name ?? `@${targetBlog.slug}`,
+    description: targetBlog.description,
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_URL}/${blogId}`,
       types: {
         "application/atom+xml": [
           {
-            title: blog.name ?? blogId,
+            title: targetBlog.name ?? blogId,
             url: `${process.env.NEXT_PUBLIC_URL}/${blogId}/feed.xml`,
           },
         ],
@@ -54,111 +54,100 @@ export async function generateMetadata(
   };
 }
 
-export default async function BlogHome(
-  props: {
-    params: Promise<{ blogId: string }>;
-  }
-) {
-  const params = await props.params;
-  const { user } = await validateRequest();
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export default async function BlogHome(props: { params: Params }) {
+  const { user: sessionUser } = await getCurrentSession();
 
   let currentUser;
-  if (user) {
-    currentUser = await prisma.user.findUnique({
-      where: {
-        id: user?.id,
-      },
-      include: {
-        blog: true,
+  if (sessionUser) {
+    currentUser = await db.query.user.findFirst({
+      where: eq(user.id, sessionUser.id),
+      with: {
+        blogs: true,
       },
     });
   }
 
-  const blogId = decodeURIComponent(params.blogId);
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
       posts: {
-        where: {
-          deletedAt: null,
-          publishedAt: {
-            not: null,
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      guestbook: {
-        orderBy: {
-          createdAt: "desc",
-        },
-        include: {
-          author: true,
-        },
+        where: and(isNull(post.deletedAt), isNotNull(post.publishedAt)),
+        orderBy: desc(post.createdAt),
       },
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
   const isCurrentlyFollowing =
-    currentUser &&
-    currentUser.blog &&
-    (await prisma.follow.findFirst({
-      where: {
-        followerId: currentUser.blog.id,
-        followingId: blog.id,
-      },
-    })) !== null;
+    currentUser?.blogs?.[0]?.id &&
+    (await db.query.follow.findFirst({
+      where: and(
+        eq(follow.followerId, currentUser.blogs[0].id),
+        eq(follow.followingId, targetBlog.id)
+      ),
+    })) !== undefined;
 
-  await incrementVisitorCount(blog.id);
-
-  const isCurrentUserBlogOwner = blog.user.email === user?.email;
-  const publishedPosts = blog.posts;
+  const isCurrentUserBlogOwner =
+    sessionUser && targetBlog.user.email === sessionUser.email;
+  const publishedPosts = targetBlog.posts;
 
   return (
     <div className="space-y-8">
       <PostList
         name="발행된 글 목록"
-        blog={blog}
+        blog={targetBlog}
         posts={publishedPosts}
         showTitle={false}
       />
 
       <div className="flex flex-row space-x-2">
-        <Button variant="outline" asChild>
-          <Link href={getBlogGuestbookPath(blog.slug)}>방명록</Link>
-        </Button>
-
         {isCurrentUserBlogOwner && (
           <div className="space-x-2">
             <Button>
-              <Link href={getBlogDashboardPath(blog.slug)}>블로그 관리</Link>
+              <Link href={getBlogDashboardPath(targetBlog.slug)}>
+                블로그 관리
+              </Link>
             </Button>
           </div>
         )}
 
-        {blog.id !== currentUser?.blog?.id &&
-          currentUser?.blog &&
+        {currentUser &&
+          currentUser.blogs?.[0] &&
+          targetBlog.id !== currentUser.blogs[0].id &&
           (isCurrentlyFollowing ? (
-            <form action={unfollowBlog}>
-              <input type="hidden" name="blogId" value={blog.slug} />
+            <form
+              action={async (formData: FormData) => {
+                "use server";
+
+                await unfollowBlog(formData);
+              }}
+            >
+              <input type="hidden" name="blogId" value={targetBlog.slug} />
               <Button variant="destructive" type="submit">
                 파도타기 삭제
               </Button>
             </form>
           ) : (
-            <form action={followBlog}>
-              <input type="hidden" name="blogId" value={blog.slug} />
+            <form
+              action={async (formData: FormData) => {
+                "use server";
+
+                await followBlog(formData);
+              }}
+            >
+              <input type="hidden" name="blogId" value={targetBlog.slug} />
               <Button type="submit">파도타기 추가</Button>
             </form>
           ))}

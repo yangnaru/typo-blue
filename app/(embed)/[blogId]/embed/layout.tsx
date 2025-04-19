@@ -1,17 +1,18 @@
 import { Metadata } from "next";
 import "../../../globals.css";
 import { Inter } from "next/font/google";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { blog } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ blogId: string }>;
-  }
-): Promise<Metadata> {
-  const params = await props.params;
-  const blogId = decodeURIComponent(params.blogId);
+type Params = Promise<{ blogId: string }>;
+
+export async function generateMetadata(props: {
+  params: Params;
+}): Promise<Metadata> {
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) {
     return {
       title: "존재하지 않는 블로그입니다.",
@@ -19,30 +20,28 @@ export async function generateMetadata(
   }
 
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return {
       title: "존재하지 않는 블로그입니다.",
     };
   }
 
   return {
-    title: blog.name ?? `@${blog.slug}`,
-    description: blog.description,
+    title: targetBlog.name ?? `@${targetBlog.slug}`,
+    description: targetBlog.description,
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_URL}/${blogId}`,
       types: {
         "application/atom+xml": [
           {
-            title: blog.name ?? blogId,
+            title: targetBlog.name ?? blogId,
             url: `${process.env.NEXT_PUBLIC_URL}/${blogId}/feed.xml`,
           },
         ],

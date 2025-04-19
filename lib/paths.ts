@@ -22,10 +22,6 @@ export function getBlogPostPath(slug: string, encodedPostId: string) {
   return `/@${slug}/${encodedPostId}`;
 }
 
-export function getBlogGuestbookPath(slug: string) {
-  return `/@${slug}/guestbook`;
-}
-
 export function getBlogNewPostPath(slug: string) {
   return `/@${slug}/posts/new`;
 }

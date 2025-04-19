@@ -1,26 +1,22 @@
 "use server";
 
-import { prisma } from "../db";
-import { validateRequest } from "../auth";
-import { Prisma } from "@prisma/client";
+import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import sanitize from "sanitize-html";
 import { decodePostId, encodePostId } from "../utils";
+import { db } from "../db";
+import { blog, follow, post, user } from "@/drizzle/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function createBlog(blogId: string) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
   }
 
-  const blogs = await prisma.blog.findMany({
-    where: {
-      user: {
-        email: user.email,
-      },
-    },
+  const blogs = await db.query.blog.findMany({
+    where: eq(blog.userId, user.id),
   });
 
   if (blogs.length >= 3) {
@@ -35,13 +31,8 @@ export async function createBlog(blogId: string) {
     };
   }
 
-  const existingBlog = await prisma.blog.findFirst({
-    where: {
-      slug: {
-        equals: blogId,
-        mode: "insensitive",
-      },
-    },
+  const existingBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId.toLowerCase()),
   });
 
   if (existingBlog) {
@@ -49,208 +40,63 @@ export async function createBlog(blogId: string) {
   }
 
   try {
-    const q = await prisma.blog.create({
-      data: {
-        slug: blogId,
-        user: {
-          connect: {
-            email: user.email,
-          },
-        },
-      },
-    });
+    const [q] = await db
+      .insert(blog)
+      .values({
+        slug: blogId.toLowerCase(),
+        userId: user.id,
+        updatedAt: new Date(),
+      })
+      .returning();
 
     return { blogId: q.slug };
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      if (e.code === "P2002") {
-        if (e.message.includes("userId")) {
-          return { error: "이미 블로그를 만들었습니다." };
-        } else {
-          return { error: "이미 존재하는 블로그 ID입니다." };
-        }
-      }
-    }
     return { error: "알 수 없는 오류가 발생했습니다." };
   }
 }
 
 export async function deleteBlog(blogId: string) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
   if (!user) {
     return { error: "로그인이 필요합니다." };
   }
 
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
+    with: {
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return { error: "블로그를 찾을 수 없습니다." };
   }
 
-  if (blog.user.email !== user.email) {
+  if (targetBlog.user.email !== user.email) {
     return { error: "권한이 없습니다." };
   }
 
-  await prisma.blog.delete({
-    where: {
-      slug: blogId,
-    },
-  });
+  await db.delete(blog).where(eq(blog.slug, blogId));
 
   return {
     success: true,
   };
 }
 
-export async function writeToGuestbook(formData: FormData) {
-  const blogId = formData.get("blogId") as string;
-  const content = formData.get("content") as string;
-
-  const { user } = await validateRequest();
-
-  if (!user) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId,
-    },
-  });
-
-  if (!blog) {
-    return { error: "블로그를 찾을 수 없습니다." };
-  }
-
-  if (user.id === blog.userId) {
-    return { error: "자신의 블로그에는 방명록을 남길 수 없습니다." };
-  }
-
-  const guestbook = await prisma.guestbook.create({
-    data: {
-      content: sanitize(content),
-      blog: {
-        connect: {
-          slug: blogId,
-        },
-      },
-      author: {
-        connect: {
-          email: user.email,
-        },
-      },
-    },
-  });
-
-  revalidatePath(`/@${blogId}/guestbook`);
-
-  redirect(`/@${blogId}/guestbook/${encodePostId(guestbook.uuid)}`);
-}
-
-export async function saveGuestbookReply(formData: FormData) {
-  const content = formData.get("content") as string;
-  const guestbookId = formData.get("guestbookId") as string;
-
-  const { user } = await validateRequest();
-
-  if (!user) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  const guestbook = await prisma.guestbook.findUnique({
-    where: {
-      uuid: guestbookId,
-    },
-    include: {
-      blog: true,
-    },
-  });
-
-  if (!guestbook) {
-    return { error: "방명록 게시글을 찾을 수 없습니다." };
-  }
-
-  if (user.id !== guestbook.blog.userId) {
-    return { error: "권한이 없습니다." };
-  }
-
-  await prisma.guestbook.update({
-    where: {
-      uuid: guestbookId,
-    },
-    data: {
-      reply: sanitize(content),
-      repliedAt: new Date(),
-    },
-  });
-
-  revalidatePath(`/@${guestbook.blog.slug}/guestbook`);
-
-  redirect(`/@${guestbook.blog.slug}/guestbook/${encodePostId(guestbookId)}`);
-}
-
-export async function deleteGuestbook(uuid: string) {
-  const { user } = await validateRequest();
-
-  if (!user) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  const guestbook = await prisma.guestbook.findUnique({
-    where: {
-      uuid,
-    },
-    include: {
-      blog: true,
-    },
-  });
-
-  if (!guestbook) {
-    return { error: "방명록 게시글을 찾을 수 없습니다." };
-  }
-
-  if (!(user.id === guestbook.blog.userId || user.id === guestbook.authorId)) {
-    return { error: "권한이 없습니다." };
-  }
-
-  if (user.id === guestbook.authorId && guestbook.repliedAt) {
-    return { error: "답변이 달린 방명록은 삭제할 수 없습니다." };
-  }
-
-  await prisma.guestbook.delete({
-    where: {
-      uuid,
-    },
-  });
-
-  revalidatePath(`/@${guestbook.blog.slug}/guestbook`);
-
-  redirect(`/@${guestbook.blog.slug}/guestbook`);
-}
-
 export async function followBlog(formData: FormData) {
   const blogId = formData.get("blogId") as string;
 
-  const { user } = await validateRequest();
+  const { user: sessionUser } = await getCurrentSession();
 
-  if (!user) {
+  if (!sessionUser) {
     return { error: "로그인이 필요합니다." };
   }
 
-  const currentUser = await prisma.user.findUnique({
-    where: {
-      id: user.id,
-    },
-    include: {
-      blog: true,
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, sessionUser.id),
+    with: {
+      blogs: true,
     },
   });
 
@@ -258,30 +104,27 @@ export async function followBlog(formData: FormData) {
     return { error: "로그인이 필요합니다." };
   }
 
-  if (!currentUser.blog) {
+  if (!currentUser.blogs || currentUser.blogs.length === 0) {
     return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
   }
 
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId,
-    },
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return { error: "블로그를 찾을 수 없습니다." };
   }
 
-  if (user.id === blog.userId) {
+  if (sessionUser.id === targetBlog.userId) {
     return { error: "자신의 블로그를 팔로우할 수 없습니다." };
   }
 
   try {
-    await prisma.follow.create({
-      data: {
-        followerId: currentUser.blog.id,
-        followingId: blog.id,
-      },
+    await db.insert(follow).values({
+      followerId: currentUser.blogs[0].id,
+      followingId: targetBlog.id,
+      updatedAt: new Date(),
     });
   } catch {}
 
@@ -292,18 +135,16 @@ export async function followBlog(formData: FormData) {
 export async function unfollowBlog(formData: FormData) {
   const blogId = formData.get("blogId") as string;
 
-  const { user } = await validateRequest();
+  const { user: sessionUser } = await getCurrentSession();
 
-  if (!user) {
+  if (!sessionUser) {
     return { error: "로그인이 필요합니다." };
   }
 
-  const currentUser = await prisma.user.findUnique({
-    where: {
-      id: user.id,
-    },
-    include: {
-      blog: true,
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, sessionUser.id),
+    with: {
+      blogs: true,
     },
   });
 
@@ -311,33 +152,31 @@ export async function unfollowBlog(formData: FormData) {
     return { error: "로그인이 필요합니다." };
   }
 
-  if (!currentUser.blog) {
+  if (!currentUser.blogs || currentUser.blogs.length === 0) {
     return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
   }
 
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId,
-    },
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return { error: "블로그를 찾을 수 없습니다." };
   }
 
-  if (user.id === blog.userId) {
+  if (sessionUser.id === targetBlog.userId) {
     return { error: "자신의 블로그를 팔로우할 수 없습니다." };
   }
 
   try {
-    await prisma.follow.delete({
-      where: {
-        followerId_followingId: {
-          followerId: currentUser.blog.id,
-          followingId: blog.id,
-        },
-      },
-    });
+    await db
+      .delete(follow)
+      .where(
+        and(
+          eq(follow.followerId, currentUser.blogs[0].id),
+          eq(follow.followingId, targetBlog.id)
+        )
+      );
   } catch {}
 
   revalidatePath(`/@${blogId}`);
@@ -348,54 +187,55 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   blogId: string,
   postId: string
 ) {
-  const { user } = await validateRequest();
-  if (!user) {
+  const { user: sessionUser } = await getCurrentSession();
+  if (!sessionUser) {
     throw new Error("사용자가 없습니다.");
   }
 
-  const post = await prisma.post.findUnique({
-    where: {
-      uuid: postId,
-      blog: {
-        slug: blogId,
-        userId: user.id,
-      },
+  const targetPost = await db.query.post.findFirst({
+    where: and(eq(post.uuid, postId), isNull(post.deletedAt)),
+    with: {
+      blog: true,
     },
   });
 
-  if (!post) {
+  if (!targetPost) {
     throw new Error("글을 찾을 수 없습니다.");
   }
 
-  return post;
+  if (targetPost.blog.userId !== sessionUser.id) {
+    throw new Error("권한이 없습니다.");
+  }
+
+  return targetPost;
 }
 
 export async function publishPost(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
-  await prisma.post.update({
-    where: {
-      uuid,
-    },
-    data: {
+  await db
+    .update(post)
+    .set({
       publishedAt: new Date(),
-    },
-  });
+    })
+    .where(eq(post.uuid, uuid));
+
+  return {
+    success: true,
+  };
 }
 
 export async function unPublishPost(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
-  await prisma.post.update({
-    where: {
-      uuid,
-    },
-    data: {
+  await db
+    .update(post)
+    .set({
       publishedAt: null,
-    },
-  });
+    })
+    .where(eq(post.uuid, uuid));
 
   return {
     success: true,
@@ -406,16 +246,14 @@ export async function deletePost(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
-  await prisma.post.update({
-    where: {
-      uuid,
-    },
-    data: {
+  await db
+    .update(post)
+    .set({
       title: null,
       content: null,
       deletedAt: new Date(),
-    },
-  });
+    })
+    .where(eq(post.uuid, uuid));
 
   return {
     success: true,
@@ -429,56 +267,53 @@ export async function upsertPost(
   title: string,
   content: string
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     throw new Error("사용자가 없습니다.");
   }
 
-  const blog = await prisma.blog.findFirst({
-    where: {
-      slug: blogSlug,
-      userId: user.id,
-    },
+  const targetBlog = await db.query.blog.findFirst({
+    where: and(eq(blog.slug, blogSlug), eq(blog.userId, user.id)),
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     throw new Error("블로그를 찾을 수 없습니다.");
   }
 
   const uuid = postId ? decodePostId(postId) : undefined;
 
-  let post;
+  let targetPost;
   if (uuid) {
-    post = await prisma.post.update({
-      where: {
-        uuid,
-      },
-      data: {
+    const [updatedPost] = await db
+      .update(post)
+      .set({
         title,
         content,
         publishedAt,
-      },
-    });
+      })
+      .where(eq(post.uuid, uuid))
+      .returning();
+    targetPost = updatedPost;
   } else {
-    post = await prisma.post.create({
-      data: {
+    const [newPost] = await db
+      .insert(post)
+      .values({
         title,
         content,
         publishedAt,
-        blog: {
-          connect: {
-            slug: blogSlug,
-          },
-        },
-      },
-    });
+        blogId: targetBlog.id,
+        updatedAt: new Date(),
+        uuid: crypto.randomUUID(),
+      })
+      .returning();
+    targetPost = newPost;
   }
 
   revalidatePath(`/@${blogSlug}`);
 
   return {
     success: true,
-    postId: encodePostId(post.uuid),
+    postId: encodePostId(targetPost.uuid),
   };
 }
 
@@ -488,32 +323,27 @@ export async function editBlogInfo(
   description: string,
   discoverable: boolean
 ) {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
   if (!user) {
     throw new Error("사용자가 없습니다.");
   }
 
-  const blog = await prisma.blog.findFirst({
-    where: {
-      slug: blogSlug,
-      userId: user.id,
-    },
+  const targetBlog = await db.query.blog.findFirst({
+    where: and(eq(blog.slug, blogSlug), eq(blog.userId, user.id)),
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     throw new Error("블로그를 찾을 수 없습니다.");
   }
 
-  await prisma.blog.update({
-    where: {
-      id: blog.id,
-    },
-    data: {
+  await db
+    .update(blog)
+    .set({
       name,
       description,
       discoverable,
-    },
-  });
+    })
+    .where(eq(blog.id, targetBlog.id));
 
   return {
     success: true,

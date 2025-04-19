@@ -1,101 +1,56 @@
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { Button } from "@/components/ui/button";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { blog, post, user } from "@/drizzle/schema";
 import { getBlogHomePath } from "@/lib/paths";
-import { encodePostId } from "@/lib/utils";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
+import { count, eq, isNotNull, and, desc, isNull, inArray } from "drizzle-orm";
 
 export default async function Home() {
-  const { user } = await validateRequest();
+  const userCount = (await db.select({ count: count() }).from(user))[0].count;
 
-  const userCount = await prisma.user.count();
-  const totalNotDeletedPosts = await prisma.post.count({
-    where: {
-      deletedAt: null,
-    },
-  });
+  const totalNotDeletedPosts = (
+    await db.select({ count: count() }).from(post).where(isNull(post.deletedAt))
+  )[0].count;
 
-  const latestPublishedPostsFromDiscoverableBlogs = await prisma.post.findMany({
-    orderBy: {
-      publishedAt: "desc",
-    },
-    where: {
-      deletedAt: null,
-      publishedAt: {
-        not: null,
-      },
-      blog: {
-        discoverable: true,
-      },
-    },
-    include: {
-      blog: {
-        select: {
-          slug: true,
-        },
-      },
-    },
-    take: 100,
-  });
+  const latestPublishedPostsFromDiscoverableBlogs = await db
+    .select({ slug: blog.slug })
+    .from(post)
+    .leftJoin(blog, eq(post.blogId, blog.id))
+    .where(
+      and(
+        isNotNull(post.publishedAt),
+        isNull(post.deletedAt),
+        eq(blog.discoverable, true)
+      )
+    )
+    .orderBy(desc(post.publishedAt))
+    .limit(100);
 
-  const discoverableBlogSlugs = latestPublishedPostsFromDiscoverableBlogs
-    .map((post) => post.blog.slug)
-    .filter((slug, index, self) => self.indexOf(slug) === index);
+  const discoverableBlogSlugs = Array.from(
+    new Set([
+      ...latestPublishedPostsFromDiscoverableBlogs.map(
+        (blog) => blog.slug ?? ""
+      ),
+    ])
+  );
 
-  let followingBlogPosts;
-  if (user) {
-    followingBlogPosts = await prisma.post.findMany({
-      orderBy: {
-        publishedAt: "desc",
-      },
-      where: {
-        deletedAt: null,
-        publishedAt: {
-          not: null,
-        },
-        blog: {
-          followers: {
-            some: {
-              followerId: user.id,
-            },
-          },
-        },
-      },
-      take: 100,
-      include: {
-        blog: {
-          select: {
-            slug: true,
-          },
-        },
-      },
-    });
-  }
-  const dateFormat = "yyyy-MM-dd";
-
-  let officialBlog;
+  let officialBlogPosts: any = [];
   if (process.env.OFFICIAL_BLOG_SLUG) {
-    officialBlog = await prisma.blog.findUnique({
-      where: {
-        slug: process.env.OFFICIAL_BLOG_SLUG,
-      },
-      include: {
-        posts: {
-          where: {
-            deletedAt: null,
-            publishedAt: {
-              not: null,
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
+    officialBlogPosts = await db.query.post.findMany({
+      with: { blog: true },
+      where: inArray(
+        post.blogId,
+        db
+          .select({ blogId: blog.id })
+          .from(blog)
+          .where(eq(blog.slug, process.env.OFFICIAL_BLOG_SLUG))
+      ),
+      orderBy: desc(post.createdAt),
     });
+    // blog_id IN (SELECT id AS blogId FROM blog WHERE slug = '..')
   }
 
   return (
@@ -112,7 +67,7 @@ export default async function Home() {
         <HomeWithSession />
       </nav>
 
-      {discoverableBlogSlugs.length > 0 && (
+      {discoverableBlogSlugs && (
         <>
           <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
 
@@ -126,81 +81,35 @@ export default async function Home() {
         </>
       )}
 
-      {officialBlog && (
+      {officialBlogPosts.length > 0 && (
         <PostList
           name="공식 블로그 소식"
-          posts={officialBlog.posts}
+          posts={officialBlogPosts}
           showTitle={true}
-          blog={officialBlog}
+          blog={officialBlogPosts[0].blog}
           titleClassName="text-normal font-bold"
           showTime={false}
         />
-      )}
-
-      {followingBlogPosts && followingBlogPosts.length > 0 && (
-        <>
-          <h3 className="text-normal font-bold">파도타기 블로그 소식</h3>
-
-          <ul className="space-y-2">
-            {followingBlogPosts.map((post) => {
-              const base62 = encodePostId(post.uuid);
-
-              return (
-                <li key={encodePostId(post.uuid)}>
-                  <Link href={`/@${post.blog.slug}/${base62}`}>
-                    {post.publishedAt ? (
-                      <span className="font-bold tabular-nums">
-                        {formatInTimeZone(
-                          post.publishedAt,
-                          "Asia/Seoul",
-                          dateFormat
-                        )}
-                      </span>
-                    ) : (
-                      <span className="font-bold tabular-nums">
-                        {formatInTimeZone(
-                          post.updatedAt,
-                          "Asia/Seoul",
-                          dateFormat
-                        )}
-                      </span>
-                    )}{" "}
-                    {post.title?.length === 0 ? "무제" : post.title}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </>
       )}
     </main>
   );
 }
 
 async function HomeWithSession() {
-  const { user } = await validateRequest();
+  const { user } = await getCurrentSession();
 
-  let blog;
-
+  let userBlog;
   if (user) {
-    blog = await prisma.blog.findUnique({
-      where: {
-        userId: user.id,
-      },
-      include: {
-        posts: {
-          select: {
-            uuid: true,
-          },
-        },
-      },
-    });
+    userBlog = await db
+      .select({ count: count() })
+      .from(blog)
+      .where(eq(blog.userId, user.id));
   }
 
   return (
     <div>
       <div className="flex flex-row items-baseline space-x-2">
-        {user && !blog && (
+        {user && !userBlog && (
           <Button asChild>
             <Link href="/blogs/new">블로그 만들기</Link>
           </Button>

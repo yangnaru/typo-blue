@@ -1,26 +1,27 @@
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
 import { encodePostId } from "@/lib/utils";
-import { incrementVisitorCount } from "@/lib/server-util";
-import { Prisma } from "@prisma/client";
 import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getBlogPostEditPath } from "@/lib/paths";
+import { db } from "@/lib/db";
+import { blog, post, user } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ postId: string }>;
-  }
-): Promise<Metadata> {
-  const params = await props.params;
-  const { user } = await validateRequest();
+type MetadataParams = Promise<{
+  postId: string;
+}>;
+
+export async function generateMetadata(props: {
+  params: MetadataParams;
+}): Promise<Metadata> {
+  const { user } = await getCurrentSession();
 
   let uuid;
   try {
-    uuid = Buffer.from(decode(params.postId)).toString("hex");
+    uuid = Buffer.from(decode((await props.params).postId)).toString("hex");
   } catch (e) {
     return {
       title: "존재하지 않는 글입니다.",
@@ -33,30 +34,35 @@ export async function generateMetadata(
     };
   }
 
-  const post = await prisma.post.findUnique({
-    where: {
-      uuid: uuid,
-    },
-    include: {
-      blog: true,
-    },
+  const targetPost = await db.query.post.findFirst({
+    where: eq(post.uuid, uuid),
   });
 
-  if (!post || !post.blog) {
+  if (!targetPost) {
     return {
       title: "존재하지 않는 글입니다.",
     };
   }
 
-  if (!post.publishedAt && post.blog.userId !== user?.id) {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.id, targetPost?.blogId),
+  });
+
+  if (!targetBlog) {
     return {
       title: "존재하지 않는 글입니다.",
     };
   }
 
-  const blogName = post.blog.name ?? `@${post.blog.slug}`;
-  const blogDescription = post.blog.description ?? "";
-  const postTitle = post.title === "" ? "무제" : post.title;
+  if (!targetPost.publishedAt && targetBlog.userId !== user?.id) {
+    return {
+      title: "존재하지 않는 글입니다.",
+    };
+  }
+
+  const blogName = targetBlog.name ?? `@${targetBlog.slug}`;
+  const blogDescription = targetBlog.description ?? "";
+  const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
 
   return {
     title: postTitle,
@@ -64,69 +70,66 @@ export async function generateMetadata(
   };
 }
 
-export default async function BlogPost(
-  props: {
-    params: Promise<{ blogId: string; postId: string }>;
-  }
-) {
-  const params = await props.params;
-  const { user } = await validateRequest();
+type Params = Promise<{
+  blogId: string;
+  postId: string;
+}>;
 
-  const blogId = decodeURIComponent(params.blogId);
+export default async function BlogPost(props: { params: Params }) {
+  const { user: sessionUser } = await getCurrentSession();
+
+  const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) return <p>👀</p>;
 
   const slug = blogId.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: slug,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, slug),
+    with: {
       user: true,
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
-  const isCurrentUserBlogOwner = blog.user.email === user?.email;
+  const targetBlogUser = await db.query.user.findFirst({
+    where: eq(user.id, targetBlog.userId),
+  });
 
-  let post;
-  try {
-    post = await prisma.post.findUnique({
-      where: {
-        deletedAt: null,
-        uuid: Buffer.from(decode(params.postId)).toString("hex"),
-      },
-    });
-  } catch (e) {
-    if (
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2023"
-    ) {
-      return <p>글이 존재하지 않습니다.</p>;
-    }
-
-    throw e;
+  if (!targetBlogUser) {
+    return <p>블로그 작성자를 찾을 수 없습니다.</p>;
   }
 
-  if (!post || (!post.publishedAt && !isCurrentUserBlogOwner)) {
+  const isCurrentUserBlogOwner = targetBlogUser.email === sessionUser?.email;
+
+  let targetPost;
+  try {
+    const uuid = Buffer.from(decode((await props.params).postId)).toString(
+      "hex"
+    );
+    targetPost = await db.query.post.findFirst({
+      where: eq(post.uuid, uuid),
+    });
+  } catch {
     return <p>글이 존재하지 않습니다.</p>;
   }
 
-  await incrementVisitorCount(blog.id);
+  if (!targetPost || (!targetPost.publishedAt && !isCurrentUserBlogOwner)) {
+    return <p>글이 존재하지 않습니다.</p>;
+  }
 
   return (
     <div className="space-y-8">
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
-          <Link href={`/@${blog.slug}/${encodePostId(post.uuid)}`}>
-            {post.title === "" ? "무제" : post.title}
+          <Link href={`/@${blog.slug}/${encodePostId(targetPost.uuid)}`}>
+            {targetPost.title === "" ? "무제" : targetPost.title}
           </Link>
         </h3>
         <span className="text-neutral-500">
           {formatInTimeZone(
-            post.publishedAt ?? post.updatedAt,
+            targetPost.publishedAt ?? targetPost.updatedAt,
             "Asia/Seoul",
             "yyyy-MM-dd HH:mm"
           )}
@@ -134,12 +137,14 @@ export default async function BlogPost(
       </div>
       <div
         className="prose dark:prose-invert break-keep"
-        dangerouslySetInnerHTML={{ __html: post.content ?? "" }}
+        dangerouslySetInnerHTML={{ __html: targetPost.content ?? "" }}
       />
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">
           <Button asChild>
-            <Link href={getBlogPostEditPath(slug, params.postId)}>수정</Link>
+            <Link href={getBlogPostEditPath(slug, (await props.params).postId)}>
+              수정
+            </Link>
           </Button>
         </div>
       )}

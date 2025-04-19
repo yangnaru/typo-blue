@@ -1,32 +1,27 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";
 
-export async function GET(req: NextRequest, props: { params: Promise<{ blogId: string }> }) {
-  const params = await props.params;
-  const handle = params.blogId;
+type Params = Promise<{
+  blogId: string;
+}>;
+
+export async function GET(req: NextRequest, props: { params: Params }) {
+  const handle = (await props.params).blogId;
   const slug = handle.replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug,
-    },
-    include: {
+  const targetBlog = await db.query.blog.findFirst({
+    where: (blogs, { eq }) => eq(blogs.slug, slug),
+    with: {
       posts: {
-        where: {
-          publishedAt: {
-            not: null,
-          },
-        },
-        orderBy: {
-          publishedAt: "desc",
-        },
-        take: 10,
+        where: (posts, { isNotNull }) => isNotNull(posts.publishedAt),
+        orderBy: (posts, { desc }) => [desc(posts.publishedAt)],
+        limit: 10,
       },
     },
   });
 
-  if (!blog) {
+  if (!targetBlog) {
     return new NextResponse(`<h1>Blog not found</h1>`, {
       status: 404,
       headers: {
@@ -45,42 +40,45 @@ export async function GET(req: NextRequest, props: { params: Promise<{ blogId: s
     .up()
     .ele("link", {
       rel: "self",
-      href: `${url}/@${blog.slug}/feed.xml`,
+      href: `${url}/@${targetBlog.slug}/feed.xml`,
       type: "application/atom+xml",
     })
     .up()
     .ele("link", {
       rel: "alternate",
-      href: `${url}/@${blog.slug}`,
+      href: `${url}/@${targetBlog.slug}`,
       type: "text/html",
     })
     .up()
     .ele("id")
-    .txt(`${url}/@${blog.slug}/feed.xml`)
+    .txt(`${url}/@${targetBlog.slug}/feed.xml`)
     .up()
     .ele("title", { type: "html" })
-    .txt(blog.name || handle)
+    .txt(targetBlog.name || handle)
     .up()
     .ele("subtitle")
-    .txt(blog.description || "")
+    .txt(targetBlog.description || "")
     .up();
 
-  if (blog.posts.length > 0) {
-    root.ele("updated").txt(blog.posts[0].publishedAt!.toISOString()).up();
+  if (targetBlog.posts.length > 0) {
+    root
+      .ele("updated")
+      .txt(targetBlog.posts[0].publishedAt!.toISOString())
+      .up();
   }
 
-  for (const post of blog.posts) {
+  for (const post of targetBlog.posts) {
     const entry = root.ele("entry");
     const postSlug = encodePostId(post.uuid);
     entry.ele("title", { type: "html" }).txt(post.title || "무제");
-    entry.ele("id").txt(`${url}/@${blog.slug}/${postSlug}`);
+    entry.ele("id").txt(`${url}/@${targetBlog.slug}/${postSlug}`);
     entry
       .ele("author")
       .ele("name")
-      .txt(blog.name || handle);
+      .txt(targetBlog.name || handle);
     entry.ele("link", {
       rel: "alternate",
-      href: `${url}/@${blog.slug}/${postSlug}`,
+      href: `${url}/@${targetBlog.slug}/${postSlug}`,
       type: "text/html",
       title: post.title,
     });

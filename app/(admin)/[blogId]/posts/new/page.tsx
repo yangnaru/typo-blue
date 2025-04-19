@@ -1,25 +1,25 @@
 import PostEditor from "@/components/PostEditor";
-import { validateRequest } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getCurrentSession } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
+import { blog } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-export default async function BlogNewPostPage(
-  props: {
-    params: Promise<{ blogId: string }>;
-  }
-) {
-  const params = await props.params;
-  const { user } = await validateRequest();
+type Params = Promise<{ blogId: string }>;
 
-  const blogId = decodeURIComponent(params.blogId).replace("@", "");
-  const blog = await prisma.blog.findUnique({
-    where: {
-      slug: blogId,
-    },
+export default async function BlogNewPostPage(props: { params: Params }) {
+  const { user } = await getCurrentSession();
+
+  const blogId = decodeURIComponent((await props.params).blogId).replace(
+    "@",
+    ""
+  );
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
   });
 
-  if (user?.id !== blog?.userId) {
+  if (user?.id !== targetBlog?.userId) {
     redirect(getRootPath());
   }
 
