@@ -1,6 +1,4 @@
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import { getBlogHomePath } from "@/lib/paths";
 import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
@@ -20,13 +18,6 @@ export default async function BlogLayout({
 
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId.replace("@", "")),
-    with: {
-      follows_followerId: {
-        with: {
-          blog_followingId: true,
-        },
-      },
-    },
   });
 
   return (
@@ -51,30 +42,6 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
-      {targetBlog?.follows_followerId &&
-        targetBlog.follows_followerId.length > 0 && (
-          <div className="mt-8">
-            <hr className="bg-neutral-500" />
-            <div className="mt-8 space-y-4">
-              <h2 className="text-xl font-bold">파도타기</h2>
-              <div className="flex flex-row flex-wrap items-baseline break-keep gap-2">
-                {targetBlog.follows_followerId.map((follower) => (
-                  <Button
-                    key={follower.blog_followingId.slug}
-                    variant="outline"
-                    asChild
-                  >
-                    <Link
-                      href={getBlogHomePath(follower.blog_followingId.slug)}
-                    >
-                      @{follower.blog_followingId.slug}
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
     </BlogLayoutBody>
   );
 }

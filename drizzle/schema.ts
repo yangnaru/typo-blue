@@ -11,44 +11,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const follow = pgTable(
-  "Follow",
-  {
-    id: serial().primaryKey().notNull(),
-    createdAt: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp({ withTimezone: true }).notNull(),
-    followerId: integer().notNull(),
-    followingId: integer().notNull(),
-  },
-  (table) => {
-    return {
-      followerIdFollowingIdKey: uniqueIndex(
-        "Follow_followerId_followingId_key"
-      ).using(
-        "btree",
-        table.followerId.asc().nullsLast().op("int4_ops"),
-        table.followingId.asc().nullsLast().op("int4_ops")
-      ),
-      followFollowerIdFkey: foreignKey({
-        columns: [table.followerId],
-        foreignColumns: [blog.id],
-        name: "Follow_followerId_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("restrict"),
-      followFollowingIdFkey: foreignKey({
-        columns: [table.followingId],
-        foreignColumns: [blog.id],
-        name: "Follow_followingId_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("restrict"),
-    };
-  }
-);
-
 export const emailVerificationChallenge = pgTable(
   "EmailVerificationChallenge",
   {
