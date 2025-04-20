@@ -31,10 +31,10 @@ export default function PostList({
       ) : (
         <ul className="space-y-2">
           {posts.map((post) => {
-            const base62 = encodePostId(post.uuid);
+            const base62 = encodePostId(post.id);
 
             return (
-              <li key={encodePostId(post.uuid)}>
+              <li key={encodePostId(post.id)}>
                 <Link
                   href={`/@${blog.slug}/${base62}`}
                   target={embed ? "_blank" : "_self"}

@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, props: { params: Params }) {
 
   for (const post of targetBlog.posts) {
     const entry = root.ele("entry");
-    const postSlug = encodePostId(post.uuid);
+    const postSlug = encodePostId(post.id);
     entry.ele("title", { type: "html" }).txt(post.title || "무제");
     entry.ele("id").txt(`${url}/@${targetBlog.slug}/${postSlug}`);
     entry

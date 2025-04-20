@@ -35,7 +35,7 @@ export async function generateMetadata(props: {
   }
 
   const targetPost = await db.query.post.findFirst({
-    where: eq(post.uuid, uuid),
+    where: eq(post.id, uuid),
   });
 
   if (!targetPost) {
@@ -109,7 +109,7 @@ export default async function BlogPost(props: { params: Params }) {
       "hex"
     );
     targetPost = await db.query.post.findFirst({
-      where: eq(post.uuid, uuid),
+      where: eq(post.id, uuid),
     });
   } catch {
     return <p>글이 존재하지 않습니다.</p>;
@@ -123,7 +123,7 @@ export default async function BlogPost(props: { params: Params }) {
     <div className="space-y-8">
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
-          <Link href={`/@${blog.slug}/${encodePostId(targetPost.uuid)}`}>
+          <Link href={`/@${blog.slug}/${encodePostId(targetPost.id)}`}>
             {targetPost.title === "" ? "무제" : targetPost.title}
           </Link>
         </h3>

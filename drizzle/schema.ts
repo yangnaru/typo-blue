@@ -24,12 +24,12 @@ export const emailVerificationChallenge = pgTable(
 export const post = pgTable(
   "post",
   {
+    id: uuid().primaryKey().notNull(),
     created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updated: timestamp({ withTimezone: true }).notNull(),
     published: timestamp({ withTimezone: true }),
-    uuid: uuid().primaryKey().notNull(),
     title: text(),
     content: text(),
     blogId: integer("blog_id").notNull(),

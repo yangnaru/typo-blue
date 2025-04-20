@@ -81,17 +81,17 @@ export default async function Dashboard(props: { params: PageProps }) {
           <TableBody>
             {currentBlog.posts.map((post) => {
               return (
-                <TableRow key={post.uuid} className="bg-accent">
+                <TableRow key={post.id} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">
                     <Link
-                      href={getBlogPostEditPath(slug, encodePostId(post.uuid))}
+                      href={getBlogPostEditPath(slug, encodePostId(post.id))}
                     >
                       <span className="font-medium">
                         {post.title === "" ? "무제" : post.title}
                       </span>
                     </Link>
                     <Link
-                      href={getBlogPostPath(slug, encodePostId(post.uuid))}
+                      href={getBlogPostPath(slug, encodePostId(post.id))}
                       target="_blank"
                     >
                       <SquareArrowUpRight className="h-5 w-5" />
