@@ -43,6 +43,13 @@
       "when": 1745129876488,
       "tag": "0005_lumpy_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1745132007344,
+      "tag": "0006_mighty_nebula",
+      "breakpoints": true
     }
   ]
 }

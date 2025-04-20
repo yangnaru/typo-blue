@@ -42,6 +42,7 @@ export async function createBlog(blogId: string) {
     const [q] = await db
       .insert(blog)
       .values({
+        id: crypto.randomUUID(),
         slug: blogId.toLowerCase(),
         userId: user.id,
         updated: new Date(),

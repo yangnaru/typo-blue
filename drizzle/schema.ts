@@ -32,7 +32,7 @@ export const post = pgTable(
     published: timestamp({ withTimezone: true }),
     title: text(),
     content: text(),
-    blogId: integer("blog_id").notNull(),
+    blogId: uuid("blog_id").notNull(),
     deleted: timestamp({ withTimezone: true }),
   },
   (table) => {
@@ -95,7 +95,7 @@ export const user = pgTable(
 export const blog = pgTable(
   "blog",
   {
-    id: serial().primaryKey().notNull(),
+    id: uuid().primaryKey().notNull(),
     created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
