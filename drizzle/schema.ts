@@ -12,7 +12,7 @@ import {
 import { sql } from "drizzle-orm";
 
 export const emailVerificationChallenge = pgTable(
-  "EmailVerificationChallenge",
+  "email_verification_challenge",
   {
     id: uuid().primaryKey().notNull(),
     code: text().notNull(),
@@ -22,7 +22,7 @@ export const emailVerificationChallenge = pgTable(
 );
 
 export const post = pgTable(
-  "Post",
+  "post",
   {
     createdAt: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -40,7 +40,7 @@ export const post = pgTable(
       postBlogIdFkey: foreignKey({
         columns: [table.blogId],
         foreignColumns: [blog.id],
-        name: "Post_blogId_fkey",
+        name: "post_blogId_fkey",
       })
         .onUpdate("cascade")
         .onDelete("cascade"),
@@ -49,7 +49,7 @@ export const post = pgTable(
 );
 
 export const session = pgTable(
-  "Session",
+  "session",
   {
     id: text().primaryKey().notNull(),
     userId: integer().notNull(),
@@ -60,7 +60,7 @@ export const session = pgTable(
       sessionUserIdFkey: foreignKey({
         columns: [table.userId],
         foreignColumns: [user.id],
-        name: "Session_userId_fkey",
+        name: "session_userId_fkey",
       })
         .onUpdate("cascade")
         .onDelete("cascade"),
@@ -69,7 +69,7 @@ export const session = pgTable(
 );
 
 export const user = pgTable(
-  "User",
+  "user",
   {
     id: serial().primaryKey().notNull(),
     name: text(),
@@ -84,7 +84,7 @@ export const user = pgTable(
   },
   (table) => {
     return {
-      emailKey: uniqueIndex("User_email_key").using(
+      emailKey: uniqueIndex("user_email_key").using(
         "btree",
         table.email.asc().nullsLast().op("text_ops")
       ),
@@ -93,7 +93,7 @@ export const user = pgTable(
 );
 
 export const blog = pgTable(
-  "Blog",
+  "blog",
   {
     id: serial().primaryKey().notNull(),
     createdAt: timestamp({ withTimezone: true })
@@ -109,18 +109,18 @@ export const blog = pgTable(
   },
   (table) => {
     return {
-      slugKey: uniqueIndex("Blog_slug_key").using(
+      slugKey: uniqueIndex("blog_slug_key").using(
         "btree",
         table.slug.asc().nullsLast().op("text_ops")
       ),
-      userIdKey: uniqueIndex("Blog_userId_key").using(
+      userIdKey: uniqueIndex("blog_userId_key").using(
         "btree",
         table.userId.asc().nullsLast().op("int4_ops")
       ),
       blogUserIdFkey: foreignKey({
         columns: [table.userId],
         foreignColumns: [user.id],
-        name: "Blog_userId_fkey",
+        name: "blog_userId_fkey",
       })
         .onUpdate("cascade")
         .onDelete("restrict"),
