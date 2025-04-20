@@ -31,29 +31,25 @@ export default function PostList({
       ) : (
         <ul className="space-y-2">
           {posts.map((post) => {
-            const base62 = encodePostId(post.uuid);
+            const base62 = encodePostId(post.id);
 
             return (
-              <li key={encodePostId(post.uuid)}>
+              <li key={encodePostId(post.id)}>
                 <Link
                   href={`/@${blog.slug}/${base62}`}
                   target={embed ? "_blank" : "_self"}
                 >
-                  {post.publishedAt ? (
+                  {post.published ? (
                     <span className="font-bold tabular-nums">
                       {formatInTimeZone(
-                        post.publishedAt,
+                        post.published,
                         "Asia/Seoul",
                         dateFormat
                       )}
                     </span>
                   ) : (
                     <span className="font-bold tabular-nums">
-                      {formatInTimeZone(
-                        post.updatedAt,
-                        "Asia/Seoul",
-                        dateFormat
-                      )}
+                      {formatInTimeZone(post.updated, "Asia/Seoul", dateFormat)}
                     </span>
                   )}{" "}
                   {post.title?.length === 0 ? "무제" : post.title}

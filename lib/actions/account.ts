@@ -59,7 +59,7 @@ export async function sendEmailVerificationCode(
     id: uuid,
     email,
     code,
-    expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
+    expires: createDate(new TimeSpan(5, "m")), // 5 minutes
   };
   await db.insert(emailVerificationChallenge).values(challenge);
 
@@ -100,7 +100,7 @@ export async function sendEmailVerificationCodeForEmailChange(
     id: uuid,
     email,
     code,
-    expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
+    expires: createDate(new TimeSpan(5, "m")), // 5 minutes
   };
   await db.insert(emailVerificationChallenge).values(challenge);
 
@@ -144,7 +144,7 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
-  if (!isWithinExpirationDate(new Date(challenge.expiresAt))) {
+  if (!isWithinExpirationDate(new Date(challenge.expires))) {
     return false;
   }
 
@@ -200,7 +200,7 @@ export async function verifyPassword(
   const sessionToken = generateSessionToken();
   const sessionCookie = await createSession(sessionToken, user.id);
 
-  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expiresAt));
+  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
 
   return true;
 }
@@ -220,7 +220,7 @@ export async function verifyEmailVerificationCode(
     return false;
   }
 
-  if (!isWithinExpirationDate(new Date(challenge.expiresAt))) {
+  if (!isWithinExpirationDate(new Date(challenge.expires))) {
     return false;
   }
 
@@ -240,25 +240,20 @@ export async function verifyEmailVerificationCode(
     const newUser = await db
       .insert(userTable)
       .values({
+        id: randomUUID(),
         email: challenge.email,
-        updatedAt: new Date(),
+        updated: new Date(),
       })
       .returning({ id: userTable.id });
     const sessionToken = generateSessionToken();
     const sessionCookie = await createSession(sessionToken, newUser[0].id);
 
-    await setSessionTokenCookie(
-      sessionToken,
-      new Date(sessionCookie.expiresAt)
-    );
+    await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
   } else {
     const sessionToken = generateSessionToken();
     const sessionCookie = await createSession(sessionToken, existingUser.id);
 
-    await setSessionTokenCookie(
-      sessionToken,
-      new Date(sessionCookie.expiresAt)
-    );
+    await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
   }
 
   return true;

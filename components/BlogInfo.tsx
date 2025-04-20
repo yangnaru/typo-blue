@@ -14,7 +14,7 @@ export default function BlogInfo({ blog }: { blog: any }) {
             @{blog.slug} {blog.name && `(${blog.name})`}
           </Link>
         </p>
-        <p>개설일: {format(new Date(blog.createdAt), "yyyy년 M월 d일")}</p>
+        <p>개설일: {format(new Date(blog.created), "yyyy년 M월 d일")}</p>
         <p>글 수: {blog.posts.length}</p>
       </div>
       <div className="flex flex-col space-y-2 items-end">

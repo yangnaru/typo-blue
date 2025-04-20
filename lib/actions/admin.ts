@@ -8,11 +8,11 @@ import {
   setSessionTokenCookie,
 } from "../auth";
 
-export async function impersonateUser(userId: number) {
+export async function impersonateUser(userId: string) {
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, userId);
 
-  await setSessionTokenCookie(sessionToken, new Date(session.expiresAt));
+  await setSessionTokenCookie(sessionToken, new Date(session.expires));
 
   redirect(getRootPath());
 }

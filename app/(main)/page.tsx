@@ -12,7 +12,7 @@ export default async function Home() {
   const userCount = (await db.select({ count: count() }).from(user))[0].count;
 
   const totalNotDeletedPosts = (
-    await db.select({ count: count() }).from(post).where(isNull(post.deletedAt))
+    await db.select({ count: count() }).from(post).where(isNull(post.deleted))
   )[0].count;
 
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -21,12 +21,12 @@ export default async function Home() {
     .leftJoin(blog, eq(post.blogId, blog.id))
     .where(
       and(
-        isNotNull(post.publishedAt),
-        isNull(post.deletedAt),
+        isNotNull(post.published),
+        isNull(post.deleted),
         eq(blog.discoverable, true)
       )
     )
-    .orderBy(desc(post.publishedAt))
+    .orderBy(desc(post.published))
     .limit(100);
 
   const discoverableBlogSlugs = Array.from(
@@ -48,7 +48,7 @@ export default async function Home() {
           .from(blog)
           .where(eq(blog.slug, process.env.OFFICIAL_BLOG_SLUG))
       ),
-      orderBy: desc(post.createdAt),
+      orderBy: desc(post.created),
     });
     // blog_id IN (SELECT id AS blogId FROM blog WHERE slug = '..')
   }

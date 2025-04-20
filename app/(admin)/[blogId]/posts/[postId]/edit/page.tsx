@@ -19,7 +19,7 @@ export default async function EditPost(props: { params: Params }) {
   }
 
   const editingPost = await db.query.post.findFirst({
-    where: and(eq(post.uuid, uuid), isNull(post.deletedAt)),
+    where: and(eq(post.id, uuid), isNull(post.deleted)),
   });
 
   const targetBlog = await db.query.blog.findFirst({
@@ -40,7 +40,7 @@ export default async function EditPost(props: { params: Params }) {
       existingTitle={editingPost.title ?? ""}
       existingContent={editingPost.content ?? ""}
       existingPostId={(await props.params).postId}
-      existingPublishedAt={editingPost.publishedAt}
+      existingPublishedAt={editingPost.published}
     />
   );
 }

@@ -42,9 +42,10 @@ export async function createBlog(blogId: string) {
     const [q] = await db
       .insert(blog)
       .values({
+        id: crypto.randomUUID(),
         slug: blogId.toLowerCase(),
         userId: user.id,
-        updatedAt: new Date(),
+        updated: new Date(),
       })
       .returning();
 
@@ -93,7 +94,7 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   }
 
   const targetPost = await db.query.post.findFirst({
-    where: and(eq(post.uuid, postId), isNull(post.deletedAt)),
+    where: and(eq(post.id, postId), isNull(post.deleted)),
     with: {
       blog: true,
     },
@@ -117,9 +118,9 @@ export async function publishPost(blogId: string, postId: string) {
   await db
     .update(post)
     .set({
-      publishedAt: new Date(),
+      published: new Date(),
     })
-    .where(eq(post.uuid, uuid));
+    .where(eq(post.id, uuid));
 
   return {
     success: true,
@@ -133,9 +134,9 @@ export async function unPublishPost(blogId: string, postId: string) {
   await db
     .update(post)
     .set({
-      publishedAt: null,
+      published: null,
     })
-    .where(eq(post.uuid, uuid));
+    .where(eq(post.id, uuid));
 
   return {
     success: true,
@@ -151,9 +152,9 @@ export async function deletePost(blogId: string, postId: string) {
     .set({
       title: null,
       content: null,
-      deletedAt: new Date(),
+      deleted: new Date(),
     })
-    .where(eq(post.uuid, uuid));
+    .where(eq(post.id, uuid));
 
   return {
     success: true,
@@ -162,7 +163,7 @@ export async function deletePost(blogId: string, postId: string) {
 
 export async function upsertPost(
   blogSlug: string,
-  publishedAt: Date | null,
+  published: Date | null,
   postId: string | null,
   title: string,
   content: string
@@ -189,9 +190,9 @@ export async function upsertPost(
       .set({
         title,
         content,
-        publishedAt,
+        published,
       })
-      .where(eq(post.uuid, uuid))
+      .where(eq(post.id, uuid))
       .returning();
     targetPost = updatedPost;
   } else {
@@ -200,10 +201,10 @@ export async function upsertPost(
       .values({
         title,
         content,
-        publishedAt,
+        published,
         blogId: targetBlog.id,
-        updatedAt: new Date(),
-        uuid: crypto.randomUUID(),
+        updated: new Date(),
+        id: crypto.randomUUID(),
       })
       .returning();
     targetPost = newPost;
@@ -213,7 +214,7 @@ export async function upsertPost(
 
   return {
     success: true,
-    postId: encodePostId(targetPost.uuid),
+    postId: encodePostId(targetPost.id),
   };
 }
 

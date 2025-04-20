@@ -14,8 +14,8 @@ export async function GET(req: NextRequest, props: { params: Params }) {
     where: (blogs, { eq }) => eq(blogs.slug, slug),
     with: {
       posts: {
-        where: (posts, { isNotNull }) => isNotNull(posts.publishedAt),
-        orderBy: (posts, { desc }) => [desc(posts.publishedAt)],
+        where: (posts, { isNotNull }) => isNotNull(posts.published),
+        orderBy: (posts, { desc }) => [desc(posts.published)],
         limit: 10,
       },
     },
@@ -61,15 +61,12 @@ export async function GET(req: NextRequest, props: { params: Params }) {
     .up();
 
   if (targetBlog.posts.length > 0) {
-    root
-      .ele("updated")
-      .txt(targetBlog.posts[0].publishedAt!.toISOString())
-      .up();
+    root.ele("updated").txt(targetBlog.posts[0].published!.toISOString()).up();
   }
 
   for (const post of targetBlog.posts) {
     const entry = root.ele("entry");
-    const postSlug = encodePostId(post.uuid);
+    const postSlug = encodePostId(post.id);
     entry.ele("title", { type: "html" }).txt(post.title || "무제");
     entry.ele("id").txt(`${url}/@${targetBlog.slug}/${postSlug}`);
     entry
@@ -82,8 +79,8 @@ export async function GET(req: NextRequest, props: { params: Params }) {
       type: "text/html",
       title: post.title,
     });
-    entry.ele("published").txt(post.publishedAt!.toISOString());
-    entry.ele("updated").txt(post.updatedAt!.toISOString());
+    entry.ele("published").txt(post.published!.toISOString());
+    entry.ele("updated").txt(post.updated!.toISOString());
     entry.ele("content", { type: "html" }).txt(post.content || "");
   }
 

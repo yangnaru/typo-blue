@@ -78,8 +78,8 @@ export default async function BlogHome(props: { params: Params }) {
     where: eq(blog.slug, slug),
     with: {
       posts: {
-        where: and(isNull(post.deletedAt), isNotNull(post.publishedAt)),
-        orderBy: desc(post.createdAt),
+        where: and(isNull(post.deleted), isNotNull(post.published)),
+        orderBy: desc(post.created),
       },
       user: true,
     },
