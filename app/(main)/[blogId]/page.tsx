@@ -1,10 +1,9 @@
 import PostList from "@/components/PostList";
 import { Button } from "@/components/ui/button";
-import { followBlog, unfollowBlog } from "@/lib/actions/blog";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getBlogDashboardPath } from "@/lib/paths";
-import { blog, follow, post, user } from "@/drizzle/schema";
+import { blog, post, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -90,15 +89,6 @@ export default async function BlogHome(props: { params: Params }) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
-  const isCurrentlyFollowing =
-    currentUser?.blogs?.[0]?.id &&
-    (await db.query.follow.findFirst({
-      where: and(
-        eq(follow.followerId, currentUser.blogs[0].id),
-        eq(follow.followingId, targetBlog.id)
-      ),
-    })) !== undefined;
-
   const isCurrentUserBlogOwner =
     sessionUser && targetBlog.user.email === sessionUser.email;
   const publishedPosts = targetBlog.posts;
@@ -122,35 +112,6 @@ export default async function BlogHome(props: { params: Params }) {
             </Button>
           </div>
         )}
-
-        {currentUser &&
-          currentUser.blogs?.[0] &&
-          targetBlog.id !== currentUser.blogs[0].id &&
-          (isCurrentlyFollowing ? (
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-
-                await unfollowBlog(formData);
-              }}
-            >
-              <input type="hidden" name="blogId" value={targetBlog.slug} />
-              <Button variant="destructive" type="submit">
-                파도타기 삭제
-              </Button>
-            </form>
-          ) : (
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-
-                await followBlog(formData);
-              }}
-            >
-              <input type="hidden" name="blogId" value={targetBlog.slug} />
-              <Button type="submit">파도타기 추가</Button>
-            </form>
-          ))}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 {
-  "id": "e68df94c-50b5-4137-ba19-0a5c4de71f3f",
+  "id": "eeb67828-7463-431e-b02a-0ddabddba6d7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -64,6 +64,7 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+<<<<<<< HEAD
         },
         "privateKey": {
           "name": "privateKey",
@@ -76,6 +77,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+=======
+>>>>>>> main
         }
       },
       "indexes": {
@@ -170,6 +173,7 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+<<<<<<< HEAD
     "public.Follow": {
       "name": "Follow",
       "schema": "",
@@ -277,6 +281,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+=======
+>>>>>>> main
     "public.Post": {
       "name": "Post",
       "schema": "",

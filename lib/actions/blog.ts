@@ -2,10 +2,9 @@
 
 import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
-import { blog, follow, post, user } from "@/drizzle/schema";
+import { blog, post } from "@/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
 export async function createBlog(blogId: string) {
@@ -82,105 +81,6 @@ export async function deleteBlog(blogId: string) {
   return {
     success: true,
   };
-}
-
-export async function followBlog(formData: FormData) {
-  const blogId = formData.get("blogId") as string;
-
-  const { user: sessionUser } = await getCurrentSession();
-
-  if (!sessionUser) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  const currentUser = await db.query.user.findFirst({
-    where: eq(user.id, sessionUser.id),
-    with: {
-      blogs: true,
-    },
-  });
-
-  if (!currentUser) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  if (!currentUser.blogs || currentUser.blogs.length === 0) {
-    return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
-  }
-
-  const targetBlog = await db.query.blog.findFirst({
-    where: eq(blog.slug, blogId),
-  });
-
-  if (!targetBlog) {
-    return { error: "블로그를 찾을 수 없습니다." };
-  }
-
-  if (sessionUser.id === targetBlog.userId) {
-    return { error: "자신의 블로그를 팔로우할 수 없습니다." };
-  }
-
-  try {
-    await db.insert(follow).values({
-      followerId: currentUser.blogs[0].id,
-      followingId: targetBlog.id,
-      updatedAt: new Date(),
-    });
-  } catch {}
-
-  revalidatePath(`/@${blogId}`);
-  redirect(`/@${blogId}`);
-}
-
-export async function unfollowBlog(formData: FormData) {
-  const blogId = formData.get("blogId") as string;
-
-  const { user: sessionUser } = await getCurrentSession();
-
-  if (!sessionUser) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  const currentUser = await db.query.user.findFirst({
-    where: eq(user.id, sessionUser.id),
-    with: {
-      blogs: true,
-    },
-  });
-
-  if (!currentUser) {
-    return { error: "로그인이 필요합니다." };
-  }
-
-  if (!currentUser.blogs || currentUser.blogs.length === 0) {
-    return { error: "블로그를 만들어야 팔로우할 수 있습니다." };
-  }
-
-  const targetBlog = await db.query.blog.findFirst({
-    where: eq(blog.slug, blogId),
-  });
-
-  if (!targetBlog) {
-    return { error: "블로그를 찾을 수 없습니다." };
-  }
-
-  if (sessionUser.id === targetBlog.userId) {
-    return { error: "자신의 블로그를 팔로우할 수 없습니다." };
-  }
-
-  try {
-    await db
-      .delete(follow)
-      .where(
-        and(
-          eq(follow.followerId, currentUser.blogs[0].id),
-          eq(follow.followingId, targetBlog.id)
-        )
-      );
-  } catch {}
-
-  revalidatePath(`/@${blogId}`);
-  redirect(`/@${blogId}`);
 }
 
 async function assertCurrentUserHasBlogWithIdAndPostWithId(
