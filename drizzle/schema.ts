@@ -32,7 +32,7 @@ export const post = pgTable(
     uuid: uuid().primaryKey().notNull(),
     title: text(),
     content: text(),
-    blogId: integer().notNull(),
+    blogId: integer("blog_id").notNull(),
     deleted: timestamp({ withTimezone: true }),
   },
   (table) => {
@@ -74,13 +74,13 @@ export const user = pgTable(
     id: serial().primaryKey().notNull(),
     name: text(),
     email: text().notNull(),
-    emailVerified: timestamp({ withTimezone: true }),
+    emailVerified: timestamp("email_verified", { withTimezone: true }),
     image: text(),
     created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updated: timestamp({ withTimezone: true }).notNull(),
-    passwordHash: text(),
+    passwordHash: text("password_hash"),
   },
   (table) => {
     return {
@@ -103,7 +103,7 @@ export const blog = pgTable(
     slug: text().notNull(),
     name: text(),
     description: text(),
-    userId: integer().notNull(),
+    userId: integer("user_id").notNull(),
     visitorCount: integer().default(0).notNull(),
     discoverable: boolean().default(false).notNull(),
   },
