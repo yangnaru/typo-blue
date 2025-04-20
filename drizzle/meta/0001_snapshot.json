@@ -64,21 +64,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-<<<<<<< HEAD
-        },
-        "privateKey": {
-          "name": "privateKey",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "publicKey": {
-          "name": "publicKey",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-=======
->>>>>>> main
         }
       },
       "indexes": {
@@ -173,116 +158,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-<<<<<<< HEAD
-    "public.Follow": {
-      "name": "Follow",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "followerId": {
-          "name": "followerId",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "followingId": {
-          "name": "followingId",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "iri": {
-          "name": "iri",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "acceptedAt": {
-          "name": "acceptedAt",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "Follow_followerId_followingId_key": {
-          "name": "Follow_followerId_followingId_key",
-          "columns": [
-            {
-              "expression": "followerId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "int4_ops"
-            },
-            {
-              "expression": "followingId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last",
-              "opclass": "int4_ops"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "Follow_followerId_fkey": {
-          "name": "Follow_followerId_fkey",
-          "tableFrom": "Follow",
-          "tableTo": "Blog",
-          "columnsFrom": [
-            "followerId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "cascade"
-        },
-        "Follow_followingId_fkey": {
-          "name": "Follow_followingId_fkey",
-          "tableFrom": "Follow",
-          "tableTo": "Blog",
-          "columnsFrom": [
-            "followingId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-=======
->>>>>>> main
     "public.Post": {
       "name": "Post",
       "schema": "",
