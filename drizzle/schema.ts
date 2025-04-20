@@ -8,8 +8,17 @@ import {
   uuid,
   text,
   boolean,
+  jsonb,
+  pgEnum,
+  check,
+  json,
+  AnyPgColumn,
+  unique,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { SQL, sql } from "drizzle-orm";
+import { Uuid } from "@/lib/uuid";
+
+const currentTimestamp = sql`CURRENT_TIMESTAMP`;
 
 export const follow = pgTable(
   "Follow",
@@ -19,8 +28,10 @@ export const follow = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updatedAt: timestamp({ withTimezone: true }).notNull(),
-    followerId: integer().notNull(),
+    followerId: integer(),
     followingId: integer().notNull(),
+    iri: text(),
+    acceptedAt: timestamp({ withTimezone: true }),
   },
   (table) => {
     return {
@@ -144,6 +155,8 @@ export const blog = pgTable(
     userId: integer().notNull(),
     visitorCount: integer().default(0).notNull(),
     discoverable: boolean().default(false).notNull(),
+    privateKey: jsonb("private_key").$type<JsonWebKey>(),
+    publicKey: jsonb("public_key").$type<JsonWebKey>(),
   },
   (table) => {
     return {
@@ -164,4 +177,94 @@ export const blog = pgTable(
         .onDelete("restrict"),
     };
   }
+);
+
+export const instanceTable = pgTable(
+  "instance",
+  {
+    host: text().primaryKey(),
+    software: text(),
+    softwareVersion: text("software_version"),
+    updated: timestamp({ withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    created: timestamp({ withTimezone: true })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [check("instance_host_check", sql`${table.host} NOT LIKE '%@%'`)]
+);
+
+export const actorTypeEnum = pgEnum("actor_type", [
+  "Application",
+  "Group",
+  "Organization",
+  "Person",
+  "Service",
+]);
+
+export type ActorType = (typeof actorTypeEnum.enumValues)[number];
+
+export const actorTable = pgTable(
+  "actor",
+  {
+    id: uuid().$type<Uuid>().primaryKey(),
+    iri: text().notNull().unique(),
+    type: actorTypeEnum().notNull(),
+    username: text().notNull(),
+    instanceHost: text("instance_host")
+      .notNull()
+      .references(() => instanceTable.host),
+    handleHost: text("handle_host").notNull(),
+    handle: text()
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`'@' || ${actorTable.username} || '@' || ${actorTable.handleHost}`
+      ),
+    blogId: integer("blog_id")
+      .notNull()
+      .unique()
+      .references(() => blog.id, { onDelete: "cascade" }),
+    name: text(),
+    bioHtml: text("bio_html"),
+    automaticallyApprovesFollowers: boolean("automatically_approves_followers")
+      .notNull()
+      .default(false),
+    avatarUrl: text("avatar_url"),
+    headerUrl: text("header_url"),
+    inboxUrl: text("inbox_url").notNull(),
+    sharedInboxUrl: text("shared_inbox_url"),
+    followersUrl: text("followers_url"),
+    featuredUrl: text("featured_url"),
+    fieldHtmls: json("field_htmls")
+      .$type<Record<string, string>>()
+      .notNull()
+      .default({}),
+    emojis: jsonb().$type<Record<string, string>>().notNull().default({}),
+    tags: jsonb().$type<Record<string, string>>().notNull().default({}),
+    sensitive: boolean().notNull().default(false),
+    successorId: uuid("successor_id")
+      .$type<Uuid>()
+      .references((): AnyPgColumn => actorTable.id, { onDelete: "set null" }),
+    aliases: text()
+      .array()
+      .notNull()
+      .default(sql`(ARRAY[]::text[])`),
+    followeesCount: integer("followees_count").notNull().default(0),
+    followersCount: integer("followers_count").notNull().default(0),
+    postsCount: integer("posts_count").notNull().default(0),
+    url: text(),
+    updated: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+    published: timestamp({ withTimezone: true }),
+    created: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+  },
+  (table) => [
+    unique().on(table.username, table.instanceHost),
+    check("actor_username_check", sql`${table.username} NOT LIKE '%@%'`),
+  ]
 );
