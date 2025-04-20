@@ -50,6 +50,13 @@
       "when": 1745132007344,
       "tag": "0006_mighty_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1745134348451,
+      "tag": "0007_whole_bromley",
+      "breakpoints": true
     }
   ]
 }

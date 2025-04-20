@@ -240,6 +240,7 @@ export async function verifyEmailVerificationCode(
     const newUser = await db
       .insert(userTable)
       .values({
+        id: randomUUID(),
         email: challenge.email,
         updated: new Date(),
       })

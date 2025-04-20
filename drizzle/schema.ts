@@ -2,7 +2,6 @@ import {
   pgTable,
   uniqueIndex,
   foreignKey,
-  serial,
   timestamp,
   integer,
   uuid,
@@ -52,7 +51,7 @@ export const session = pgTable(
   "session",
   {
     id: text().primaryKey().notNull(),
-    userId: integer().notNull(),
+    userId: uuid("user_id").notNull(),
     expires: timestamp({ withTimezone: true }).notNull(),
   },
   (table) => {
@@ -60,7 +59,7 @@ export const session = pgTable(
       sessionUserIdFkey: foreignKey({
         columns: [table.userId],
         foreignColumns: [user.id],
-        name: "session_userId_fkey",
+        name: "session_user_id_fkey",
       })
         .onUpdate("cascade")
         .onDelete("cascade"),
@@ -71,7 +70,7 @@ export const session = pgTable(
 export const user = pgTable(
   "user",
   {
-    id: serial().primaryKey().notNull(),
+    id: uuid().primaryKey().notNull(),
     name: text(),
     email: text().notNull(),
     emailVerified: timestamp("email_verified", { withTimezone: true }),
@@ -103,7 +102,7 @@ export const blog = pgTable(
     slug: text().notNull(),
     name: text(),
     description: text(),
-    userId: integer("user_id").notNull(),
+    userId: uuid("user_id").notNull(),
     visitorCount: integer().default(0).notNull(),
     discoverable: boolean().default(false).notNull(),
   },
@@ -113,14 +112,14 @@ export const blog = pgTable(
         "btree",
         table.slug.asc().nullsLast().op("text_ops")
       ),
-      userIdKey: uniqueIndex("blog_userId_key").using(
+      userIdKey: uniqueIndex("blog_user_id_key").using(
         "btree",
         table.userId.asc().nullsLast().op("int4_ops")
       ),
       blogUserIdFkey: foreignKey({
         columns: [table.userId],
         foreignColumns: [user.id],
-        name: "blog_userId_fkey",
+        name: "blog_user_id_fkey",
       })
         .onUpdate("cascade")
         .onDelete("restrict"),

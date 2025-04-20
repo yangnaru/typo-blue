@@ -8,7 +8,7 @@ import {
   setSessionTokenCookie,
 } from "../auth";
 
-export async function impersonateUser(userId: number) {
+export async function impersonateUser(userId: string) {
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, userId);
 

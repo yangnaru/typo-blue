@@ -9,7 +9,7 @@ export async function assertAdmin() {
     redirect(getLoginPath());
   }
 
-  if (user.id !== +process.env.ADMIN_USER_ID!) {
+  if (user.id !== process.env.ADMIN_USER_ID!) {
     redirect(getRootPath());
   }
 }
