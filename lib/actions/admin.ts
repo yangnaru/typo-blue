@@ -12,7 +12,7 @@ export async function impersonateUser(userId: number) {
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, userId);
 
-  await setSessionTokenCookie(sessionToken, new Date(session.expiresAt));
+  await setSessionTokenCookie(sessionToken, new Date(session.expires));
 
   redirect(getRootPath());
 }

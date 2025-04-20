@@ -17,23 +17,23 @@ export const emailVerificationChallenge = pgTable(
     id: uuid().primaryKey().notNull(),
     code: text().notNull(),
     email: text().notNull(),
-    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    expires: timestamp({ withTimezone: true }).notNull(),
   }
 );
 
 export const post = pgTable(
   "post",
   {
-    createdAt: timestamp({ withTimezone: true })
+    created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ withTimezone: true }).notNull(),
-    publishedAt: timestamp({ withTimezone: true }),
+    updated: timestamp({ withTimezone: true }).notNull(),
+    published: timestamp({ withTimezone: true }),
     uuid: uuid().primaryKey().notNull(),
     title: text(),
     content: text(),
     blogId: integer().notNull(),
-    deletedAt: timestamp({ withTimezone: true }),
+    deleted: timestamp({ withTimezone: true }),
   },
   (table) => {
     return {
@@ -53,7 +53,7 @@ export const session = pgTable(
   {
     id: text().primaryKey().notNull(),
     userId: integer().notNull(),
-    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    expires: timestamp({ withTimezone: true }).notNull(),
   },
   (table) => {
     return {
@@ -76,10 +76,10 @@ export const user = pgTable(
     email: text().notNull(),
     emailVerified: timestamp({ withTimezone: true }),
     image: text(),
-    createdAt: timestamp({ withTimezone: true })
+    created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ withTimezone: true }).notNull(),
+    updated: timestamp({ withTimezone: true }).notNull(),
     passwordHash: text(),
   },
   (table) => {
@@ -96,10 +96,10 @@ export const blog = pgTable(
   "blog",
   {
     id: serial().primaryKey().notNull(),
-    createdAt: timestamp({ withTimezone: true })
+    created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    updatedAt: timestamp({ withTimezone: true }).notNull(),
+    updated: timestamp({ withTimezone: true }).notNull(),
     slug: text().notNull(),
     name: text(),
     description: text(),

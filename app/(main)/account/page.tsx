@@ -43,7 +43,7 @@ export default async function AccountHome() {
                 <p>이메일 주소: {targetUser.email}</p>
                 <p>
                   가입일:{" "}
-                  {format(new Date(targetUser.createdAt), "yyyy년 M월 d일")}
+                  {format(new Date(targetUser.created), "yyyy년 M월 d일")}
                 </p>
               </div>
               <div className="flex flex-row space-x-2 items-center align-baseline">

@@ -47,8 +47,8 @@ export default async function Dashboard(props: { params: PageProps }) {
     where: eq(blog.slug, slug),
     with: {
       posts: {
-        orderBy: (post) => [desc(post.publishedAt)],
-        where: isNull(post.deletedAt),
+        orderBy: (post) => [desc(post.published)],
+        where: isNull(post.deleted),
       },
     },
   });
@@ -98,7 +98,7 @@ export default async function Dashboard(props: { params: PageProps }) {
                     </Link>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    {post.publishedAt ? (
+                    {post.published ? (
                       <Badge className="text-xs" variant="default">
                         발행
                       </Badge>
@@ -110,7 +110,7 @@ export default async function Dashboard(props: { params: PageProps }) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {formatInTimeZone(
-                      post.publishedAt ?? post.updatedAt,
+                      post.published ?? post.updated,
                       "Asia/Seoul",
                       "yyyy-MM-dd HH:mm"
                     )}

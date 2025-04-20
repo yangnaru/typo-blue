@@ -54,7 +54,7 @@ export async function generateMetadata(props: {
     };
   }
 
-  if (!targetPost.publishedAt && targetBlog.userId !== user?.id) {
+  if (!targetPost.published && targetBlog.userId !== user?.id) {
     return {
       title: "존재하지 않는 글입니다.",
     };
@@ -115,7 +115,7 @@ export default async function BlogPost(props: { params: Params }) {
     return <p>글이 존재하지 않습니다.</p>;
   }
 
-  if (!targetPost || (!targetPost.publishedAt && !isCurrentUserBlogOwner)) {
+  if (!targetPost || (!targetPost.published && !isCurrentUserBlogOwner)) {
     return <p>글이 존재하지 않습니다.</p>;
   }
 
@@ -129,7 +129,7 @@ export default async function BlogPost(props: { params: Params }) {
         </h3>
         <span className="text-neutral-500">
           {formatInTimeZone(
-            targetPost.publishedAt ?? targetPost.updatedAt,
+            targetPost.published ?? targetPost.updated,
             "Asia/Seoul",
             "yyyy-MM-dd HH:mm"
           )}

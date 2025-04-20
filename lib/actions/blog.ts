@@ -44,7 +44,7 @@ export async function createBlog(blogId: string) {
       .values({
         slug: blogId.toLowerCase(),
         userId: user.id,
-        updatedAt: new Date(),
+        updated: new Date(),
       })
       .returning();
 
@@ -93,7 +93,7 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   }
 
   const targetPost = await db.query.post.findFirst({
-    where: and(eq(post.uuid, postId), isNull(post.deletedAt)),
+    where: and(eq(post.uuid, postId), isNull(post.deleted)),
     with: {
       blog: true,
     },
@@ -117,7 +117,7 @@ export async function publishPost(blogId: string, postId: string) {
   await db
     .update(post)
     .set({
-      publishedAt: new Date(),
+      published: new Date(),
     })
     .where(eq(post.uuid, uuid));
 
@@ -133,7 +133,7 @@ export async function unPublishPost(blogId: string, postId: string) {
   await db
     .update(post)
     .set({
-      publishedAt: null,
+      published: null,
     })
     .where(eq(post.uuid, uuid));
 
@@ -151,7 +151,7 @@ export async function deletePost(blogId: string, postId: string) {
     .set({
       title: null,
       content: null,
-      deletedAt: new Date(),
+      deleted: new Date(),
     })
     .where(eq(post.uuid, uuid));
 
@@ -162,7 +162,7 @@ export async function deletePost(blogId: string, postId: string) {
 
 export async function upsertPost(
   blogSlug: string,
-  publishedAt: Date | null,
+  published: Date | null,
   postId: string | null,
   title: string,
   content: string
@@ -189,7 +189,7 @@ export async function upsertPost(
       .set({
         title,
         content,
-        publishedAt,
+        published,
       })
       .where(eq(post.uuid, uuid))
       .returning();
@@ -200,9 +200,9 @@ export async function upsertPost(
       .values({
         title,
         content,
-        publishedAt,
+        published,
         blogId: targetBlog.id,
-        updatedAt: new Date(),
+        updated: new Date(),
         uuid: crypto.randomUUID(),
       })
       .returning();

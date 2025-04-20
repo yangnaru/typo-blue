@@ -21,8 +21,8 @@ export default async function AdminRootPage() {
   const blogs = await db.query.blog.findMany({
     with: {
       posts: {
-        where: and(isNotNull(post.publishedAt), isNull(post.deletedAt)),
-        orderBy: desc(post.publishedAt),
+        where: and(isNotNull(post.published), isNull(post.deleted)),
+        orderBy: desc(post.published),
       },
     },
   });

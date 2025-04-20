@@ -39,21 +39,17 @@ export default function PostList({
                   href={`/@${blog.slug}/${base62}`}
                   target={embed ? "_blank" : "_self"}
                 >
-                  {post.publishedAt ? (
+                  {post.published ? (
                     <span className="font-bold tabular-nums">
                       {formatInTimeZone(
-                        post.publishedAt,
+                        post.published,
                         "Asia/Seoul",
                         dateFormat
                       )}
                     </span>
                   ) : (
                     <span className="font-bold tabular-nums">
-                      {formatInTimeZone(
-                        post.updatedAt,
-                        "Asia/Seoul",
-                        dateFormat
-                      )}
+                      {formatInTimeZone(post.updated, "Asia/Seoul", dateFormat)}
                     </span>
                   )}{" "}
                   {post.title?.length === 0 ? "무제" : post.title}

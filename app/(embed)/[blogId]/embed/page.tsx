@@ -26,9 +26,9 @@ export default async function BlogHome(props: { params: Params }) {
   const publishedPosts = await db.query.post.findMany({
     where: and(
       eq(post.blogId, blog.id),
-      eq(post.publishedAt, isNotNull(post.publishedAt))
+      eq(post.published, isNotNull(post.published))
     ),
-    orderBy: desc(post.publishedAt),
+    orderBy: desc(post.published),
     with: { blog: true },
   });
 
