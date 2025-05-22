@@ -10,5 +10,6 @@ export const db = drizzle({
   schema: { ...schema, ...relations },
 });
 
+export type Database = typeof db;
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;

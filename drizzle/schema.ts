@@ -13,6 +13,7 @@ import {
   json,
   AnyPgColumn,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 import { SQL, sql } from "drizzle-orm";
 import { Uuid } from "@/lib/uuid";
@@ -154,6 +155,9 @@ export const instanceTable = pgTable(
   (table) => [check("instance_host_check", sql`${table.host} NOT LIKE '%@%'`)]
 );
 
+export type Instance = typeof instanceTable.$inferSelect;
+export type NewInstance = typeof instanceTable.$inferInsert;
+
 export const actorTypeEnum = pgEnum("actor_type", [
   "Application",
   "Group",
@@ -181,7 +185,7 @@ export const actorTable = pgTable(
         (): SQL =>
           sql`'@' || ${actorTable.username} || '@' || ${actorTable.handleHost}`
       ),
-    blogId: integer("blog_id")
+    blogId: uuid("blog_id")
       .notNull()
       .unique()
       .references(() => blog.id, { onDelete: "cascade" }),
@@ -225,5 +229,28 @@ export const actorTable = pgTable(
   (table) => [
     unique().on(table.username, table.instanceHost),
     check("actor_username_check", sql`${table.username} NOT LIKE '%@%'`),
+  ]
+);
+
+export const followingTable = pgTable(
+  "following",
+  {
+    iri: text().notNull().primaryKey(),
+    followerId: uuid("follower_id")
+      .$type<Uuid>()
+      .notNull()
+      .references(() => actorTable.id, { onDelete: "cascade" }),
+    followeeId: uuid("followee_id")
+      .$type<Uuid>()
+      .notNull()
+      .references(() => actorTable.id, { onDelete: "cascade" }),
+    accepted: timestamp({ withTimezone: true }),
+    created: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+  },
+  (table) => [
+    unique().on(table.followerId, table.followeeId),
+    index().on(table.followerId),
   ]
 );

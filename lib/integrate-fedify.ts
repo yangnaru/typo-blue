@@ -10,11 +10,15 @@ import {
   Undo,
   exportJwk,
   importJwk,
+  Actor,
+  formatSemVer,
+  getNodeInfo,
 } from "@fedify/fedify";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
-import { blog, follow as followTable } from "@/drizzle/schema";
+import { actorTable, blog, NewInstance } from "@/drizzle/schema";
 import { and, eq } from "drizzle-orm";
+import { persistActor } from "./actor";
 
 export const fedifyRequestHanlder = integrateFederation(() => {});
 
@@ -60,7 +64,16 @@ federation
     }
 
     if (targetBlog.privateKey == null || targetBlog.publicKey == null) {
-      return [];
+      const { privateKey, publicKey } = await generateCryptoKeyPair();
+      await db
+        .update(blog)
+        .set({
+          privateKey: await exportJwk(privateKey),
+          publicKey: await exportJwk(publicKey),
+        })
+        .where(eq(blog.slug, identifier))
+        .execute();
+      return [{ privateKey, publicKey }];
     }
 
     try {
@@ -109,12 +122,15 @@ federation
     if (!targetBlog) {
       return;
     }
-    console.log({ targetBlog });
 
     const follower = await follow.getActor(context);
     if (follower?.id == null) {
       throw new Error("follower is null");
     }
+
+    console.debug("follower", follower);
+    await persistActor(db, context, follower);
+
     await context.sendActivity(
       { identifier: result.identifier },
       follower,
@@ -127,13 +143,6 @@ federation
         object: follow,
       })
     );
-
-    await db.insert(followTable).values({
-      followingId: targetBlog.id,
-      iri: follow.id.href,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
 
     revalidatePath("/");
   })
