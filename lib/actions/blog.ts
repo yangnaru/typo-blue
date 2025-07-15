@@ -6,6 +6,7 @@ import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, post } from "@/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
+import { sendPostNotificationEmail } from "./mailing-list";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -122,6 +123,12 @@ export async function publishPost(blogId: string, postId: string) {
     })
     .where(eq(post.id, uuid));
 
+  try {
+    await sendPostNotificationEmail(uuid);
+  } catch (error) {
+    console.error("Failed to send notification email:", error);
+  }
+
   return {
     success: true,
   };
@@ -184,7 +191,14 @@ export async function upsertPost(
   const uuid = postId ? decodePostId(postId) : undefined;
 
   let targetPost;
+  let wasAlreadyPublished = false;
+  
   if (uuid) {
+    const existingPost = await db.query.post.findFirst({
+      where: eq(post.id, uuid),
+    });
+    wasAlreadyPublished = !!existingPost?.published;
+    
     const [updatedPost] = await db
       .update(post)
       .set({
@@ -208,6 +222,14 @@ export async function upsertPost(
       })
       .returning();
     targetPost = newPost;
+  }
+
+  if (published && !wasAlreadyPublished) {
+    try {
+      await sendPostNotificationEmail(targetPost.id);
+    } catch (error) {
+      console.error("Failed to send notification email:", error);
+    }
   }
 
   revalidatePath(`/@${blogSlug}`);

@@ -1,4 +1,5 @@
 import PostList from "@/components/PostList";
+import MailingListSubscription from "@/components/MailingListSubscription";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -101,6 +102,13 @@ export default async function BlogHome(props: { params: Params }) {
         posts={publishedPosts}
         showTitle={false}
       />
+
+      {!isCurrentUserBlogOwner && (
+        <MailingListSubscription
+          blogId={targetBlog.id}
+          blogName={targetBlog.name || `@${targetBlog.slug}`}
+        />
+      )}
 
       <div className="flex flex-row space-x-2">
         {isCurrentUserBlogOwner && (

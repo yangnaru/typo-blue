@@ -114,7 +114,7 @@ export const blog = pgTable(
       ),
       userIdKey: uniqueIndex("blog_user_id_key").using(
         "btree",
-        table.userId.asc().nullsLast().op("int4_ops")
+        table.userId.asc().nullsLast().op("uuid_ops")
       ),
       blogUserIdFkey: foreignKey({
         columns: [table.userId],
@@ -123,6 +123,65 @@ export const blog = pgTable(
       })
         .onUpdate("cascade")
         .onDelete("restrict"),
+    };
+  }
+);
+
+export const mailingListSubscription = pgTable(
+  "mailing_list_subscription",
+  {
+    id: uuid().primaryKey().notNull(),
+    email: text().notNull(),
+    blogId: uuid("blog_id").notNull(),
+    created: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    unsubscribeToken: text("unsubscribe_token").notNull(),
+  },
+  (table) => {
+    return {
+      emailBlogIdKey: uniqueIndex("mailing_list_subscription_email_blog_id_key").using(
+        "btree",
+        table.email.asc().nullsLast().op("text_ops"),
+        table.blogId.asc().nullsLast().op("uuid_ops")
+      ),
+      unsubscribeTokenKey: uniqueIndex("mailing_list_subscription_unsubscribe_token_key").using(
+        "btree",
+        table.unsubscribeToken.asc().nullsLast().op("text_ops")
+      ),
+      mailingListSubscriptionBlogIdFkey: foreignKey({
+        columns: [table.blogId],
+        foreignColumns: [blog.id],
+        name: "mailing_list_subscription_blog_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+    };
+  }
+);
+
+export const postEmailSent = pgTable(
+  "post_email_sent",
+  {
+    id: uuid().primaryKey().notNull(),
+    postId: uuid("post_id").notNull(),
+    sentAt: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => {
+    return {
+      postIdKey: uniqueIndex("post_email_sent_post_id_key").using(
+        "btree",
+        table.postId.asc().nullsLast().op("uuid_ops")
+      ),
+      postEmailSentPostIdFkey: foreignKey({
+        columns: [table.postId],
+        foreignColumns: [post.id],
+        name: "post_email_sent_post_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
     };
   }
 );

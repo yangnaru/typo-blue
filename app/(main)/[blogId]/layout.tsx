@@ -9,7 +9,7 @@ export default async function BlogLayout({
   params,
 }: {
   children: ReactNode;
-  params: { blogId: string };
+  params: Promise<{ blogId: string }>;
 }) {
   const blogId = decodeURIComponent((await params).blogId);
   if (!blogId.startsWith("@")) {
