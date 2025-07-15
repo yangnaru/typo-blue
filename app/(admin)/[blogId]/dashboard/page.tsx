@@ -30,7 +30,7 @@ import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq, isNull } from "drizzle-orm";
-import { blog, post } from "@/drizzle/schema";
+import { blog, post, postEmailSent } from "@/drizzle/schema";
 
 type PageProps = Promise<{
   blogId: string;
@@ -52,6 +52,13 @@ export default async function Dashboard(props: { params: PageProps }) {
       },
     },
   });
+
+  // Get email sent records for all posts
+  const emailSentRecords = currentBlog?.posts.length 
+    ? await db.query.postEmailSent.findMany()
+    : [];
+
+  const emailSentMap = new Map(emailSentRecords.map(record => [record.postId, record.sentAt]));
 
   if (!currentBlog) {
     redirect(getRootPath());
@@ -76,10 +83,14 @@ export default async function Dashboard(props: { params: PageProps }) {
               <TableHead className="hidden md:table-cell">
                 발행 일시 (또는 저장 일시)
               </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                이메일 발송 일시
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentBlog.posts.map((post) => {
+              const emailSentAt = emailSentMap.get(post.id);
               return (
                 <TableRow key={post.id} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">
@@ -113,6 +124,28 @@ export default async function Dashboard(props: { params: PageProps }) {
                       post.published ?? post.updated,
                       "Asia/Seoul",
                       "yyyy-MM-dd HH:mm"
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {emailSentAt ? (
+                      <div className="flex flex-col">
+                        <span className="text-sm">
+                          {formatInTimeZone(
+                            emailSentAt,
+                            "Asia/Seoul",
+                            "yyyy-MM-dd HH:mm"
+                          )}
+                        </span>
+                        <Badge className="text-xs w-fit" variant="outline">
+                          발송 완료
+                        </Badge>
+                      </div>
+                    ) : post.published ? (
+                      <Badge className="text-xs" variant="secondary">
+                        미발송
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </TableCell>
                 </TableRow>

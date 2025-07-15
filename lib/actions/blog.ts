@@ -123,12 +123,6 @@ export async function publishPost(blogId: string, postId: string) {
     })
     .where(eq(post.id, uuid));
 
-  try {
-    await sendPostNotificationEmail(uuid);
-  } catch (error) {
-    console.error("Failed to send notification email:", error);
-  }
-
   return {
     success: true,
   };
@@ -224,13 +218,7 @@ export async function upsertPost(
     targetPost = newPost;
   }
 
-  if (published && !wasAlreadyPublished) {
-    try {
-      await sendPostNotificationEmail(targetPost.id);
-    } catch (error) {
-      console.error("Failed to send notification email:", error);
-    }
-  }
+  // Email sending is now manual - no automatic email on publish
 
   revalidatePath(`/@${blogSlug}`);
 
@@ -271,4 +259,17 @@ export async function editBlogInfo(
   return {
     success: true,
   };
+}
+
+export async function sendPostEmail(blogId: string, postId: string) {
+  const uuid = decodePostId(postId);
+  await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+
+  try {
+    const result = await sendPostNotificationEmail(uuid);
+    return result;
+  } catch (error) {
+    console.error("Failed to send notification email:", error);
+    return { success: false, message: "이메일 발송 중 오류가 발생했습니다." };
+  }
 }

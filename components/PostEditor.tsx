@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
-import { deletePost, unPublishPost, upsertPost } from "@/lib/actions/blog";
+import { deletePost, unPublishPost, upsertPost, sendPostEmail } from "@/lib/actions/blog";
 import { Button } from "./ui/button";
 import {
   Card,
@@ -22,12 +22,14 @@ export default function PostEditor({
   existingTitle = "",
   existingContent = "",
   existingPublishedAt = null,
+  existingEmailSent = false,
 }: {
   blogId: string;
   existingPostId?: string | null;
   existingTitle?: string;
   existingContent?: string;
   existingPublishedAt?: Date | null;
+  existingEmailSent?: boolean;
 }) {
   const [postId, setPostId] = useState(existingPostId);
   const [title, setTitle] = useState(existingTitle);
@@ -36,6 +38,8 @@ export default function PostEditor({
     existingPublishedAt
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(existingEmailSent);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
 
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
@@ -71,6 +75,30 @@ export default function PostEditor({
 
         window.location.href = getBlogDashboardPath(blogId);
       }
+    }
+  }
+
+  async function handleSendEmail() {
+    if (!postId) {
+      toast("글을 먼저 발행해야 합니다.");
+      return;
+    }
+
+    setIsEmailLoading(true);
+    
+    try {
+      const res = await sendPostEmail(blogId, postId);
+      
+      if (res.success) {
+        setEmailSent(true);
+        toast("이메일이 성공적으로 발송되었습니다! ✅");
+      } else {
+        toast(`이메일 발송 실패: ${res.message}`);
+      }
+    } catch (error) {
+      toast("이메일 발송 중 오류가 발생했습니다.");
+    } finally {
+      setIsEmailLoading(false);
     }
   }
 
@@ -135,6 +163,15 @@ export default function PostEditor({
               }}
             >
               발행 취소
+            </Button>
+          )}
+          {publishedAt !== null && postId !== null && (
+            <Button
+              variant="secondary"
+              disabled={isEmailLoading || emailSent}
+              onClick={handleSendEmail}
+            >
+              {emailSent ? "이메일 발송 완료" : "이메일 발송"}
             </Button>
           )}
           {postId !== null && (
