@@ -41,12 +41,16 @@ export default async function Home() {
   if (process.env.OFFICIAL_BLOG_SLUG) {
     officialBlogPosts = await db.query.post.findMany({
       with: { blog: true },
-      where: inArray(
-        post.blogId,
-        db
-          .select({ blogId: blog.id })
-          .from(blog)
-          .where(eq(blog.slug, process.env.OFFICIAL_BLOG_SLUG))
+      where: and(
+        inArray(
+          post.blogId,
+          db
+            .select({ blogId: blog.id })
+            .from(blog)
+            .where(eq(blog.slug, process.env.OFFICIAL_BLOG_SLUG))
+        ),
+        isNotNull(post.published),
+        isNull(post.deleted)
       ),
       orderBy: desc(post.created),
     });
