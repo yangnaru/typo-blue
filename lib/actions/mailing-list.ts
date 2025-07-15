@@ -137,7 +137,7 @@ export async function sendPostNotificationEmail(
     for (const subscriber of subscribers) {
       const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${subscriber.unsubscribeToken}`;
 
-      const emailContent = `
+      const emailContentText = `
 새로운 글이 게시되었습니다.
 
 제목: ${postData.title}
@@ -153,11 +153,112 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 구독해지: ${unsubscribeUrl}
       `.trim();
 
+      const emailContentHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${postData.title}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+    }
+    .header {
+      border-bottom: 2px solid #e5e5e5;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .content {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+    .cta {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .button:hover {
+      background-color: #2563eb;
+    }
+    .footer {
+      border-top: 1px solid #e5e5e5;
+      padding-top: 20px;
+      margin-top: 40px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+    .unsubscribe {
+      font-size: 12px;
+      color: #666;
+      text-decoration: none;
+    }
+    .unsubscribe:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">${postData.title}</div>
+    <div class="meta">
+      <strong>${blogName}</strong> • ${postData.blog.user.name}
+    </div>
+  </div>
+  
+  <div class="content">
+    ${postData.content ? postData.content.substring(0, 300) + (postData.content.length > 300 ? "..." : "") : ""}
+  </div>
+  
+  <div class="cta">
+    <a href="${postUrl}" class="button">전체 글 보기</a>
+  </div>
+  
+  <div class="footer">
+    <p>이 메일은 <strong>${blogName}</strong> 블로그의 메일링 리스트에 구독하여 발송되었습니다.</p>
+    <p><a href="${unsubscribeUrl}" class="unsubscribe">구독해지</a></p>
+  </div>
+</body>
+</html>
+      `.trim();
+
       const message = createMessage({
         from: process.env.EMAIL_FROM!,
         to: subscriber.email,
         subject: `[${blogName}] ${postData.title}`,
-        content: { text: emailContent },
+        content: { 
+          text: emailContentText,
+          html: emailContentHtml
+        },
       });
 
       try {
