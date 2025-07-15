@@ -7,6 +7,7 @@ import {
   uuid,
   text,
   boolean,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -182,6 +183,34 @@ export const postEmailSent = pgTable(
       })
         .onUpdate("cascade")
         .onDelete("cascade"),
+    };
+  }
+);
+
+export const emailQueue = pgTable(
+  "email_queue",
+  {
+    id: text("id").primaryKey(),
+    blogId: text("blog_id")
+      .notNull()
+      .references(() => blog.id, { onDelete: "cascade" }),
+    postId: text("post_id")
+      .notNull()
+      .references(() => post.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+    retryCount: integer("retry_count").notNull().default(0),
+    maxRetries: integer("max_retries").notNull().default(3),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    processedAt: timestamp("processed_at"),
+    scheduledFor: timestamp("scheduled_for").defaultNow().notNull(),
+    errorMessage: text("error_message"),
+  },
+  (table) => {
+    return {
+      statusIdx: index("email_queue_status_idx").on(table.status),
+      scheduledIdx: index("email_queue_scheduled_idx").on(table.scheduledFor),
+      createdAtIdx: index("email_queue_created_at_idx").on(table.createdAt),
     };
   }
 );

@@ -4,6 +4,7 @@ import { sendPostNotificationEmail } from '../actions/mailing-list';
 class EmailWorker {
   private isRunning = false;
   private shutdownSignal = false;
+  private processingJob: EmailJob | null = null;
 
   async start() {
     if (this.isRunning) {
@@ -36,7 +37,6 @@ class EmailWorker {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    await emailQueue.disconnect();
     console.log('Email worker shut down gracefully');
     process.exit(0);
   }
@@ -47,15 +47,23 @@ class EmailWorker {
         const job = await emailQueue.dequeue();
         
         if (!job) {
-          continue; // Timeout, continue polling
+          // No jobs available, wait before polling again
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          continue;
         }
 
+        this.processingJob = job;
         console.log(`Processing job ${job.id} (attempt ${job.retryCount + 1}/${job.maxRetries + 1})`);
         
         await this.processJob(job);
+        this.processingJob = null;
         
       } catch (error) {
         console.error('Error in job processing loop:', error);
+        if (this.processingJob) {
+          await emailQueue.fail(this.processingJob.id, error instanceof Error ? error.message : 'Unknown error');
+          this.processingJob = null;
+        }
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
       }
     }
@@ -78,12 +86,21 @@ class EmailWorker {
       
     } catch (error) {
       console.error(`Job ${job.id} failed:`, error);
-      await emailQueue.retry(job);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Update job with error message for retry
+      const jobWithError = { ...job, errorMessage };
+      await emailQueue.retry(jobWithError);
     }
   }
 
   async getStats() {
     return await emailQueue.getQueueStats();
+  }
+
+  async cleanupOldJobs(olderThanDays: number = 30) {
+    console.log(`Cleaning up completed jobs older than ${olderThanDays} days`);
+    await emailQueue.cleanupOldJobs(olderThanDays);
   }
 }
 

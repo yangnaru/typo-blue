@@ -64,6 +64,13 @@
       "when": 1752565558064,
       "tag": "0008_tan_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1752572663745,
+      "tag": "0009_rapid_dark_beast",
+      "breakpoints": true
     }
   ]
 }

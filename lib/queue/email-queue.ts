@@ -1,125 +1,179 @@
-import { createClient } from 'redis';
+import { db } from '../db';
+import { emailQueue as emailQueueTable } from '../../drizzle/schema';
+import { eq, and, lt, sql } from 'drizzle-orm';
 
 export interface EmailJob {
   id: string;
   blogId: string;
   postId: string;
   type: 'post-notification';
-  createdAt: Date;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   retryCount: number;
   maxRetries: number;
+  createdAt: Date;
+  processedAt?: Date;
+  scheduledFor: Date;
+  errorMessage?: string;
 }
 
 class EmailQueue {
-  private client = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
-  });
-
-  private queueName = 'email-queue';
-  private processingKey = 'email-processing';
   private retryDelayMs = 60000; // 1 minute
 
-  async connect() {
-    if (!this.client.isOpen) {
-      await this.client.connect();
-    }
-  }
-
-  async disconnect() {
-    if (this.client.isOpen) {
-      await this.client.disconnect();
-    }
-  }
-
-  async enqueue(job: Omit<EmailJob, 'id' | 'createdAt' | 'retryCount'>): Promise<string> {
-    await this.connect();
+  async enqueue(job: Omit<EmailJob, 'id' | 'createdAt' | 'retryCount' | 'status' | 'scheduledFor'>): Promise<string> {
+    const jobId = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
     
-    const emailJob: EmailJob = {
-      ...job,
-      id: `${Date.now()}-${Math.random().toString(36).substring(2)}`,
+    await db.insert(emailQueueTable).values({
+      id: jobId,
+      blogId: job.blogId,
+      postId: job.postId,
+      type: job.type,
+      status: 'pending',
+      retryCount: 0,
+      maxRetries: job.maxRetries,
       createdAt: new Date(),
-      retryCount: 0
-    };
+      scheduledFor: new Date(),
+    });
 
-    await this.client.lPush(this.queueName, JSON.stringify(emailJob));
-    return emailJob.id;
+    return jobId;
   }
 
   async dequeue(): Promise<EmailJob | null> {
-    await this.connect();
-    
-    const result = await this.client.brPop(this.queueName, 10);
-    if (!result) return null;
+    // Use a transaction to atomically get and mark a job as processing
+    const result = await db.transaction(async (tx) => {
+      // Find the oldest pending job that's scheduled to run
+      const [job] = await tx
+        .select()
+        .from(emailQueueTable)
+        .where(
+          and(
+            eq(emailQueueTable.status, 'pending'),
+            lt(emailQueueTable.scheduledFor, new Date())
+          )
+        )
+        .orderBy(emailQueueTable.createdAt)
+        .limit(1);
 
-    const job: EmailJob = JSON.parse(result.element);
-    
-    // Add to processing set with expiration
-    await this.client.setEx(
-      `${this.processingKey}:${job.id}`,
-      300, // 5 minutes
-      JSON.stringify(job)
-    );
+      if (!job) return null;
 
-    return job;
+      // Mark it as processing
+      await tx
+        .update(emailQueueTable)
+        .set({ status: 'processing' })
+        .where(eq(emailQueueTable.id, job.id));
+
+      return job;
+    });
+
+    return result;
   }
 
   async complete(jobId: string): Promise<void> {
-    await this.connect();
-    await this.client.del(`${this.processingKey}:${jobId}`);
+    await db
+      .update(emailQueueTable)
+      .set({ 
+        status: 'completed',
+        processedAt: new Date()
+      })
+      .where(eq(emailQueueTable.id, jobId));
   }
 
   async retry(job: EmailJob): Promise<void> {
-    await this.connect();
-    
     if (job.retryCount >= job.maxRetries) {
-      console.error(`Job ${job.id} exceeded max retries, moving to dead letter queue`);
-      await this.client.lPush(`${this.queueName}:failed`, JSON.stringify(job));
-      await this.client.del(`${this.processingKey}:${job.id}`);
+      console.error(`Job ${job.id} exceeded max retries, marking as failed`);
+      await db
+        .update(emailQueueTable)
+        .set({ 
+          status: 'failed',
+          processedAt: new Date(),
+          errorMessage: `Exceeded max retries (${job.maxRetries})`
+        })
+        .where(eq(emailQueueTable.id, job.id));
       return;
     }
 
-    job.retryCount++;
-    
-    // Exponential backoff: delay = retryDelayMs * 2^retryCount
-    const delay = this.retryDelayMs * Math.pow(2, job.retryCount - 1);
-    
-    setTimeout(async () => {
-      await this.client.lPush(this.queueName, JSON.stringify(job));
-      await this.client.del(`${this.processingKey}:${job.id}`);
-    }, delay);
+    const newRetryCount = job.retryCount + 1;
+    const delay = this.retryDelayMs * Math.pow(2, newRetryCount - 1);
+    const scheduledFor = new Date(Date.now() + delay);
+
+    await db
+      .update(emailQueueTable)
+      .set({
+        status: 'pending',
+        retryCount: newRetryCount,
+        scheduledFor,
+        errorMessage: job.errorMessage
+      })
+      .where(eq(emailQueueTable.id, job.id));
+  }
+
+  async fail(jobId: string, errorMessage: string): Promise<void> {
+    await db
+      .update(emailQueueTable)
+      .set({
+        status: 'failed',
+        processedAt: new Date(),
+        errorMessage
+      })
+      .where(eq(emailQueueTable.id, jobId));
   }
 
   async getQueueStats(): Promise<{
     pending: number;
     processing: number;
+    completed: number;
     failed: number;
   }> {
-    await this.connect();
-    
-    const [pending, processing, failed] = await Promise.all([
-      this.client.lLen(this.queueName),
-      this.client.keys(`${this.processingKey}:*`).then(keys => keys.length),
-      this.client.lLen(`${this.queueName}:failed`)
-    ]);
+    const results = await db
+      .select({
+        status: emailQueueTable.status,
+        count: sql<number>`count(*)`.as('count')
+      })
+      .from(emailQueueTable)
+      .groupBy(emailQueueTable.status);
 
-    return { pending, processing, failed };
+    const stats = {
+      pending: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0
+    };
+
+    results.forEach(row => {
+      stats[row.status as keyof typeof stats] = Number(row.count);
+    });
+
+    return stats;
   }
 
   async recoverStuckJobs(): Promise<void> {
-    await this.connect();
-    
-    const processingKeys = await this.client.keys(`${this.processingKey}:*`);
-    
-    for (const key of processingKeys) {
-      const ttl = await this.client.ttl(key);
-      if (ttl === -1) { // Key exists but has no expiration
-        const jobData = await this.client.get(key);
-        if (jobData) {
-          const job: EmailJob = JSON.parse(jobData);
-          await this.retry(job);
-        }
-      }
+    // Find jobs that have been processing for more than 5 minutes
+    const stuckJobs = await db
+      .select()
+      .from(emailQueueTable)
+      .where(
+        and(
+          eq(emailQueueTable.status, 'processing'),
+          lt(emailQueueTable.scheduledFor, new Date(Date.now() - 5 * 60 * 1000))
+        )
+      );
+
+    for (const job of stuckJobs) {
+      console.log(`Recovering stuck job ${job.id}`);
+      await this.retry(job);
     }
+  }
+
+  async cleanupOldJobs(olderThanDays: number = 30): Promise<void> {
+    const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    
+    await db
+      .delete(emailQueueTable)
+      .where(
+        and(
+          eq(emailQueueTable.status, 'completed'),
+          lt(emailQueueTable.createdAt, cutoffDate)
+        )
+      );
   }
 }
 
