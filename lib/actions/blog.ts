@@ -186,13 +186,13 @@ export async function upsertPost(
 
   let targetPost;
   let wasAlreadyPublished = false;
-  
+
   if (uuid) {
     const existingPost = await db.query.post.findFirst({
       where: eq(post.id, uuid),
     });
     wasAlreadyPublished = !!existingPost?.published;
-    
+
     const [updatedPost] = await db
       .update(post)
       .set({
@@ -265,23 +265,36 @@ export async function sendPostEmail(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
+  const foundBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
+  });
+
+  if (!foundBlog) {
+    return { success: false, message: "블로그를 찾을 수 없습니다." };
+  }
+
+  console.log({ foundBlog });
+
   try {
-    const { emailQueue } = await import('../queue/email-queue');
-    
+    const { emailQueue } = await import("../queue/email-queue");
+
     const jobId = await emailQueue.enqueue({
-      blogId,
+      blogId: foundBlog.id,
       postId: uuid,
-      type: 'post-notification',
-      maxRetries: 3
+      type: "post-notification",
+      maxRetries: 3,
     });
-    
-    return { 
-      success: true, 
-      message: "이메일 발송이 예약되었습니다.", 
-      jobId 
+
+    return {
+      success: true,
+      message: "이메일 발송이 예약되었습니다.",
+      jobId,
     };
   } catch (error) {
     console.error("Failed to enqueue notification email:", error);
-    return { success: false, message: "이메일 발송 예약 중 오류가 발생했습니다." };
+    return {
+      success: false,
+      message: "이메일 발송 예약 중 오류가 발생했습니다.",
+    };
   }
 }
