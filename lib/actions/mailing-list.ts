@@ -86,6 +86,7 @@ export async function unsubscribeFromMailingList(
 }
 
 export async function sendPostNotificationEmail(
+  blogId: string,
   postId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
@@ -101,6 +102,7 @@ export async function sendPostNotificationEmail(
     const postData = await db.query.post.findFirst({
       where: and(
         eq(post.id, postId),
+        eq(post.blogId, blogId),
         isNotNull(post.published),
         isNull(post.deleted)
       ),
@@ -120,7 +122,7 @@ export async function sendPostNotificationEmail(
     const subscribers = await db
       .select()
       .from(mailingListSubscription)
-      .where(eq(mailingListSubscription.blogId, postData.blogId));
+      .where(eq(mailingListSubscription.blogId, blogId));
 
     if (subscribers.length === 0) {
       return { success: true, message: "구독자가 없습니다." };

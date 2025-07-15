@@ -266,10 +266,22 @@ export async function sendPostEmail(blogId: string, postId: string) {
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   try {
-    const result = await sendPostNotificationEmail(uuid);
-    return result;
+    const { emailQueue } = await import('../queue/email-queue');
+    
+    const jobId = await emailQueue.enqueue({
+      blogId,
+      postId: uuid,
+      type: 'post-notification',
+      maxRetries: 3
+    });
+    
+    return { 
+      success: true, 
+      message: "이메일 발송이 예약되었습니다.", 
+      jobId 
+    };
   } catch (error) {
-    console.error("Failed to send notification email:", error);
-    return { success: false, message: "이메일 발송 중 오류가 발생했습니다." };
+    console.error("Failed to enqueue notification email:", error);
+    return { success: false, message: "이메일 발송 예약 중 오류가 발생했습니다." };
   }
 }
