@@ -3,7 +3,6 @@
 import { db } from "@/lib/db";
 import {
   mailingListSubscription,
-  postEmailSent,
   blog,
   post,
 } from "@/drizzle/schema";
@@ -90,15 +89,6 @@ export async function sendPostNotificationEmail(
   postId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const alreadySent = await db
-      .select()
-      .from(postEmailSent)
-      .where(eq(postEmailSent.postId, postId));
-
-    if (alreadySent.length > 0) {
-      return { success: false, message: "이미 이메일이 발송되었습니다." };
-    }
-
     const postData = await db.query.post.findFirst({
       where: and(
         eq(post.id, postId),
@@ -117,6 +107,10 @@ export async function sendPostNotificationEmail(
 
     if (!postData) {
       return { success: false, message: "게시글을 찾을 수 없습니다." };
+    }
+
+    if (postData.emailSent) {
+      return { success: false, message: "이미 이메일이 발송되었습니다." };
     }
 
     const subscribers = await db
@@ -288,10 +282,10 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
       }
     }
 
-    await db.insert(postEmailSent).values({
-      id: randomUUID(),
-      postId,
-    });
+    await db
+      .update(post)
+      .set({ emailSent: new Date() })
+      .where(eq(post.id, postId));
 
     return {
       success: true,

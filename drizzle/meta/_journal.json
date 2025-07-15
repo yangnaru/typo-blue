@@ -71,6 +71,20 @@
       "when": 1752572663745,
       "tag": "0009_rapid_dark_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1752574080154,
+      "tag": "0010_old_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1752574222807,
+      "tag": "0011_lethal_sally_floyd",
+      "breakpoints": true
     }
   ]
 }

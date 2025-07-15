@@ -1,0 +1,2 @@
+ALTER TABLE "post" ADD COLUMN "email_sent" timestamp with time zone;--> statement-breakpoint
+UPDATE "post" SET "email_sent" = "post_email_sent"."sentAt" FROM "post_email_sent" WHERE "post"."id" = "post_email_sent"."post_id";

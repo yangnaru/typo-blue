@@ -30,7 +30,7 @@ import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq, isNull } from "drizzle-orm";
-import { blog, post, postEmailSent } from "@/drizzle/schema";
+import { blog, post } from "@/drizzle/schema";
 
 type PageProps = Promise<{
   blogId: string;
@@ -53,12 +53,7 @@ export default async function Dashboard(props: { params: PageProps }) {
     },
   });
 
-  // Get email sent records for all posts
-  const emailSentRecords = currentBlog?.posts.length 
-    ? await db.query.postEmailSent.findMany()
-    : [];
-
-  const emailSentMap = new Map(emailSentRecords.map(record => [record.postId, record.sentAt]));
+  // Email sent information is now part of the post object
 
   if (!currentBlog) {
     redirect(getRootPath());
@@ -90,7 +85,7 @@ export default async function Dashboard(props: { params: PageProps }) {
           </TableHeader>
           <TableBody>
             {currentBlog.posts.map((post) => {
-              const emailSentAt = emailSentMap.get(post.id);
+              const emailSentAt = post.emailSent;
               return (
                 <TableRow key={post.id} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">

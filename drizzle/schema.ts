@@ -34,6 +34,7 @@ export const post = pgTable(
     content: text(),
     blogId: uuid("blog_id").notNull(),
     deleted: timestamp({ withTimezone: true }),
+    emailSent: timestamp("email_sent", { withTimezone: true }),
   },
   (table) => {
     return {
@@ -161,31 +162,6 @@ export const mailingListSubscription = pgTable(
   }
 );
 
-export const postEmailSent = pgTable(
-  "post_email_sent",
-  {
-    id: uuid().primaryKey().notNull(),
-    postId: uuid("post_id").notNull(),
-    sentAt: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (table) => {
-    return {
-      postIdKey: uniqueIndex("post_email_sent_post_id_key").using(
-        "btree",
-        table.postId.asc().nullsLast().op("uuid_ops")
-      ),
-      postEmailSentPostIdFkey: foreignKey({
-        columns: [table.postId],
-        foreignColumns: [post.id],
-        name: "post_email_sent_post_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-    };
-  }
-);
 
 export const emailQueue = pgTable(
   "email_queue",

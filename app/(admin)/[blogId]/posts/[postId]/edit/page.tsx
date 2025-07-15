@@ -2,7 +2,7 @@ import PostEditor from "@/components/PostEditor";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
-import { blog, post, postEmailSent } from "@/drizzle/schema";
+import { blog, post } from "@/drizzle/schema";
 import { decodePostId } from "@/lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -34,11 +34,7 @@ export default async function EditPost(props: { params: Params }) {
     redirect(getRootPath());
   }
 
-  const emailSentRecord = await db.query.postEmailSent.findFirst({
-    where: eq(postEmailSent.postId, uuid),
-  });
-
-  const emailSent = !!emailSentRecord;
+  const emailSent = !!editingPost.emailSent;
 
   return (
     <PostEditor
