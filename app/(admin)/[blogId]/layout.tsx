@@ -7,6 +7,7 @@ import {
   Cog,
   ExternalLink,
   Home,
+  Mail,
   PanelLeft,
   Settings,
   Type,
@@ -25,6 +26,7 @@ import {
   getBlogDashboardPath,
   getBlogHomePath,
   getBlogSettingsPath,
+  getBlogSubscribersPath,
   getRootPath,
 } from "@/lib/paths";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -97,6 +99,18 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">대시보드</TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={getBlogSubscribersPath(blogId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                      >
+                        <Mail className="h-5 w-5" />
+                        <span className="sr-only">구독자</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">구독자</TooltipContent>
+                  </Tooltip>
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
                   <Tooltip>
@@ -154,6 +168,13 @@ export default async function RootLayout({
                         >
                           <Home className="h-5 w-5" />
                           대시보드
+                        </Link>
+                        <Link
+                          href={getBlogSubscribersPath(blogId)}
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                          <Mail className="h-5 w-5" />
+                          구독자
                         </Link>
                         <Link
                           href={getBlogHomePath(blogId)}

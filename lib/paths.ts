@@ -38,6 +38,10 @@ export function getBlogSettingsPath(slug: string) {
   return `/@${slug}/settings`;
 }
 
+export function getBlogSubscribersPath(slug: string) {
+  return `/@${slug}/subscribers`;
+}
+
 export function getAccountChangeEmailPath() {
   return "/account/change-email";
 }
