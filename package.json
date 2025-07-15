@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "email-worker": "tsx scripts/email-worker.ts"
+    "email-worker": "tsx --env-file=.env scripts/email-worker.ts"
   },
   "dependencies": {
     "@fedify/fedify": "^1.5.1",
