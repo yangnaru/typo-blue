@@ -12,7 +12,6 @@ CREATE TABLE "email_queue" (
 	"error_message" text
 );
 --> statement-breakpoint
-DROP INDEX "blog_user_id_key";--> statement-breakpoint
 ALTER TABLE "email_queue" ADD CONSTRAINT "email_queue_blog_id_blog_id_fk" FOREIGN KEY ("blog_id") REFERENCES "public"."blog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "email_queue" ADD CONSTRAINT "email_queue_post_id_post_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."post"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "email_queue_status_idx" ON "email_queue" USING btree ("status");--> statement-breakpoint
