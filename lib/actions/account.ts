@@ -2,7 +2,8 @@
 
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo";
 import { generateRandomString, alphabet } from "oslo/crypto";
-import { TransportOptions, createTransport } from "nodemailer";
+import { MailgunTransport } from "@upyo/mailgun";
+import { createMessage } from "@upyo/core";
 import {
   createSession,
   deleteSessionTokenCookie,
@@ -63,21 +64,24 @@ export async function sendEmailVerificationCode(
   };
   await db.insert(emailVerificationChallenge).values(challenge);
 
-  const transporter = createTransport({
-    host: process.env.EMAIL_SERVER_HOST,
-    port: process.env.EMAIL_SERVER_PORT,
-    auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
-    },
-  } as TransportOptions);
+  const transport = new MailgunTransport({
+    apiKey: process.env.MAILGUN_API_KEY!,
+    domain: process.env.MAILGUN_DOMAIN!,
+  });
 
-  const info: any = await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  const message = createMessage({
+    from: process.env.EMAIL_FROM!,
     to: email,
     subject: "타이포 블루 로그인 코드",
-    text: code,
+    content: { text: code },
   });
+
+  const receipt = await transport.send(message);
+  if (receipt.successful) {
+    console.log("Message sent with ID:", receipt.messageId);
+  } else {
+    console.error("Send failed:", receipt.errorMessages.join(", "));
+  }
 
   return challenge.id;
 }
@@ -104,21 +108,24 @@ export async function sendEmailVerificationCodeForEmailChange(
   };
   await db.insert(emailVerificationChallenge).values(challenge);
 
-  const transporter = createTransport({
-    host: process.env.EMAIL_SERVER_HOST,
-    port: process.env.EMAIL_SERVER_PORT,
-    auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
-    },
-  } as TransportOptions);
+  const transport = new MailgunTransport({
+    apiKey: process.env.MAILGUN_API_KEY!,
+    domain: process.env.MAILGUN_DOMAIN!,
+  });
 
-  const info: any = await transporter.sendMail({
-    from: process.env.EMAIL_FROM,
+  const message = createMessage({
+    from: process.env.EMAIL_FROM!,
     to: email,
     subject: "타이포 블루 이메일 변경 코드",
-    text: code,
+    content: { text: code },
   });
+
+  const receipt = await transport.send(message);
+  if (receipt.successful) {
+    console.log("Message sent with ID:", receipt.messageId);
+  } else {
+    console.error("Send failed:", receipt.errorMessages.join(", "));
+  }
 
   return challenge.id;
 }
