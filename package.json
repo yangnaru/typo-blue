@@ -77,7 +77,7 @@
     "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.11.10",
     "@types/sanitize-html": "^2.9.0",
-    "drizzle-kit": "^0.31.0"
+    "drizzle-kit": "^0.31.4"
   },
   "overrides": {
     "@types/react": "19.1.2",
