@@ -61,7 +61,7 @@ class EmailQueue {
         .set({ status: 'processing' })
         .where(eq(emailQueueTable.id, job.id));
 
-      return job;
+      return job as EmailJob;
     });
 
     return result;
@@ -159,7 +159,7 @@ class EmailQueue {
 
     for (const job of stuckJobs) {
       console.log(`Recovering stuck job ${job.id}`);
-      await this.retry(job);
+      await this.retry(job as EmailJob);
     }
   }
 
