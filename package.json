@@ -37,6 +37,7 @@
     "@types/node": "^20.4.4",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
+    "@upyo/core": "^0.1.1",
     "@urlpack/base62": "^1.1.0",
     "autoprefixer": "10.4.14",
     "class-variance-authority": "^0.7.0",
