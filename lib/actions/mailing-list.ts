@@ -13,6 +13,7 @@ import { generateRandomString, alphabet } from "oslo/crypto";
 import { MailgunTransport } from "@upyo/mailgun";
 import { createMessage } from "@upyo/core";
 import { htmlToText } from "html-to-text";
+import { encodePostId } from "../utils";
 
 export async function subscribeToMailingList(
   email: string,
@@ -131,7 +132,9 @@ export async function sendPostNotificationEmail(
     });
 
     const blogName = postData.blog.name || `@${postData.blog.slug}`;
-    const postUrl = `${process.env.NEXT_PUBLIC_URL}/@${postData.blog.slug}/${postData.id}`;
+    const postUrl = `${process.env.NEXT_PUBLIC_URL}/@${
+      postData.blog.slug
+    }/${encodePostId(postData.id)}`;
     const contentText = postData.content ? htmlToText(postData.content) : "";
 
     for (const subscriber of subscribers) {
@@ -236,7 +239,12 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   </div>
   
   <div class="content">
-    ${postData.content ? postData.content.substring(0, 300) + (postData.content.length > 300 ? "..." : "") : ""}
+    ${
+      postData.content
+        ? postData.content.substring(0, 300) +
+          (postData.content.length > 300 ? "..." : "")
+        : ""
+    }
   </div>
   
   <div class="cta">
@@ -255,9 +263,9 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
         from: process.env.EMAIL_FROM!,
         to: subscriber.email,
         subject: `[${blogName}] ${postData.title}`,
-        content: { 
+        content: {
           text: emailContentText,
-          html: emailContentHtml
+          html: emailContentHtml,
         },
       });
 
