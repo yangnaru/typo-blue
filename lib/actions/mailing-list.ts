@@ -1,7 +1,12 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { mailingListSubscription, postEmailSent, blog, post } from "@/drizzle/schema";
+import {
+  mailingListSubscription,
+  postEmailSent,
+  blog,
+  post,
+} from "@/drizzle/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { generateRandomString, alphabet } from "oslo/crypto";
@@ -36,8 +41,11 @@ export async function subscribeToMailingList(
       return { success: false, message: "블로그를 찾을 수 없습니다." };
     }
 
-    const unsubscribeToken = generateRandomString(32, alphabet("a-z", "A-Z", "0-9"));
-    
+    const unsubscribeToken = generateRandomString(
+      32,
+      alphabet("a-z", "A-Z", "0-9")
+    );
+
     await db.insert(mailingListSubscription).values({
       id: randomUUID(),
       email,
@@ -128,13 +136,13 @@ export async function sendPostNotificationEmail(
 
     for (const subscriber of subscribers) {
       const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${subscriber.unsubscribeToken}`;
-      
+
       const emailContent = `
 새로운 글이 게시되었습니다.
 
 제목: ${postData.title}
 블로그: ${blogName}
-작성자: ${postData.blog.user.name || postData.blog.user.email}
+작성자: ${postData.blog.user.name}
 
 ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 
@@ -155,9 +163,14 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
       try {
         const receipt = await transport.send(message);
         if (receipt.successful) {
-          console.log(`Email sent to ${subscriber.email}, ID: ${receipt.messageId}`);
+          console.log(
+            `Email sent to ${subscriber.email}, ID: ${receipt.messageId}`
+          );
         } else {
-          console.error(`Failed to send to ${subscriber.email}:`, receipt.errorMessages.join(", "));
+          console.error(
+            `Failed to send to ${subscriber.email}:`,
+            receipt.errorMessages.join(", ")
+          );
         }
       } catch (error) {
         console.error(`Error sending email to ${subscriber.email}:`, error);
@@ -169,9 +182,9 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
       postId,
     });
 
-    return { 
-      success: true, 
-      message: `${subscribers.length}명의 구독자에게 이메일을 발송했습니다.` 
+    return {
+      success: true,
+      message: `${subscribers.length}명의 구독자에게 이메일을 발송했습니다.`,
     };
   } catch (error) {
     console.error("Error sending post notification email:", error);
