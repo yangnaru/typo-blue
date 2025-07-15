@@ -72,7 +72,7 @@
 
 1. **저장소 클론**
    ```bash
-   git clone https://github.com/your-username/typo-blue.git
+   git clone https://github.com/yangnaru/typo-blue.git
    cd typo-blue
    ```
 
@@ -353,9 +353,6 @@ npm start
 | `npm run build` | 프로덕션용 빌드 |
 | `npm run start` | 프로덕션 서버 시작 |
 | `npm run lint` | ESLint 실행 |
-| `npm run db:generate` | 데이터베이스 마이그레이션 생성 |
-| `npm run db:migrate` | 데이터베이스 마이그레이션 실행 |
-| `npm run db:studio` | Drizzle Studio 열기 |
 
 ## 지원
 
@@ -374,4 +371,4 @@ npm start
 
 **즐거운 코딩!** 🚀
 
-자세한 정보는 [프로젝트 저장소](https://github.com/your-username/typo-blue)를 방문하세요.
+자세한 정보는 [프로젝트 저장소](https://github.com/yangnaru/typo-blue)를 방문하세요.
