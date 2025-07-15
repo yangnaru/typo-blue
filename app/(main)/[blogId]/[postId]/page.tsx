@@ -123,7 +123,7 @@ export default async function BlogPost(props: { params: Params }) {
     <div className="space-y-8">
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
-          <Link href={`/@${blog.slug}/${encodePostId(targetPost.id)}`}>
+          <Link href={`/@${targetBlog.slug}/${encodePostId(targetPost.id)}`}>
             {targetPost.title === "" ? "무제" : targetPost.title}
           </Link>
         </h3>
