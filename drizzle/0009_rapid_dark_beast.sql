@@ -1,7 +1,7 @@
 CREATE TABLE "email_queue" (
 	"id" text PRIMARY KEY NOT NULL,
-	"blog_id" text NOT NULL,
-	"post_id" text NOT NULL,
+	"blog_id" uuid NOT NULL,
+	"post_id" uuid NOT NULL,
 	"type" text NOT NULL,
 	"status" text DEFAULT 'pending' NOT NULL,
 	"retry_count" integer DEFAULT 0 NOT NULL,
