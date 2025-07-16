@@ -71,7 +71,7 @@ export default async function Home() {
         <HomeWithSession />
       </nav>
 
-      {discoverableBlogSlugs && (
+      {discoverableBlogSlugs.length > 0 && (
         <>
           <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
 
