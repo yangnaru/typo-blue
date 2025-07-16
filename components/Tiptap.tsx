@@ -18,6 +18,7 @@ function Tiptap({
   onChange: (name: string, content: string) => void;
 }) {
   const editor = useEditor({
+    immediatelyRender: false,
     content: content,
     onUpdate: ({ editor }) => {
       onChange(name, editor.getHTML());
