@@ -8,6 +8,7 @@ import { blog, post, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
+import { incrementVisitorCount } from "@/lib/actions/blog";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -93,6 +94,8 @@ export default async function BlogHome(props: { params: Params }) {
   const isCurrentUserBlogOwner =
     sessionUser && targetBlog.user.email === sessionUser.email;
   const publishedPosts = targetBlog.posts;
+
+  await incrementVisitorCount(targetBlog.id);
 
   return (
     <div className="space-y-8">

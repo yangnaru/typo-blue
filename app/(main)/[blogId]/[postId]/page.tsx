@@ -9,6 +9,7 @@ import { getBlogPostEditPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, post, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { incrementVisitorCount } from "@/lib/actions/blog";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -118,6 +119,8 @@ export default async function BlogPost(props: { params: Params }) {
   if (!targetPost || (!targetPost.published && !isCurrentUserBlogOwner)) {
     return <p>글이 존재하지 않습니다.</p>;
   }
+
+  await incrementVisitorCount(targetBlog.id);
 
   return (
     <div className="space-y-8">

@@ -5,8 +5,7 @@ import { revalidatePath } from "next/cache";
 import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, post } from "@/drizzle/schema";
-import { and, eq, isNull } from "drizzle-orm";
-import { sendPostNotificationEmail } from "./mailing-list";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -297,4 +296,13 @@ export async function sendPostEmail(blogId: string, postId: string) {
       message: "이메일 발송 예약 중 오류가 발생했습니다.",
     };
   }
+}
+
+export async function incrementVisitorCount(blogId: string) {
+  await db
+    .update(blog)
+    .set({
+      visitorCount: sql`${blog.visitorCount} + 1`,
+    })
+    .where(eq(blog.id, blogId));
 }

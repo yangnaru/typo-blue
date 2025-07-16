@@ -2,6 +2,7 @@ import PostList from "@/components/PostList";
 import { db } from "@/lib/db";
 import { blog, post } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { incrementVisitorCount } from "@/lib/actions/blog";
 
 type Params = Promise<{
   blogId: string;
@@ -31,6 +32,8 @@ export default async function BlogHome(props: { params: Params }) {
     orderBy: desc(post.published),
     with: { blog: true },
   });
+
+  await incrementVisitorCount(targetBlog.id);
 
   return (
     <PostList
