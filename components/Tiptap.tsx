@@ -69,7 +69,7 @@ function Tiptap({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="[&>*]:text-xl space-x-1 pl-1">
+      <div className="*:text-xl space-x-1 pl-1">
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
