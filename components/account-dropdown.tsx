@@ -44,14 +44,8 @@ export default function AccountDropdown({
         <DropdownMenuItem className="cursor-pointer" asChild>
           <Link href={getAccountPath()}>내 계정</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer" asChild>
-          <form
-            action={async () => {
-              await logout();
-            }}
-          >
-            <button>로그아웃</button>
-          </form>
+        <DropdownMenuItem className="cursor-pointer" onClick={logout}>
+          로그아웃
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
