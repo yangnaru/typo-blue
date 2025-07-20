@@ -64,7 +64,7 @@ function BlogLayoutBody({
             <span className="text-blue-500">blue</span>
           </Link>
           {blog && (
-            <p className="text-neutral-500">total {blog.visitorCount}</p>
+            <p className="text-neutral-500">total {blog.visitor_count}</p>
           )}
         </div>
       </h1>

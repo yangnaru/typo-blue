@@ -102,7 +102,7 @@ export const blog = pgTable(
     name: text(),
     description: text(),
     userId: uuid("user_id").notNull(),
-    visitorCount: integer().default(0).notNull(),
+    visitor_count: integer().default(0).notNull(),
     discoverable: boolean().default(false).notNull(),
   },
   (table) => {

@@ -302,7 +302,7 @@ export async function incrementVisitorCount(blogId: string) {
   await db
     .update(blog)
     .set({
-      visitorCount: sql`${blog.visitorCount} + 1`,
+      visitor_count: sql`${blog.visitor_count} + 1`,
     })
     .where(eq(blog.id, blogId));
 }
