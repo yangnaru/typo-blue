@@ -1,4 +1,5 @@
 import BlogInfo from "@/components/BlogInfo";
+import AccountDeletion from "@/components/AccountDeletion";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -73,6 +74,8 @@ export default async function AccountHome() {
             )}
           </div>
         </div>
+
+        <AccountDeletion />
       </div>
     </div>
   );

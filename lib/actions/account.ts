@@ -19,6 +19,8 @@ import { db } from "../db";
 import {
   emailVerificationChallenge,
   user as userTable,
+  blog as blogTable,
+  session as sessionTable,
 } from "@/drizzle/schema";
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
@@ -278,4 +280,99 @@ export async function logout() {
   await deleteSessionTokenCookie();
 
   return redirect(getRootPath());
+}
+
+export async function sendAccountDeletionVerificationCode(): Promise<string> {
+  const { user } = await getCurrentSession();
+
+  if (!user) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  const code = generateRandomString(6, alphabet("0-9"));
+
+  const uuid = randomUUID();
+  const challenge = {
+    id: uuid,
+    email: user.email,
+    code,
+    expires: createDate(new TimeSpan(10, "m")), // 10 minutes for account deletion
+  };
+  await db.insert(emailVerificationChallenge).values(challenge);
+
+  const transport = new MailgunTransport({
+    apiKey: process.env.MAILGUN_API_KEY!,
+    domain: process.env.MAILGUN_DOMAIN!,
+  });
+
+  const message = createMessage({
+    from: process.env.EMAIL_FROM!,
+    to: user.email,
+    subject: "타이포 블루 계정 삭제 인증 코드",
+    content: { 
+      text: `계정 삭제 인증 코드: ${code}\n\n이 코드는 10분 후에 만료됩니다. 계정 삭제를 원하지 않으시면 이 메일을 무시하세요.`,
+      html: `<h2>계정 삭제 인증 코드</h2><p><strong>${code}</strong></p><p>이 코드는 10분 후에 만료됩니다.</p><p>계정 삭제를 원하지 않으시면 이 메일을 무시하세요.</p>`
+    },
+  });
+
+  const receipt = await transport.send(message);
+  if (receipt.successful) {
+    console.log("Account deletion verification message sent with ID:", receipt.messageId);
+  } else {
+    console.error("Send failed:", receipt.errorMessages.join(", "));
+    throw new Error("이메일 발송에 실패했습니다.");
+  }
+
+  return challenge.id;
+}
+
+export async function deleteAccount(challengeId: string, code: string): Promise<boolean> {
+  const { user, session } = await getCurrentSession();
+
+  if (!user || !session) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  const challenge = (
+    await db
+      .select()
+      .from(emailVerificationChallenge)
+      .where(eq(emailVerificationChallenge.id, challengeId))
+  )[0];
+
+  if (!challenge) {
+    throw new Error("유효하지 않은 인증 코드입니다.");
+  }
+
+  if (!isWithinExpirationDate(new Date(challenge.expires))) {
+    throw new Error("인증 코드가 만료되었습니다.");
+  }
+
+  if (challenge.code !== code) {
+    throw new Error("인증 코드가 일치하지 않습니다.");
+  }
+
+  if (challenge.email !== user.email) {
+    throw new Error("인증 코드가 현재 계정과 일치하지 않습니다.");
+  }
+
+  // Delete account and all related data in a transaction
+  await db.transaction(async (tx) => {
+    // Delete all user's blogs (cascade will handle posts and related data)
+    await tx.delete(blogTable).where(eq(blogTable.userId, user.id));
+    
+    // Delete all user's sessions
+    await tx.delete(sessionTable).where(eq(sessionTable.userId, user.id));
+    
+    // Delete the user
+    await tx.delete(userTable).where(eq(userTable.id, user.id));
+    
+    // Clean up the verification challenge
+    await tx.delete(emailVerificationChallenge).where(eq(emailVerificationChallenge.id, challengeId));
+  });
+
+  // Clear the session cookie
+  await deleteSessionTokenCookie();
+
+  return true;
 }
