@@ -141,7 +141,7 @@ export async function sendPostNotificationEmail(
 
 제목: ${postData.title}
 블로그: ${blogName}
-작성자: ${postData.blog.user.name}
+작성자: ${postData.blog.user.email}
 
 ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 
@@ -230,7 +230,7 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   <div class="header">
     <div class="title">${postData.title}</div>
     <div class="meta">
-      <strong>${blogName}</strong> • ${postData.blog.user.name}
+      <strong>${blogName}</strong> • ${postData.blog.user.email}
     </div>
   </div>
   

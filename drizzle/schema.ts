@@ -73,10 +73,7 @@ export const user = pgTable(
   "user",
   {
     id: uuid().primaryKey().notNull(),
-    name: text(),
     email: text().notNull(),
-    emailVerified: timestamp("email_verified", { withTimezone: true }),
-    image: text(),
     created: timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
