@@ -92,7 +92,7 @@ export default async function BlogHome(props: { params: Params }) {
   }
 
   const isCurrentUserBlogOwner =
-    sessionUser && targetBlog.user.email === sessionUser.email;
+    sessionUser && targetBlog.user.id === sessionUser.id;
   const publishedPosts = targetBlog.posts;
 
   await incrementVisitorCount(targetBlog.id);

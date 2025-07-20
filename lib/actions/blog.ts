@@ -73,7 +73,7 @@ export async function deleteBlog(blogId: string) {
     return { error: "블로그를 찾을 수 없습니다." };
   }
 
-  if (targetBlog.user.email !== user.email) {
+  if (targetBlog.user.id !== user.id) {
     return { error: "권한이 없습니다." };
   }
 
