@@ -1,11 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import {
-  mailingListSubscription,
-  blog,
-  post,
-} from "@/drizzle/schema";
+import { mailingListSubscription, blog, post } from "@/drizzle/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { generateRandomString, alphabet } from "oslo/crypto";
@@ -141,7 +137,6 @@ export async function sendPostNotificationEmail(
 
 제목: ${postData.title}
 블로그: ${blogName}
-작성자: ${postData.blog.user.email}
 
 ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 
@@ -230,7 +225,7 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   <div class="header">
     <div class="title">${postData.title}</div>
     <div class="meta">
-      <strong>${blogName}</strong> • ${postData.blog.user.email}
+      <strong>${blogName}</strong>
     </div>
   </div>
   
