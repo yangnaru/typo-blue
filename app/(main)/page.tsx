@@ -62,10 +62,14 @@ export default async function Home() {
       <Logo />
 
       <p>타이포 블루는 텍스트 전용 블로깅 플랫폼입니다.</p>
-      <p>
-        지금까지 {userCount}명이 쓴 {totalNotDeletedPosts}개의 글과 함께하고
-        있습니다.
-      </p>
+
+      <ul className="list-disc list-inside">
+        <li>텍스트로만 게시물을 쓸 수 있습니다.</li>
+        <li>사진 등의 첨부 파일은 올릴 수 없습니다.</li>
+        <li>독자들이 이메일로 새 글을 구독할 수 있습니다.</li>
+      </ul>
+
+      <p>지금 이메일로 가입하고 블로그를 만들어 보세요.</p>
 
       <nav className="space-x-2 flex">
         <HomeWithSession />

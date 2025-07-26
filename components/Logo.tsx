@@ -26,7 +26,7 @@ export default async function Logo() {
       <div className="flex flex-row gap-2">
         {!user && (
           <Button asChild>
-            <Link href={getLoginPath()}>로그인</Link>
+            <Link href={getLoginPath()}>로그인 / 회원 가입</Link>
           </Button>
         )}
         <ModeToggle />
