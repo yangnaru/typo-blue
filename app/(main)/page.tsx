@@ -1,22 +1,25 @@
 import Logo from "@/components/Logo";
-import PostList from "@/components/PostList";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blog, post, user } from "@/drizzle/schema";
-import { getBlogHomePath } from "@/lib/paths";
+import { blog, post } from "@/drizzle/schema";
+import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull, inArray } from "drizzle-orm";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Home() {
-  const userCount = (await db.select({ count: count() }).from(user))[0].count;
-
-  const totalNotDeletedPosts = (
-    await db.select({ count: count() }).from(post).where(isNull(post.deleted))
-  )[0].count;
-
   const latestPublishedPostsFromDiscoverableBlogs = await db
-    .select({ slug: blog.slug })
+    .select({
+      id: post.id,
+      slug: blog.slug,
+      title: post.title,
+      published: post.published,
+      content: post.content,
+      blog: {
+        slug: blog.slug,
+      },
+    })
     .from(post)
     .leftJoin(blog, eq(post.blogId, blog.id))
     .where(
@@ -28,14 +31,6 @@ export default async function Home() {
     )
     .orderBy(desc(post.published))
     .limit(100);
-
-  const discoverableBlogSlugs = Array.from(
-    new Set([
-      ...latestPublishedPostsFromDiscoverableBlogs.map(
-        (blog) => blog.slug ?? ""
-      ),
-    ])
-  );
 
   let officialBlogPosts: any = [];
   if (process.env.OFFICIAL_BLOG_SLUG) {
@@ -75,30 +70,64 @@ export default async function Home() {
         <HomeWithSession />
       </nav>
 
-      {discoverableBlogSlugs.length > 0 && (
-        <>
-          <h3 className="text-normal font-bold">최근 업데이트된 블로그</h3>
+      <h3 className="text-normal font-bold">최근 새 글</h3>
 
-          <div className="flex flex-row gap-2 flex-wrap">
-            {discoverableBlogSlugs.map((slug) => (
-              <Button key={slug} variant="outline" asChild>
-                <Link href={getBlogHomePath(slug)}>@{slug}</Link>
-              </Button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {officialBlogPosts.length > 0 && (
-        <PostList
-          name="공식 블로그 소식"
-          posts={officialBlogPosts}
-          showTitle={true}
-          blog={officialBlogPosts[0].blog}
-          titleClassName="text-normal font-bold"
-          showTime={false}
-        />
-      )}
+      <div className="flex flex-col gap-2">
+        {latestPublishedPostsFromDiscoverableBlogs
+          .filter((post) => {
+            // Filter out posts with empty or whitespace-only content
+            if (!post.content) return false;
+            // Remove all HTML tags and check if there's any non-whitespace text left
+            const plainText = post.content.replace(/<[^>]+>/g, "").trim();
+            return plainText.length > 0;
+          })
+          .map((post) => {
+            let firstSentence = "";
+            if (post.content) {
+              // Extract the first <p>...</p> block (case-insensitive, dot matches newline)
+              const match = post.content.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+              let firstParagraphText = "";
+              if (match && match[1]) {
+                // Remove any HTML tags from the paragraph
+                firstParagraphText = match[1].replace(/<[^>]+>/g, "").trim();
+              } else {
+                // Fallback: remove all tags and use the plain text
+                firstParagraphText = post.content
+                  .replace(/<[^>]+>/g, "")
+                  .trim();
+              }
+              // Extract the first sentence (ends with . ! or ?)
+              const sentenceMatch =
+                firstParagraphText.match(/.*?[.!?](?=\s|$)/);
+              if (sentenceMatch) {
+                firstSentence = sentenceMatch[0];
+              } else {
+                // If no punctuation, take up to 80 chars or the whole paragraph
+                firstSentence = firstParagraphText.slice(0, 80);
+              }
+            }
+            return (
+              <Link
+                href={getBlogPostPathWithSlugAndUuid(post.blog!.slug, post.id)}
+                key={post.id}
+              >
+                <Card key={post.id} className="p-2">
+                  <CardContent className="p-2">
+                    <div className="gap-2 flex flex-col">
+                      <div className="font-semibold text-base mb-1 flex flex-row items-center gap-2">
+                        {post.title}
+                      </div>
+                      <div>
+                        {firstSentence}
+                        {firstSentence && " ..."}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+      </div>
     </main>
   );
 }

@@ -1,3 +1,5 @@
+import { encodePostId } from "./utils";
+
 export function getRootPath() {
   return "/";
 }
@@ -16,6 +18,12 @@ export function getBlogNewPath() {
 
 export function getBlogHomePath(slug: string) {
   return `/@${slug}`;
+}
+
+export function getBlogPostPathWithSlugAndUuid(slug: string, uuid: string) {
+  const encodedUuid = encodePostId(uuid);
+
+  return `/@${slug}/${encodedUuid}`;
 }
 
 export function getBlogPostPath(slug: string, encodedPostId: string) {
