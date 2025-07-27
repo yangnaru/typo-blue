@@ -166,10 +166,10 @@ export const emailQueue = pgTable(
   "email_queue",
   {
     id: uuid("id").primaryKey().notNull(),
-    blogId: text("blog_id")
+    blogId: uuid("blog_id")
       .notNull()
       .references(() => blog.id, { onDelete: "cascade" }),
-    postId: text("post_id")
+    postId: uuid("post_id")
       .notNull()
       .references(() => post.id, { onDelete: "cascade" }),
     subscriberEmail: text("subscriber_email").notNull(),

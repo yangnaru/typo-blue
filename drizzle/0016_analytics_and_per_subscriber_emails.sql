@@ -13,8 +13,8 @@ DROP TABLE IF EXISTS "email_queue";
 
 CREATE TABLE "email_queue" (
   "id" text PRIMARY KEY NOT NULL,
-  "blog_id" text NOT NULL,
-  "post_id" text NOT NULL,
+  "blog_id" uuid NOT NULL,
+  "post_id" uuid NOT NULL,
   "subscriber_email" text NOT NULL,
   "unsubscribe_token" text NOT NULL,
   "type" text NOT NULL,
