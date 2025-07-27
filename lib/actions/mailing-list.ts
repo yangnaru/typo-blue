@@ -181,11 +181,16 @@ export async function sendPostNotificationEmailToSubscriber(
   });
 
   const blogName = postData.blog.name || `@${postData.blog.slug}`;
-  const postUrl = `${process.env.NEXT_PUBLIC_URL}/@${
+  const originalPostUrl = `${process.env.NEXT_PUBLIC_URL}/@${
     postData.blog.slug
   }/${encodePostId(postData.id)}`;
+  const originalUnsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
+  
+  // Create tracking URLs
+  const postUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${job.id}&url=${encodeURIComponent(originalPostUrl)}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${job.id}&url=${encodeURIComponent(originalUnsubscribeUrl)}`;
+  
   const contentText = postData.content ? htmlToText(postData.content) : "";
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
 
   const emailContentText = `
 새로운 글이 게시되었습니다.
@@ -195,11 +200,11 @@ export async function sendPostNotificationEmailToSubscriber(
 
 ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 
-전체 글 보기: ${postUrl}
+전체 글 보기: ${originalPostUrl}
 
 ---
 이 메일은 ${blogName} 블로그의 메일링 리스트에 구독하여 발송되었습니다.
-구독해지: ${unsubscribeUrl}
+구독해지: ${originalUnsubscribeUrl}
   `.trim();
 
   const emailContentHtml = `
