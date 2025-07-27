@@ -50,6 +50,10 @@ export function getBlogSubscribersPath(slug: string) {
   return `/@${slug}/subscribers`;
 }
 
+export function getBlogAnalyticsPath(slug: string) {
+  return `/@${slug}/analytics`;
+}
+
 export function getAccountChangeEmailPath() {
   return "/account/change-email";
 }

@@ -5,6 +5,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import { getBlogPostEditPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, post, user } from "@/drizzle/schema";
@@ -124,6 +125,8 @@ export default async function BlogPost(props: { params: Params }) {
 
   return (
     <div className="space-y-8">
+      <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
+      
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
           <Link href={`/@${targetBlog.slug}/${encodePostId(targetPost.id)}`}>

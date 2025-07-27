@@ -6,6 +6,8 @@ export interface EmailJob {
   id: string;
   blogId: string;
   postId: string;
+  subscriberEmail: string;
+  unsubscribeToken: string;
   type: 'post-notification';
   status: 'pending' | 'processing' | 'completed' | 'failed';
   retryCount: number;
@@ -14,6 +16,9 @@ export interface EmailJob {
   processedAt?: Date;
   scheduledFor: Date;
   errorMessage?: string;
+  sentAt?: Date;
+  openedAt?: Date;
+  clickedAt?: Date;
 }
 
 class EmailQueue {
@@ -26,6 +31,8 @@ class EmailQueue {
       id: jobId,
       blogId: job.blogId,
       postId: job.postId,
+      subscriberEmail: job.subscriberEmail,
+      unsubscribeToken: job.unsubscribeToken,
       type: job.type,
       status: 'pending',
       retryCount: 0,

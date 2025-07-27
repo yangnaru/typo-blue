@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Link from "next/link";
 import {
+  BarChart3,
   Cog,
   ExternalLink,
   Home,
@@ -23,6 +24,7 @@ import {
 import AccountDropdown from "@/components/account-dropdown";
 import { redirect } from "next/navigation";
 import {
+  getBlogAnalyticsPath,
   getBlogDashboardPath,
   getBlogHomePath,
   getBlogSettingsPath,
@@ -111,6 +113,18 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">구독자</TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={getBlogAnalyticsPath(blogId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                      >
+                        <BarChart3 className="h-5 w-5" />
+                        <span className="sr-only">Analytics</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Analytics</TooltipContent>
+                  </Tooltip>
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
                   <Tooltip>
@@ -175,6 +189,13 @@ export default async function RootLayout({
                         >
                           <Mail className="h-5 w-5" />
                           구독자
+                        </Link>
+                        <Link
+                          href={getBlogAnalyticsPath(blogId)}
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                          <BarChart3 className="h-5 w-5" />
+                          Analytics
                         </Link>
                         <Link
                           href={getBlogHomePath(blogId)}

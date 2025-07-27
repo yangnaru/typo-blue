@@ -1,5 +1,5 @@
 import { emailQueue, EmailJob } from './email-queue';
-import { sendPostNotificationEmail } from '../actions/mailing-list';
+import { sendPostNotificationEmailToSubscriber } from '../actions/mailing-list';
 
 class EmailWorker {
   private isRunning = false;
@@ -75,7 +75,7 @@ class EmailWorker {
     try {
       switch (job.type) {
         case 'post-notification':
-          await sendPostNotificationEmail(job.blogId, job.postId);
+          await sendPostNotificationEmailToSubscriber(job);
           break;
         default:
           throw new Error(`Unknown job type: ${job.type}`);

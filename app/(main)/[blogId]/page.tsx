@@ -1,5 +1,6 @@
 import PostList from "@/components/PostList";
 import MailingListSubscription from "@/components/MailingListSubscription";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -99,6 +100,8 @@ export default async function BlogHome(props: { params: Params }) {
 
   return (
     <div className="space-y-8">
+      <PageViewTracker blogId={targetBlog.id} />
+      
       <PostList
         name="발행된 글 목록"
         blog={targetBlog}

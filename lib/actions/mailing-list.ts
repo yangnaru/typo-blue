@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { mailingListSubscription, blog, post } from "@/drizzle/schema";
+import { mailingListSubscription, blog, post, emailQueue as emailQueueTable } from "@/drizzle/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { generateRandomString, alphabet } from "oslo/crypto";
@@ -9,6 +9,7 @@ import { MailgunTransport } from "@upyo/mailgun";
 import { createMessage } from "@upyo/core";
 import { htmlToText } from "html-to-text";
 import { encodePostId } from "../utils";
+import { EmailJob } from "../queue/email-queue";
 
 export async function subscribeToMailingList(
   email: string,
@@ -118,21 +119,76 @@ export async function sendPostNotificationEmail(
       return { success: true, message: "구독자가 없습니다." };
     }
 
-    const transport = new MailgunTransport({
-      apiKey: process.env.MAILGUN_API_KEY!,
-      domain: process.env.MAILGUN_DOMAIN!,
-    });
-
-    const blogName = postData.blog.name || `@${postData.blog.slug}`;
-    const postUrl = `${process.env.NEXT_PUBLIC_URL}/@${
-      postData.blog.slug
-    }/${encodePostId(postData.id)}`;
-    const contentText = postData.content ? htmlToText(postData.content) : "";
-
+    // Create individual email jobs for each subscriber
     for (const subscriber of subscribers) {
-      const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${subscriber.unsubscribeToken}`;
+      const jobId = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      
+      await db.insert(emailQueueTable).values({
+        id: jobId,
+        blogId,
+        postId,
+        subscriberEmail: subscriber.email,
+        unsubscribeToken: subscriber.unsubscribeToken,
+        type: 'post-notification',
+        status: 'pending',
+        retryCount: 0,
+        maxRetries: 3,
+        createdAt: new Date(),
+        scheduledFor: new Date(),
+      });
+    }
 
-      const emailContentText = `
+    await db
+      .update(post)
+      .set({ emailSent: new Date() })
+      .where(eq(post.id, postId));
+
+    return {
+      success: true,
+      message: `${subscribers.length}개의 이메일 작업이 큐에 추가되었습니다.`,
+    };
+  } catch (error) {
+    console.error("Error queueing post notification emails:", error);
+    return { success: false, message: "이메일 큐 생성 중 오류가 발생했습니다." };
+  }
+}
+
+export async function sendPostNotificationEmailToSubscriber(
+  job: EmailJob
+): Promise<void> {
+  const postData = await db.query.post.findFirst({
+    where: and(
+      eq(post.id, job.postId),
+      eq(post.blogId, job.blogId),
+      isNotNull(post.published),
+      isNull(post.deleted)
+    ),
+    with: {
+      blog: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  if (!postData) {
+    throw new Error("게시글을 찾을 수 없습니다.");
+  }
+
+  const transport = new MailgunTransport({
+    apiKey: process.env.MAILGUN_API_KEY!,
+    domain: process.env.MAILGUN_DOMAIN!,
+  });
+
+  const blogName = postData.blog.name || `@${postData.blog.slug}`;
+  const postUrl = `${process.env.NEXT_PUBLIC_URL}/@${
+    postData.blog.slug
+  }/${encodePostId(postData.id)}`;
+  const contentText = postData.content ? htmlToText(postData.content) : "";
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
+
+  const emailContentText = `
 새로운 글이 게시되었습니다.
 
 제목: ${postData.title}
@@ -145,9 +201,9 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 ---
 이 메일은 ${blogName} 블로그의 메일링 리스트에 구독하여 발송되었습니다.
 구독해지: ${unsubscribeUrl}
-      `.trim();
+  `.trim();
 
-      const emailContentHtml = `
+  const emailContentHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -248,46 +304,29 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   </div>
 </body>
 </html>
-      `.trim();
+  `.trim();
 
-      const message = createMessage({
-        from: process.env.EMAIL_FROM!,
-        to: subscriber.email,
-        subject: `[${blogName}] ${postData.title}`,
-        content: {
-          text: emailContentText,
-          html: emailContentHtml,
-        },
-      });
+  const message = createMessage({
+    from: process.env.EMAIL_FROM!,
+    to: job.subscriberEmail,
+    subject: `[${blogName}] ${postData.title}`,
+    content: {
+      text: emailContentText,
+      html: emailContentHtml,
+    },
+  });
 
-      try {
-        const receipt = await transport.send(message);
-        if (receipt.successful) {
-          console.log(
-            `Email sent to ${subscriber.email}, ID: ${receipt.messageId}`
-          );
-        } else {
-          console.error(
-            `Failed to send to ${subscriber.email}:`,
-            receipt.errorMessages.join(", ")
-          );
-        }
-      } catch (error) {
-        console.error(`Error sending email to ${subscriber.email}:`, error);
-      }
-    }
-
-    await db
-      .update(post)
-      .set({ emailSent: new Date() })
-      .where(eq(post.id, postId));
-
-    return {
-      success: true,
-      message: `${subscribers.length}명의 구독자에게 이메일을 발송했습니다.`,
-    };
-  } catch (error) {
-    console.error("Error sending post notification email:", error);
-    return { success: false, message: "이메일 발송 중 오류가 발생했습니다." };
+  const receipt = await transport.send(message);
+  
+  if (!receipt.successful) {
+    throw new Error(`Failed to send email: ${receipt.errorMessages.join(", ")}`);
   }
+
+  // Update the job with sent timestamp
+  await db
+    .update(emailQueueTable)
+    .set({ sentAt: new Date() })
+    .where(eq(emailQueueTable.id, job.id));
+
+  console.log(`Email sent to ${job.subscriberEmail}, ID: ${receipt.messageId}`);
 }

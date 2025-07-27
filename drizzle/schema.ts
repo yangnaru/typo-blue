@@ -172,6 +172,8 @@ export const emailQueue = pgTable(
     postId: text("post_id")
       .notNull()
       .references(() => post.id, { onDelete: "cascade" }),
+    subscriberEmail: text("subscriber_email").notNull(),
+    unsubscribeToken: text("unsubscribe_token").notNull(),
     type: text("type").notNull(),
     status: text("status").notNull().default("pending"), // pending, processing, completed, failed
     retryCount: integer("retry_count").notNull().default(0),
@@ -180,12 +182,57 @@ export const emailQueue = pgTable(
     processedAt: timestamp("processed_at"),
     scheduledFor: timestamp("scheduled_for").defaultNow().notNull(),
     errorMessage: text("error_message"),
+    sentAt: timestamp("sent_at"),
+    openedAt: timestamp("opened_at"),
+    clickedAt: timestamp("clicked_at"),
   },
   (table) => {
     return {
       statusIdx: index("email_queue_status_idx").on(table.status),
       scheduledIdx: index("email_queue_scheduled_idx").on(table.scheduledFor),
       createdAtIdx: index("email_queue_created_at_idx").on(table.createdAt),
+      blogIdIdx: index("email_queue_blog_id_idx").on(table.blogId),
+      postIdIdx: index("email_queue_post_id_idx").on(table.postId),
+      subscriberEmailIdx: index("email_queue_subscriber_email_idx").on(table.subscriberEmail),
+      sentAtIdx: index("email_queue_sent_at_idx").on(table.sentAt),
+      openedAtIdx: index("email_queue_opened_at_idx").on(table.openedAt),
+      clickedAtIdx: index("email_queue_clicked_at_idx").on(table.clickedAt),
+    };
+  }
+);
+
+export const pageViews = pgTable(
+  "page_views",
+  {
+    id: uuid().primaryKey().notNull(),
+    blogId: uuid("blog_id").notNull(),
+    postId: uuid("post_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    ipAddress: text("ip_address").notNull(), // Store as inet type (IPv6 compatible)
+    userAgent: text("user_agent"),
+    referrer: text("referrer"),
+    path: text("path").notNull(),
+  },
+  (table) => {
+    return {
+      pageViewsBlogIdFkey: foreignKey({
+        columns: [table.blogId],
+        foreignColumns: [blog.id],
+        name: "page_views_blog_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      pageViewsPostIdFkey: foreignKey({
+        columns: [table.postId],
+        foreignColumns: [post.id],
+        name: "page_views_post_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      blogIdIdx: index("page_views_blog_id_idx").on(table.blogId),
+      postIdIdx: index("page_views_post_id_idx").on(table.postId),
+      createdAtIdx: index("page_views_created_at_idx").on(table.createdAt),
+      ipAddressIdx: index("page_views_ip_address_idx").on(table.ipAddress),
     };
   }
 );
