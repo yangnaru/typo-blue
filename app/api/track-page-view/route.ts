@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const realIp = request.headers.get("x-real-ip");
     const cfConnectingIp = request.headers.get("cf-connecting-ip");
     
-    let ipAddress = request.ip || "127.0.0.1";
+    let ipAddress = "127.0.0.1";
     
     if (cfConnectingIp) {
       ipAddress = cfConnectingIp;
