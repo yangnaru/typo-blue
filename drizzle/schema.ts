@@ -30,6 +30,7 @@ export const post = pgTable(
       .notNull(),
     updated: timestamp({ withTimezone: true }).notNull(),
     published: timestamp({ withTimezone: true }),
+    first_published: timestamp("first_published", { withTimezone: true }),
     title: text(),
     content: text(),
     blogId: uuid("blog_id").notNull(),
