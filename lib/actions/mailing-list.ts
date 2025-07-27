@@ -119,24 +119,23 @@ export async function sendPostNotificationEmail(
       return { success: true, message: "구독자가 없습니다." };
     }
 
-    // Create individual email jobs for each subscriber
-    for (const subscriber of subscribers) {
-      const jobId = crypto.randomUUID();
-      
-      await db.insert(emailQueueTable).values({
-        id: jobId,
-        blogId,
-        postId,
-        subscriberEmail: subscriber.email,
-        unsubscribeToken: subscriber.unsubscribeToken,
-        type: 'post-notification',
-        status: 'pending',
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: new Date(),
-        scheduledFor: new Date(),
-      });
-    }
+    // Create email jobs for all subscribers in bulk
+    const now = new Date();
+    const emailJobs = subscribers.map(subscriber => ({
+      id: crypto.randomUUID(),
+      blogId,
+      postId,
+      subscriberEmail: subscriber.email,
+      unsubscribeToken: subscriber.unsubscribeToken,
+      type: 'post-notification' as const,
+      status: 'pending' as const,
+      retryCount: 0,
+      maxRetries: 3,
+      createdAt: now,
+      scheduledFor: now,
+    }));
+
+    await db.insert(emailQueueTable).values(emailJobs);
 
     await db
       .update(post)

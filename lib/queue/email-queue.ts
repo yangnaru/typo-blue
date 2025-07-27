@@ -44,6 +44,26 @@ class EmailQueue {
     return jobId;
   }
 
+  async enqueueBatch(jobs: Omit<EmailJob, 'id' | 'createdAt' | 'retryCount' | 'status' | 'scheduledFor'>[]): Promise<string[]> {
+    const now = new Date();
+    const jobsWithIds = jobs.map(job => ({
+      id: crypto.randomUUID(),
+      blogId: job.blogId,
+      postId: job.postId,
+      subscriberEmail: job.subscriberEmail,
+      unsubscribeToken: job.unsubscribeToken,
+      type: job.type,
+      status: 'pending' as const,
+      retryCount: 0,
+      maxRetries: job.maxRetries,
+      createdAt: now,
+      scheduledFor: now,
+    }));
+
+    await db.insert(emailQueueTable).values(jobsWithIds);
+    return jobsWithIds.map(job => job.id);
+  }
+
   async dequeue(): Promise<EmailJob | null> {
     // Use a transaction to atomically get and mark a job as processing
     const result = await db.transaction(async (tx) => {
