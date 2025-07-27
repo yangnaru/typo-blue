@@ -46,6 +46,7 @@ export const post = pgTable(
       })
         .onUpdate("cascade")
         .onDelete("cascade"),
+      firstPublishedRequired: sql`CONSTRAINT first_published_required CHECK (published IS NULL OR first_published IS NOT NULL)`,
     };
   }
 );

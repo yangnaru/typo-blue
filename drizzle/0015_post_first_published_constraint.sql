@@ -1,0 +1,1 @@
+ALTER TABLE "post" ADD CONSTRAINT "first_published_required" CHECK ("published" IS NULL OR "first_published" IS NOT NULL);
