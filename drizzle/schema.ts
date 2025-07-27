@@ -165,7 +165,7 @@ export const mailingListSubscription = pgTable(
 export const emailQueue = pgTable(
   "email_queue",
   {
-    id: text("id").primaryKey(),
+    id: uuid("id").primaryKey().notNull(),
     blogId: text("blog_id")
       .notNull()
       .references(() => blog.id, { onDelete: "cascade" }),

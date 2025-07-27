@@ -120,6 +120,13 @@
       "when": 1753680800000,
       "tag": "0016_analytics_and_per_subscriber_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1753681600000,
+      "tag": "0017_change_email_queue_id_to_uuid",
+      "breakpoints": true
     }
   ]
 }

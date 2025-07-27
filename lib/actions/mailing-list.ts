@@ -121,7 +121,7 @@ export async function sendPostNotificationEmail(
 
     // Create individual email jobs for each subscriber
     for (const subscriber of subscribers) {
-      const jobId = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      const jobId = crypto.randomUUID();
       
       await db.insert(emailQueueTable).values({
         id: jobId,

@@ -25,7 +25,7 @@ class EmailQueue {
   private retryDelayMs = 60000; // 1 minute
 
   async enqueue(job: Omit<EmailJob, 'id' | 'createdAt' | 'retryCount' | 'status' | 'scheduledFor'>): Promise<string> {
-    const jobId = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    const jobId = crypto.randomUUID();
     
     await db.insert(emailQueueTable).values({
       id: jobId,
