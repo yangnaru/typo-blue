@@ -306,6 +306,9 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
     <p>이 메일은 <strong>${blogName}</strong> 블로그의 메일링 리스트에 구독하여 발송되었습니다.</p>
     <p><a href="${unsubscribeUrl}" class="unsubscribe">구독해지</a></p>
   </div>
+  
+  <!-- Email open tracking pixel -->
+  <img src="${process.env.NEXT_PUBLIC_URL}/api/email-open?id=${job.id}" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" alt="" />
 </body>
 </html>
   `.trim();
