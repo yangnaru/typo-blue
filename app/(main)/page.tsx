@@ -15,6 +15,7 @@ export default async function Home() {
       slug: blog.slug,
       title: post.title,
       published: post.published,
+      first_published: post.first_published,
       content: post.content,
       blog: {
         slug: blog.slug,

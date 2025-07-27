@@ -132,7 +132,7 @@ export default async function BlogPost(props: { params: Params }) {
         </h3>
         <span className="text-neutral-500">
           {formatInTimeZone(
-            targetPost.published ?? targetPost.updated,
+            targetPost.first_published ?? targetPost.published ?? targetPost.updated,
             "Asia/Seoul",
             "yyyy-MM-dd HH:mm"
           )}

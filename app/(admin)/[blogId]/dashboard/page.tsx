@@ -116,7 +116,7 @@ export default async function Dashboard(props: { params: PageProps }) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {formatInTimeZone(
-                      post.published ?? post.updated,
+                      post.first_published ?? post.published ?? post.updated,
                       "Asia/Seoul",
                       "yyyy-MM-dd HH:mm"
                     )}

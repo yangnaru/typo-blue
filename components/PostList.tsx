@@ -42,7 +42,7 @@ export default function PostList({
                   {post.published ? (
                     <span className="font-bold tabular-nums">
                       {formatInTimeZone(
-                        post.published,
+                        post.first_published || post.published,
                         "Asia/Seoul",
                         dateFormat
                       )}

@@ -79,7 +79,7 @@ export async function GET(req: NextRequest, props: { params: Params }) {
       type: "text/html",
       title: post.title,
     });
-    entry.ele("published").txt(post.published!.toISOString());
+    entry.ele("published").txt((post.first_published || post.published)!.toISOString());
     entry.ele("updated").txt(post.updated!.toISOString());
     entry.ele("content", { type: "html" }).txt(post.content || "");
   }
