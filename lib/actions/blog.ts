@@ -113,13 +113,19 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
 
 export async function publishPost(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
-  await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+  const targetPost = await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+
+  const updateData: { published: Date; first_published?: Date } = {
+    published: new Date(),
+  };
+
+  if (!targetPost.first_published) {
+    updateData.first_published = updateData.published;
+  }
 
   await db
     .update(post)
-    .set({
-      published: new Date(),
-    })
+    .set(updateData)
     .where(eq(post.id, uuid));
 
   return {
@@ -192,27 +198,47 @@ export async function upsertPost(
     });
     wasAlreadyPublished = !!existingPost?.published;
 
+    const updateData: { title: string; content: string; published: Date | null; first_published?: Date } = {
+      title,
+      content,
+      published,
+    };
+
+    if (published && !existingPost?.first_published) {
+      updateData.first_published = published;
+    }
+
     const [updatedPost] = await db
       .update(post)
-      .set({
-        title,
-        content,
-        published,
-      })
+      .set(updateData)
       .where(eq(post.id, uuid))
       .returning();
     targetPost = updatedPost;
   } else {
+    const insertData: {
+      title: string;
+      content: string;
+      published: Date | null;
+      blogId: string;
+      updated: Date;
+      id: string;
+      first_published?: Date;
+    } = {
+      title,
+      content,
+      published,
+      blogId: targetBlog.id,
+      updated: new Date(),
+      id: crypto.randomUUID(),
+    };
+
+    if (published) {
+      insertData.first_published = published;
+    }
+
     const [newPost] = await db
       .insert(post)
-      .values({
-        title,
-        content,
-        published,
-        blogId: targetBlog.id,
-        updated: new Date(),
-        id: crypto.randomUUID(),
-      })
+      .values(insertData)
       .returning();
     targetPost = newPost;
   }
