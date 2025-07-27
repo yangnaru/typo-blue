@@ -59,9 +59,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Analytics</h1>
+        <h1 className="text-3xl font-bold">분석</h1>
         <p className="text-muted-foreground">
-          Insights into your blog's performance and audience engagement
+          블로그 성과와 독자 참여도에 대한 인사이트
         </p>
       </div>
 
@@ -69,44 +69,44 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
+            <CardTitle className="text-sm font-medium">총 방문수</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatNumber(overview.totalVisits)}</div>
             <p className="text-xs text-muted-foreground">
-              {formatNumber(overview.uniqueVisitors)} unique visitors
+              {formatNumber(overview.uniqueVisitors)} 순 방문자
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Posts</CardTitle>
+            <CardTitle className="text-sm font-medium">글</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatNumber(overview.publishedPosts)}</div>
             <p className="text-xs text-muted-foreground">
-              {formatNumber(overview.totalPosts)} total posts
+              {formatNumber(overview.totalPosts)} 전체 글
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
+            <CardTitle className="text-sm font-medium">구독자</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatNumber(overview.totalSubscribers)}</div>
-            <p className="text-xs text-muted-foreground">Email subscribers</p>
+            <p className="text-xs text-muted-foreground">이메일 구독자</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Email Performance</CardTitle>
+            <CardTitle className="text-sm font-medium">이메일 성과</CardTitle>
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -117,7 +117,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
               }
             </div>
             <p className="text-xs text-muted-foreground">
-              {formatNumber(overview.emailsOpened)} of {formatNumber(overview.emailsSent)} opened
+              {formatNumber(overview.emailsSent)}개 중 {formatNumber(overview.emailsOpened)}개 열림
             </p>
           </CardContent>
         </Card>
@@ -125,17 +125,17 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
 
       <Tabs defaultValue="visitors" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="visitors">Visitors</TabsTrigger>
-          <TabsTrigger value="posts">Post Performance</TabsTrigger>
-          <TabsTrigger value="email">Email Analytics</TabsTrigger>
+          <TabsTrigger value="visitors">방문자</TabsTrigger>
+          <TabsTrigger value="posts">글 성과</TabsTrigger>
+          <TabsTrigger value="email">이메일 분석</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visitors" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Visitor Trends (Last 30 Days)</CardTitle>
+              <CardTitle>방문자 추이 (최근 30일)</CardTitle>
               <CardDescription>
-                Daily visitor statistics for your blog
+                블로그의 일별 방문자 통계
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -145,16 +145,16 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                     <div key={trend.date} className="flex items-center justify-between">
                       <span className="text-sm">{trend.date}</span>
                       <div className="flex items-center space-x-4">
-                        <span className="text-sm font-medium">{trend.visits} visits</span>
+                        <span className="text-sm font-medium">{trend.visits} 방문</span>
                         <span className="text-sm text-muted-foreground">
-                          {trend.uniqueVisitors} unique
+                          {trend.uniqueVisitors} 순방문자
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No visitor data available yet.</p>
+                <p className="text-muted-foreground">아직 방문자 데이터가 없습니다.</p>
               )}
             </CardContent>
           </Card>
@@ -163,21 +163,21 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
         <TabsContent value="posts" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Post Performance</CardTitle>
+              <CardTitle>글 성과</CardTitle>
               <CardDescription>
-                View and email engagement metrics for your posts
+                글의 조회수와 이메일 참여 지표
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Post Title</TableHead>
-                    <TableHead>Published</TableHead>
-                    <TableHead>Views</TableHead>
-                    <TableHead>Unique Visitors</TableHead>
-                    <TableHead>Emails Sent</TableHead>
-                    <TableHead>Email Opens</TableHead>
+                    <TableHead>글 제목</TableHead>
+                    <TableHead>발행일</TableHead>
+                    <TableHead>조회수</TableHead>
+                    <TableHead>순방문자</TableHead>
+                    <TableHead>이메일 발송</TableHead>
+                    <TableHead>이메일 열람</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -195,7 +195,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                               )}
                             </span>
                           ) : (
-                            <Badge variant="secondary">Draft</Badge>
+                            <Badge variant="secondary">초안</Badge>
                           )}
                         </TableCell>
                         <TableCell>{formatNumber(post.visits)}</TableCell>
@@ -218,7 +218,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No posts found
+                        글이 없습니다
                       </TableCell>
                     </TableRow>
                   )}
@@ -231,9 +231,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
         <TabsContent value="email" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Email Analytics (Last 30 Days)</CardTitle>
+              <CardTitle>이메일 분석 (최근 30일)</CardTitle>
               <CardDescription>
-                Email delivery and engagement statistics
+                이메일 발송 및 참여 통계
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -242,7 +242,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Emails Sent</CardTitle>
+                        <CardTitle className="text-sm">이메일 발송</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -252,7 +252,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                     </Card>
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Average Open Rate</CardTitle>
+                        <CardTitle className="text-sm">평균 열람률</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -265,7 +265,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                     </Card>
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Average Click Rate</CardTitle>
+                        <CardTitle className="text-sm">평균 클릭률</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -279,19 +279,19 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Recent Email Performance</h4>
+                    <h4 className="text-sm font-medium">최근 이메일 성과</h4>
                     {emailAnalytics.slice(-7).map((day) => (
                       <div key={day.date} className="flex items-center justify-between">
                         <span className="text-sm">{day.date}</span>
                         <div className="flex items-center space-x-4">
                           <span className="text-sm">
-                            {formatNumber(day.sent)} sent
+                            {formatNumber(day.sent)} 발송
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            {formatPercentage(day.openRate)} open
+                            {formatPercentage(day.openRate)} 열람
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            {formatPercentage(day.clickRate)} click
+                            {formatPercentage(day.clickRate)} 클릭
                           </span>
                         </div>
                       </div>
@@ -299,7 +299,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground">No email data available yet.</p>
+                <p className="text-muted-foreground">아직 이메일 데이터가 없습니다.</p>
               )}
             </CardContent>
           </Card>

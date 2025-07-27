@@ -298,23 +298,10 @@ export async function sendPostEmail(blogId: string, postId: string) {
     return { success: false, message: "블로그를 찾을 수 없습니다." };
   }
 
-  console.log({ foundBlog });
-
   try {
-    const { emailQueue } = await import("../queue/email-queue");
-
-    const jobId = await emailQueue.enqueue({
-      blogId: foundBlog.id,
-      postId: uuid,
-      type: "post-notification",
-      maxRetries: 3,
-    });
-
-    return {
-      success: true,
-      message: "이메일 발송이 예약되었습니다.",
-      jobId,
-    };
+    const { sendPostNotificationEmail } = await import("./mailing-list");
+    
+    return await sendPostNotificationEmail(foundBlog.id, uuid);
   } catch (error) {
     console.error("Failed to enqueue notification email:", error);
     return {
