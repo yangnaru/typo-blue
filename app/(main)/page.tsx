@@ -30,7 +30,7 @@ export default async function Home() {
         eq(blog.discoverable, true)
       )
     )
-    .orderBy(desc(post.published))
+    .orderBy(desc(post.first_published))
     .limit(100);
 
   let officialBlogPosts: any = [];
