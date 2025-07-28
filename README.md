@@ -99,7 +99,6 @@
    
    # 관리자
    ADMIN_USER_ID="admin-user-uuid"
-   OFFICIAL_BLOG_SLUG="official-blog-slug"
    ```
 
 4. **데이터베이스 설정**
@@ -343,7 +342,6 @@ npm start
 | `NEXT_PUBLIC_URL` | 애플리케이션 공개 URL | 예 |
 | `SESSION_COOKIE_DOMAIN` | 세션용 쿠키 도메인 | 예 |
 | `ADMIN_USER_ID` | 관리자 사용자 ID | 선택 |
-| `OFFICIAL_BLOG_SLUG` | 공식 블로그 슬러그 | 선택 |
 
 ## 스크립트
 
