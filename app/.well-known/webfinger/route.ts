@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     return new Response("Blog not found", { status: 404 });
   }
 
-  const origin = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
+  const origin = `https://${activitypubDomain}`;
 
   const webfingerResponse = {
     subject: resource,
