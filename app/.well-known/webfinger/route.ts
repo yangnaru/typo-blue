@@ -44,16 +44,24 @@ export async function GET(request: NextRequest) {
 
   const webfingerResponse = {
     subject: resource,
+    aliases: [
+      `${origin}/@${blogSlug}`,
+      `${origin}/users/${blogSlug}`,
+    ],
     links: [
-      {
-        rel: "self",
-        type: "application/activity+json",
-        href: `${origin}/@${blogSlug}`,
-      },
       {
         rel: "http://webfinger.net/rel/profile-page",
         type: "text/html",
         href: `${origin}/@${blogSlug}`,
+      },
+      {
+        rel: "self",
+        type: "application/activity+json",
+        href: `${origin}/users/${blogSlug}`,
+      },
+      {
+        rel: "http://ostatus.org/schema/1.0/subscribe",
+        template: `${origin}/authorize_interaction?uri={uri}`,
       },
     ],
   };

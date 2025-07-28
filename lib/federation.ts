@@ -46,9 +46,39 @@ export const federation = createFederation<void>({
   queue: messageQueue,
 });
 
-// Configure actor dispatcher for blogs
+// Configure actor dispatcher for blogs (both /@{identifier} and /users/{identifier} paths)
 federation
   .setActorDispatcher("/@{identifier}", async (ctx, identifier) => {
+    const result = await db
+      .select({
+        blog: blogTable,
+        actor: activityPubActor,
+      })
+      .from(blogTable)
+      .innerJoin(activityPubActor, eq(activityPubActor.blogId, blogTable.id))
+      .where(eq(blogTable.slug, identifier))
+      .limit(1);
+
+    if (result.length === 0) return null;
+    
+    const { blog, actor } = result[0];
+    
+    return new Person({
+      id: ctx.getActorUri(identifier),
+      preferredUsername: identifier,
+      name: actor.name || blog.name || blog.slug,
+      summary: actor.summary || blog.description,
+      icon: actor.iconUrl ? new URL(actor.iconUrl) : undefined,
+      inbox: ctx.getInboxUri(identifier),
+      outbox: ctx.getOutboxUri(identifier),
+      followers: ctx.getFollowersUri(identifier),
+      following: ctx.getFollowingUri(identifier),
+      url: new URL(`/@${identifier}`, ctx.origin),
+      publicKey: (await ctx.getActorKeyPairs(identifier))[0].cryptographicKey,
+    });
+  })
+  .setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
+    // Same logic as /@{identifier} since they point to the same actor
     const result = await db
       .select({
         blog: blogTable,
