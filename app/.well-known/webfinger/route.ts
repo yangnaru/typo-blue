@@ -1,8 +1,5 @@
 import { db } from "../../../lib/db";
-import {
-  blog as blogTable,
-  activityPubActor,
-} from "../../../drizzle/schema";
+import { blog as blogTable, activityPubActor } from "../../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -23,10 +20,9 @@ export async function GET(request: NextRequest) {
   const [, blogSlug, domain] = match;
   const requestDomain = request.nextUrl.hostname;
 
-  console.log(blogSlug, domain, requestDomain);
-
-  // Check if this is for our domain
-  if (domain !== requestDomain) {
+  // Check if this is for our domain using process.env.ACTIVITYPUB_DOMAIN
+  const activitypubDomain = process.env.ACTIVITYPUB_DOMAIN;
+  if (!activitypubDomain || domain !== activitypubDomain) {
     return new Response("Domain not handled by this server", { status: 404 });
   }
 
