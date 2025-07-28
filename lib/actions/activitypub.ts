@@ -1,7 +1,7 @@
 "use server";
 
 import { getCurrentSession } from "@/lib/auth";
-import { getOrCreateActorForBlog, getActivityPubDomain } from "@/lib/activitypub";
+import { getOrCreateActorForBlog, getActorForBlog, getActivityPubDomain } from "@/lib/activitypub";
 import { db } from "@/lib/db";
 import { blog as blogTable } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -67,9 +67,12 @@ export async function getActivityPubProfileForBlog(blogSlug: string) {
       return null;
     }
     
-    // Check if actor exists
-    const domain = getActivityPubDomain();
-    const actor = await getOrCreateActorForBlog(blog[0].id, domain);
+    // Check if actor exists (without creating one)
+    const actor = await getActorForBlog(blog[0].id);
+    
+    if (!actor) {
+      return null; // No actor exists yet
+    }
     
     return {
       handle: actor.handle,

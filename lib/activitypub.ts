@@ -51,16 +51,23 @@ export async function createActivityPubActor(params: CreateActorParams) {
   return actor[0];
 }
 
-export async function getOrCreateActorForBlog(blogId: string, domain: string) {
-  // Check if actor already exists
+export async function getActorForBlog(blogId: string) {
+  // Check if actor exists without creating one
   const existingActor = await db
     .select()
     .from(activityPubActor)
     .where(eq(activityPubActor.blogId, blogId))
     .limit(1);
   
-  if (existingActor.length > 0) {
-    return existingActor[0];
+  return existingActor.length > 0 ? existingActor[0] : null;
+}
+
+export async function getOrCreateActorForBlog(blogId: string, domain: string) {
+  // Check if actor already exists
+  const existingActor = await getActorForBlog(blogId);
+  
+  if (existingActor) {
+    return existingActor;
   }
   
   // Get blog details
