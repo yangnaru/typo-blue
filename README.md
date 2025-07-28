@@ -340,6 +340,8 @@ npm start
 | `MAILGUN_DOMAIN` | Mailgun 도메인 | 예 |
 | `EMAIL_FROM` | 발신 이메일 주소 | 예 |
 | `NEXT_PUBLIC_URL` | 애플리케이션 공개 URL | 예 |
+| `NEXT_PUBLIC_DOMAIN` | 애플리케이션 공개 도메인 | 예 |
+| `ACTIVITYPUB_DOMAIN` | ActicityPub 도메인 | 예 |
 | `SESSION_COOKIE_DOMAIN` | 세션용 쿠키 도메인 | 예 |
 | `ADMIN_USER_ID` | 관리자 사용자 ID | 선택 |
 
