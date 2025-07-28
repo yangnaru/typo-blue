@@ -1,8 +1,8 @@
-import { db } from "../../../../lib/db";
+import { db } from "../../../lib/db";
 import {
   blog as blogTable,
   activityPubActor,
-} from "../../../../drizzle/schema";
+} from "../../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
   const [, blogSlug, domain] = match;
   const requestDomain = request.nextUrl.hostname;
 
+  console.log(blogSlug, domain, requestDomain);
+
   // Check if this is for our domain
   if (domain !== requestDomain) {
     return new Response("Domain not handled by this server", { status: 404 });
@@ -32,7 +34,6 @@ export async function GET(request: NextRequest) {
   const result = await db
     .select({
       blog: blogTable,
-      actor: activityPubActor,
     })
     .from(blogTable)
     .innerJoin(activityPubActor, eq(activityPubActor.blogId, blogTable.id))
@@ -43,7 +44,6 @@ export async function GET(request: NextRequest) {
     return new Response("Blog not found", { status: 404 });
   }
 
-  const { actor } = result[0];
   const origin = `${request.nextUrl.protocol}//${request.nextUrl.host}`;
 
   const webfingerResponse = {
