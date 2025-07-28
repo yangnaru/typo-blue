@@ -1,4 +1,5 @@
 import BlogEditForm from "@/components/BlogEditForm";
+import { BlogActivityPubProfile } from "@/components/BlogActivityPubProfile";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { blog, post } from "@/drizzle/schema";
@@ -32,12 +33,15 @@ export default async function EditBlogPage(props: { params: Params }) {
   const postsCount = posts.length;
 
   return (
-    <BlogEditForm
-      slug={targetBlog.slug}
-      name={targetBlog.name ?? ""}
-      description={targetBlog.description ?? ""}
-      discoverable={targetBlog.discoverable}
-      postCount={postsCount}
-    />
+    <div className="space-y-6">
+      <BlogEditForm
+        slug={targetBlog.slug}
+        name={targetBlog.name ?? ""}
+        description={targetBlog.description ?? ""}
+        discoverable={targetBlog.discoverable}
+        postCount={postsCount}
+      />
+      <BlogActivityPubProfile blogSlug={targetBlog.slug} />
+    </div>
   );
 }

@@ -236,3 +236,187 @@ export const pageViews = pgTable(
     };
   }
 );
+
+export const activityPubActor = pgTable(
+  "activitypub_actor",
+  {
+    id: uuid().primaryKey().notNull(),
+    blogId: uuid("blog_id").notNull(),
+    handle: text().notNull(),
+    uri: text().notNull(),
+    name: text(),
+    summary: text(),
+    iconUrl: text("icon_url"),
+    publicKeyPem: text("public_key_pem").notNull(),
+    privateKeyPem: text("private_key_pem").notNull(),
+    inboxUrl: text("inbox_url").notNull(),
+    outboxUrl: text("outbox_url").notNull(),
+    followersUrl: text("followers_url").notNull(),
+    followingUrl: text("following_url").notNull(),
+    created: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated: timestamp({ withTimezone: true }).notNull(),
+  },
+  (table) => {
+    return {
+      actorBlogIdFkey: foreignKey({
+        columns: [table.blogId],
+        foreignColumns: [blog.id],
+        name: "activitypub_actor_blog_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      handleKey: uniqueIndex("activitypub_actor_handle_key").using(
+        "btree",
+        table.handle.asc().nullsLast().op("text_ops")
+      ),
+      uriKey: uniqueIndex("activitypub_actor_uri_key").using(
+        "btree",
+        table.uri.asc().nullsLast().op("text_ops")
+      ),
+      blogIdKey: uniqueIndex("activitypub_actor_blog_id_key").using(
+        "btree",
+        table.blogId.asc().nullsLast().op("uuid_ops")
+      ),
+      blogIdIdx: index("activitypub_actor_blog_id_idx").on(table.blogId),
+    };
+  }
+);
+
+export const activityPubRemoteActor = pgTable(
+  "activitypub_remote_actor",
+  {
+    id: uuid().primaryKey().notNull(),
+    uri: text().notNull(),
+    handle: text(),
+    name: text(),
+    summary: text(),
+    iconUrl: text("icon_url"),
+    publicKeyPem: text("public_key_pem"),
+    inboxUrl: text("inbox_url").notNull(),
+    outboxUrl: text("outbox_url"),
+    followersUrl: text("followers_url"),
+    followingUrl: text("following_url"),
+    sharedInboxUrl: text("shared_inbox_url"),
+    created: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated: timestamp({ withTimezone: true }).notNull(),
+    lastFetched: timestamp("last_fetched", { withTimezone: true }),
+  },
+  (table) => {
+    return {
+      uriKey: uniqueIndex("activitypub_remote_actor_uri_key").using(
+        "btree",
+        table.uri.asc().nullsLast().op("text_ops")
+      ),
+      handleIdx: index("activitypub_remote_actor_handle_idx").on(table.handle),
+      lastFetchedIdx: index("activitypub_remote_actor_last_fetched_idx").on(table.lastFetched),
+    };
+  }
+);
+
+export const activityPubFollow = pgTable(
+  "activitypub_follow",
+  {
+    id: uuid().primaryKey().notNull(),
+    actorId: uuid("actor_id"),
+    targetActorId: uuid("target_actor_id"),
+    remoteActorId: uuid("remote_actor_id"),
+    targetRemoteActorId: uuid("target_remote_actor_id"),
+    activityId: text("activity_id").notNull(),
+    state: text().notNull().default("pending"), // pending, accepted, rejected
+    created: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated: timestamp({ withTimezone: true }).notNull(),
+  },
+  (table) => {
+    return {
+      followActorIdFkey: foreignKey({
+        columns: [table.actorId],
+        foreignColumns: [activityPubActor.id],
+        name: "activitypub_follow_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      followTargetActorIdFkey: foreignKey({
+        columns: [table.targetActorId],
+        foreignColumns: [activityPubActor.id],
+        name: "activitypub_follow_target_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      followRemoteActorIdFkey: foreignKey({
+        columns: [table.remoteActorId],
+        foreignColumns: [activityPubRemoteActor.id],
+        name: "activitypub_follow_remote_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      followTargetRemoteActorIdFkey: foreignKey({
+        columns: [table.targetRemoteActorId],
+        foreignColumns: [activityPubRemoteActor.id],
+        name: "activitypub_follow_target_remote_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      activityIdKey: uniqueIndex("activitypub_follow_activity_id_key").using(
+        "btree",
+        table.activityId.asc().nullsLast().op("text_ops")
+      ),
+      actorIdIdx: index("activitypub_follow_actor_id_idx").on(table.actorId),
+      targetActorIdIdx: index("activitypub_follow_target_actor_id_idx").on(table.targetActorId),
+      remoteActorIdIdx: index("activitypub_follow_remote_actor_id_idx").on(table.remoteActorId),
+      targetRemoteActorIdIdx: index("activitypub_follow_target_remote_actor_id_idx").on(table.targetRemoteActorId),
+      stateIdx: index("activitypub_follow_state_idx").on(table.state),
+      createdIdx: index("activitypub_follow_created_idx").on(table.created),
+    };
+  }
+);
+
+export const activityPubActivity = pgTable(
+  "activitypub_activity",
+  {
+    id: uuid().primaryKey().notNull(),
+    activityId: text("activity_id").notNull(),
+    type: text().notNull(),
+    actorId: uuid("actor_id"),
+    remoteActorId: uuid("remote_actor_id"),
+    objectId: text("object_id"),
+    targetId: text("target_id"),
+    data: text().notNull(), // JSON string
+    direction: text().notNull(), // inbound, outbound
+    created: timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => {
+    return {
+      activityActorIdFkey: foreignKey({
+        columns: [table.actorId],
+        foreignColumns: [activityPubActor.id],
+        name: "activitypub_activity_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      activityRemoteActorIdFkey: foreignKey({
+        columns: [table.remoteActorId],
+        foreignColumns: [activityPubRemoteActor.id],
+        name: "activitypub_activity_remote_actor_id_fkey",
+      })
+        .onUpdate("cascade")
+        .onDelete("cascade"),
+      activityIdKey: uniqueIndex("activitypub_activity_activity_id_key").using(
+        "btree",
+        table.activityId.asc().nullsLast().op("text_ops")
+      ),
+      typeIdx: index("activitypub_activity_type_idx").on(table.type),
+      actorIdIdx: index("activitypub_activity_actor_id_idx").on(table.actorId),
+      remoteActorIdIdx: index("activitypub_activity_remote_actor_id_idx").on(table.remoteActorId),
+      directionIdx: index("activitypub_activity_direction_idx").on(table.direction),
+      createdIdx: index("activitypub_activity_created_idx").on(table.created),
+    };
+  }
+);
