@@ -166,10 +166,13 @@ federation
 
     const { publicKeyPem, privateKeyPem } = result[0];
 
+    const privateKey = await importJwk(JSON.parse(privateKeyPem), "private");
+    const publicKey = await importJwk(JSON.parse(publicKeyPem), "public");
+
     return [
       {
-        privateKey: await importJwk(JSON.parse(privateKeyPem), "private"),
-        publicKey: await importJwk(JSON.parse(publicKeyPem), "public"),
+        privateKey,
+        publicKey,
       },
     ];
   });
@@ -185,6 +188,8 @@ federation
 
     // Persist the remote actor
     const remoteActorId = await persistRemoteActor(followerId);
+    const followActor = await follow.getActor(ctx);
+    if (followActor == null) return;
 
     // Find the local actor being followed
     const targetUri = follow.objectId?.href;
@@ -209,28 +214,48 @@ federation
       }
     }
 
-    // Store the follow request
-    const followRecord = await db.insert(activityPubFollow).values({
-      id: crypto.randomUUID(),
-      activityId: follow.id?.href || crypto.randomUUID(),
-      actorId: localActorId,
-      remoteActorId: remoteActorId,
-      state: "pending",
-      created: new Date(),
-      updated: new Date(),
-    });
+    if (!localActorId || !identifier) return;
 
-    // Auto-accept follow requests for now
+    // Store the follow request
+    const followRecord = await db
+      .insert(activityPubFollow)
+      .values({
+        id: crypto.randomUUID(),
+        activityId: follow.id?.href || crypto.randomUUID(),
+        actorId: localActorId,
+        remoteActorId: remoteActorId,
+        state: "pending",
+        created: new Date(),
+        updated: new Date(),
+      })
+      .onConflictDoNothing()
+      .returning();
+
     const accept = new Accept({
-      id: new URL(`${ctx.origin}/activities/${crypto.randomUUID()}`),
-      actor: follow.objectId,
+      id: new URL(
+        `#accept/${localActorId}/${+followRecord[0].state!}`,
+        ctx.getActorUri(localActorId)
+      ),
+      actor: ctx.getActorUri(localActorId),
       object: follow,
     });
 
     // Send the Accept activity back to the follower
     if (identifier) {
       try {
-        await ctx.sendActivity({ identifier }, follow.actorId!, accept);
+        await ctx.sendActivity(
+          { identifier: localActorId },
+          followActor,
+          new Accept({
+            id: new URL(
+              `#accept/${localActorId}/${+followRecord[0].created!}`,
+              ctx.getActorUri(localActorId)
+            ),
+            actor: ctx.getActorUri(localActorId),
+            object: follow,
+          }),
+          { excludeBaseUris: [new URL(ctx.origin)] }
+        );
       } catch (error) {
         console.error("Failed to send Accept activity:", error);
       }
