@@ -9,7 +9,7 @@ import {
   MemoryKvStore,
   InProcessMessageQueue,
 } from "@fedify/fedify";
-import { PostgresMessageQueue } from "@fedify/postgres";
+import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import { configure, getConsoleSink } from "@logtape/logtape";
 import postgres from "postgres";
 import { db } from "./db";
@@ -21,7 +21,7 @@ import {
   user as userTable,
   blog as blogTable,
 } from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { generateCryptoKeyPair, exportJwk, importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 
@@ -41,7 +41,8 @@ async function persistRemoteActor(actorUri: string): Promise<string> {
   try {
     const response = await fetch(actorUri, {
       headers: {
-        Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        Accept:
+          'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
       },
     });
 
@@ -75,8 +76,8 @@ async function persistRemoteActor(actorUri: string): Promise<string> {
 
     return actorId;
   } catch (error) {
-    console.error('Failed to fetch remote actor:', error);
-    
+    console.error("Failed to fetch remote actor:", error);
+
     // Create minimal record with just the URI
     const actorId = crypto.randomUUID();
     const now = new Date();
@@ -105,20 +106,12 @@ async function persistRemoteActor(actorUri: string): Promise<string> {
 
 export const fedifyRequestHandler = integrateFederation(() => {});
 
-// Create message queue - use in-process for development, PostgreSQL for production
-let messageQueue;
-if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL) {
-  const sql = postgres(process.env.DATABASE_URL);
-  messageQueue = new PostgresMessageQueue(sql);
-} else {
-  messageQueue = new InProcessMessageQueue();
-}
-
+const pg = postgres(process.env.DATABASE_URL!);
 const routePrefix = `/api/ap`;
 
 export const federation = createFederation<void>({
-  kv: new MemoryKvStore(),
-  queue: messageQueue,
+  kv: new PostgresKvStore(pg),
+  queue: new PostgresMessageQueue(pg),
 });
 
 // Configure actor dispatcher for blogs
@@ -188,8 +181,6 @@ federation
     const followerId = follow.actorId?.href;
     const followingId = follow.objectId?.href;
 
-    console.log({ ctx, follow, followerId, followingId });
-
     if (!followerId || !followingId) return;
 
     // Persist the remote actor
@@ -241,7 +232,7 @@ federation
       try {
         await ctx.sendActivity({ identifier }, follow.actorId!, accept);
       } catch (error) {
-        console.error('Failed to send Accept activity:', error);
+        console.error("Failed to send Accept activity:", error);
       }
     }
 
