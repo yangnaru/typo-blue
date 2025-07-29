@@ -25,6 +25,84 @@ import { eq, and } from "drizzle-orm";
 import { generateCryptoKeyPair, exportJwk, importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 
+async function persistRemoteActor(actorUri: string): Promise<string> {
+  // Check if actor already exists
+  const existing = await db
+    .select({ id: activityPubRemoteActor.id })
+    .from(activityPubRemoteActor)
+    .where(eq(activityPubRemoteActor.uri, actorUri))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  // Fetch actor data from the remote server
+  try {
+    const response = await fetch(actorUri, {
+      headers: {
+        Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch actor: ${response.status}`);
+    }
+
+    const actorData = await response.json();
+
+    // Extract actor information
+    const actorId = crypto.randomUUID();
+    const now = new Date();
+
+    await db.insert(activityPubRemoteActor).values({
+      id: actorId,
+      uri: actorUri,
+      handle: actorData.preferredUsername || null,
+      name: actorData.name || null,
+      summary: actorData.summary || null,
+      iconUrl: actorData.icon?.url || null,
+      publicKeyPem: actorData.publicKey?.publicKeyPem || null,
+      inboxUrl: actorData.inbox,
+      outboxUrl: actorData.outbox || null,
+      followersUrl: actorData.followers || null,
+      followingUrl: actorData.following || null,
+      sharedInboxUrl: actorData.endpoints?.sharedInbox || null,
+      created: now,
+      updated: now,
+      lastFetched: now,
+    });
+
+    return actorId;
+  } catch (error) {
+    console.error('Failed to fetch remote actor:', error);
+    
+    // Create minimal record with just the URI
+    const actorId = crypto.randomUUID();
+    const now = new Date();
+
+    await db.insert(activityPubRemoteActor).values({
+      id: actorId,
+      uri: actorUri,
+      handle: null,
+      name: null,
+      summary: null,
+      iconUrl: null,
+      publicKeyPem: null,
+      inboxUrl: actorUri, // Fallback to actor URI
+      outboxUrl: null,
+      followersUrl: null,
+      followingUrl: null,
+      sharedInboxUrl: null,
+      created: now,
+      updated: now,
+      lastFetched: null,
+    });
+
+    return actorId;
+  }
+}
+
 export const fedifyRequestHandler = integrateFederation(() => {});
 
 // Create message queue - use in-process for development, PostgreSQL for production
@@ -110,18 +188,42 @@ federation
     const followerId = follow.actorId?.href;
     const followingId = follow.objectId?.href;
 
+    console.log({ ctx, follow, followerId, followingId });
+
     if (!followerId || !followingId) return;
 
-    // Extract identifier from the target actor URI
+    // Persist the remote actor
+    const remoteActorId = await persistRemoteActor(followerId);
+
+    // Find the local actor being followed
     const targetUri = follow.objectId?.href;
     if (!targetUri) return;
 
+    // Extract identifier from target URI (e.g., extract 'blog' from '/api/ap/users/blog')
+    const urlPath = new URL(targetUri).pathname;
+    const identifierMatch = urlPath.match(/\/users\/([^\/]+)$/);
+    const identifier = identifierMatch?.[1];
+
+    let localActorId = null;
+    if (identifier) {
+      const localActor = await db
+        .select({ id: activityPubActor.id })
+        .from(blogTable)
+        .innerJoin(activityPubActor, eq(activityPubActor.blogId, blogTable.id))
+        .where(eq(blogTable.slug, identifier))
+        .limit(1);
+
+      if (localActor.length > 0) {
+        localActorId = localActor[0].id;
+      }
+    }
+
     // Store the follow request
-    await db.insert(activityPubFollow).values({
+    const followRecord = await db.insert(activityPubFollow).values({
       id: crypto.randomUUID(),
       activityId: follow.id?.href || crypto.randomUUID(),
-      actorId: null, // This would be the local actor ID if following a local user
-      remoteActorId: null, // This would be populated after actor lookup
+      actorId: localActorId,
+      remoteActorId: remoteActorId,
       state: "pending",
       created: new Date(),
       updated: new Date(),
@@ -134,9 +236,14 @@ federation
       object: follow,
     });
 
-    // For now, we'll skip sending the activity
-    // This would need proper actor lookup to get the identifier
-    // await ctx.sendActivity({ identifier: "me" }, follow.actorId!, accept);
+    // Send the Accept activity back to the follower
+    if (identifier) {
+      try {
+        await ctx.sendActivity({ identifier }, follow.actorId!, accept);
+      } catch (error) {
+        console.error('Failed to send Accept activity:', error);
+      }
+    }
 
     // Update follow state to accepted
     await db
