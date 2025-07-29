@@ -23,24 +23,9 @@ import {
 } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { generateCryptoKeyPair, exportJwk, importJwk } from "@fedify/fedify";
+import { getXForwardedRequest } from "x-forwarded-fetch";
 
-// Configure logging for Fedify (only in development)
-let loggingConfigured = false;
-async function configureLogging() {
-  if (process.env.NODE_ENV === "development" && !loggingConfigured) {
-    await configure({
-      sinks: { console: getConsoleSink() },
-      loggers: [
-        { category: "fedify", sinks: ["console"], lowestLevel: "info" },
-      ],
-    });
-    loggingConfigured = true;
-  }
-}
-
-export async function initializeFederation() {
-  await configureLogging();
-}
+export const fedifyRequestHandler = integrateFederation(() => {});
 
 // Create message queue - use in-process for development, PostgreSQL for production
 let messageQueue;
@@ -51,6 +36,8 @@ if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL) {
   messageQueue = new InProcessMessageQueue();
 }
 
+const routePrefix = `/api/ap`;
+
 export const federation = createFederation<void>({
   kv: new MemoryKvStore(),
   queue: messageQueue,
@@ -58,36 +45,38 @@ export const federation = createFederation<void>({
 
 // Configure actor dispatcher for blogs
 federation
-  .setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    // Same logic as /@{identifier} since they point to the same actor
-    const result = await db
-      .select({
-        blog: blogTable,
-        actor: activityPubActor,
-      })
-      .from(blogTable)
-      .innerJoin(activityPubActor, eq(activityPubActor.blogId, blogTable.id))
-      .where(eq(blogTable.slug, identifier))
-      .limit(1);
+  .setActorDispatcher(
+    `${routePrefix}/users/{identifier}`,
+    async (ctx, identifier) => {
+      const result = await db
+        .select({
+          blog: blogTable,
+          actor: activityPubActor,
+        })
+        .from(blogTable)
+        .innerJoin(activityPubActor, eq(activityPubActor.blogId, blogTable.id))
+        .where(eq(blogTable.slug, identifier))
+        .limit(1);
 
-    if (result.length === 0) return null;
+      if (result.length === 0) return null;
 
-    const { blog, actor } = result[0];
+      const { blog, actor } = result[0];
 
-    return new Person({
-      id: ctx.getActorUri(identifier),
-      preferredUsername: identifier,
-      name: actor.name || blog.name || blog.slug,
-      summary: actor.summary || blog.description,
-      icon: actor.iconUrl ? new URL(actor.iconUrl) : undefined,
-      inbox: ctx.getInboxUri(identifier),
-      outbox: ctx.getOutboxUri(identifier),
-      followers: ctx.getFollowersUri(identifier),
-      following: ctx.getFollowingUri(identifier),
-      url: new URL(`/@${identifier}`, ctx.origin),
-      publicKey: (await ctx.getActorKeyPairs(identifier))[0].cryptographicKey,
-    });
-  })
+      return new Person({
+        id: ctx.getActorUri(identifier),
+        preferredUsername: identifier,
+        name: actor.name || blog.name || blog.slug,
+        summary: actor.summary || blog.description,
+        icon: actor.iconUrl ? new URL(actor.iconUrl) : undefined,
+        inbox: ctx.getInboxUri(identifier),
+        outbox: ctx.getOutboxUri(identifier),
+        followers: ctx.getFollowersUri(identifier),
+        following: ctx.getFollowingUri(identifier),
+        url: new URL(`/@${identifier}`, ctx.origin),
+        publicKey: (await ctx.getActorKeyPairs(identifier))[0].cryptographicKey,
+      });
+    }
+  )
   .setKeyPairsDispatcher(async (ctx, identifier) => {
     const result = await db
       .select({
@@ -116,7 +105,7 @@ federation
 
 // Configure inbox listener for follow activities
 federation
-  .setInboxListeners("/@{identifier}/inbox", "/inbox")
+  .setInboxListeners(`${routePrefix}/users/{identifier}/inbox`, `/inbox`)
   .on(Follow, async (ctx, follow) => {
     const followerId = follow.actorId?.href;
     const followingId = follow.objectId?.href;
@@ -158,7 +147,7 @@ federation
 
 // Configure outbox dispatcher for posts
 federation.setOutboxDispatcher(
-  "/@{identifier}/outbox",
+  `${routePrefix}/users/{identifier}/outbox`,
   async (ctx, identifier, cursor) => {
     // Fetch posts from the blog and return them as ActivityPub objects
     const blogResult = await db
@@ -188,7 +177,7 @@ federation.setOutboxDispatcher(
 
 // Configure followers dispatcher
 federation.setFollowersDispatcher(
-  "/@{identifier}/followers",
+  `${routePrefix}/users/{identifier}/followers`,
   async (ctx, identifier, cursor) => {
     // Fetch followers from database
     const followers = await db
@@ -216,7 +205,7 @@ federation.setFollowersDispatcher(
 
 // Configure following dispatcher
 federation.setFollowingDispatcher(
-  "/@{identifier}/following",
+  `${routePrefix}/users/{identifier}/following`,
   async (ctx, identifier, cursor) => {
     // Blogs typically don't follow other accounts, but this could be implemented
     return { items: [] };
@@ -224,3 +213,27 @@ federation.setFollowingDispatcher(
 );
 
 export default federation;
+
+function integrateFederation<TContextData>(
+  contextDataFactory: (request: Request) => TContextData | Promise<TContextData>
+) {
+  return async (request: Request) => {
+    const forwardedRequest = await getXForwardedRequest(request);
+    const contextData = await contextDataFactory(forwardedRequest);
+    return await federation.fetch(forwardedRequest, {
+      contextData: contextData as any,
+      onNotFound: () => {
+        return new Response("Not found", { status: 404 }); // unused
+      },
+      onNotAcceptable: () => {
+        return new Response("Not acceptable", {
+          status: 406,
+          headers: {
+            "Content-Type": "text/plain",
+            Vary: "Accept",
+          },
+        });
+      },
+    });
+  };
+}

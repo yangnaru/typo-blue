@@ -1,4 +1,4 @@
-import { fedifyRequestHandler } from "../../../lib/federation";
+import { fedifyRequestHandler } from "@/lib/federation";
 
 export {
   fedifyRequestHandler as DELETE,
