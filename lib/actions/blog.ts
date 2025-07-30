@@ -112,50 +112,6 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   return targetPost;
 }
 
-export async function publishPost(
-  request: Request,
-  blogId: string,
-  postId: string
-) {
-  const uuid = decodePostId(postId);
-  const targetPost = await assertCurrentUserHasBlogWithIdAndPostWithId(
-    blogId,
-    uuid
-  );
-
-  const updateData: { published: Date; first_published?: Date } = {
-    published: new Date(),
-  };
-
-  if (!targetPost.first_published) {
-    updateData.first_published = updateData.published;
-  }
-
-  await db.update(post).set(updateData).where(eq(post.id, uuid));
-
-  // Send to ActivityPub followers if this is the first time publishing
-  // or if the post is being republished (published > first_published)
-  if (
-    (!targetPost.first_published ||
-      (targetPost.published &&
-        targetPost.first_published &&
-        +targetPost.published > +targetPost.first_published)) &&
-    targetPost.title &&
-    targetPost.content
-  ) {
-    try {
-      const isUpdate = !!targetPost.first_published;
-      await sendNoteToFollowers(blogId, uuid, false, isUpdate);
-    } catch (error) {
-      console.error("Failed to send ActivityPub article:", error);
-    }
-  }
-
-  return {
-    success: true,
-  };
-}
-
 export async function unPublishPost(blogId: string, postId: string) {
   const uuid = decodePostId(postId);
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
@@ -287,7 +243,12 @@ export async function upsertPost(
   // Send to ActivityPub followers if this is a newly published post or an update to an already published post
   if (published && targetPost.title && targetPost.content) {
     try {
-      await sendNoteToFollowers(blogSlug, targetPost.id, false, wasAlreadyPublished);
+      await sendNoteToFollowers(
+        blogSlug,
+        targetPost.id,
+        false,
+        wasAlreadyPublished
+      );
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }
