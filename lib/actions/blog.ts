@@ -236,11 +236,13 @@ export async function upsertPost(
       title: string;
       content: string;
       published: Date | null;
+      updated: Date;
       first_published?: Date;
     } = {
       title,
       content,
       published,
+      updated: new Date(),
     };
 
     if (published && !existingPost?.first_published) {
