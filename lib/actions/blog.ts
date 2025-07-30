@@ -275,10 +275,9 @@ export async function upsertPost(
 
   // Email sending is now manual - no automatic email on publish
 
-  // Send to ActivityPub followers if this is a newly published post
+  // Send to ActivityPub followers if this is a newly published post or an update to an already published post
   if (
     published &&
-    !wasAlreadyPublished &&
     targetPost.title &&
     targetPost.content
   ) {
