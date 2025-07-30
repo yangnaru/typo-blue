@@ -19,6 +19,7 @@ import {
   isActor,
   Note,
   Delete,
+  Article,
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
@@ -29,6 +30,7 @@ import {
   actorTable,
   followingTable,
   post as postTable,
+  notificationTable,
 } from "@/drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { importJwk } from "@fedify/fedify";
@@ -675,6 +677,118 @@ export async function updateFollowersCount(
   return rows[0];
 }
 
+async function handleMentionOrQuote(
+  fedCtx: InboxContext<ContextData>,
+  create: Create,
+  object: Note | Article
+) {
+  try {
+    const { db } = fedCtx.data;
+    
+    // Get the actor who created this post
+    const actorObject = await create.getActor(fedCtx);
+    if (!actorObject) return;
+    
+    // Persist the remote actor
+    const actor = await persistActor(fedCtx, actorObject, {
+      ...fedCtx,
+      outbox: false,
+    });
+    if (!actor) return;
+    
+    const content = object.content?.toString() || "";
+    const objectId = object.id?.href;
+    
+    if (!objectId) return;
+    
+    // Check for mentions of local actors
+    const mentions = [];
+    for await (const tag of object.getTags({ ...fedCtx, suppressError: true })) {
+      if (tag instanceof Person && tag.id) {
+        // Check if this is a mention of a local actor
+        const localActor = await db
+          .select({
+            actor: actorTable,
+            blog: blogTable,
+          })
+          .from(actorTable)
+          .innerJoin(blogTable, eq(actorTable.blogId, blogTable.id))
+          .where(eq(actorTable.iri, tag.id.href))
+          .limit(1);
+        
+        if (localActor.length > 0) {
+          mentions.push({
+            blogId: localActor[0].blog.id,
+            type: "mention" as const,
+          });
+        }
+      }
+    }
+    
+    // Check for quotes by looking for URLs in content that match local posts
+    const quotes = [];
+    const urlRegex = /https?:\/\/[^\s]+/g;
+    const urls = content.match(urlRegex) || [];
+    
+    for (const url of urls) {
+      try {
+        const urlObj = new URL(url);
+        // Check if this URL matches a local post
+        if (urlObj.hostname === fedCtx.canonicalOrigin?.replace("https://", "")) {
+          const pathMatch = urlObj.pathname.match(/\/@([^\/]+)\/([^\/]+)/);
+          if (pathMatch) {
+            const [, blogSlug, encodedPostId] = pathMatch;
+            const blog = await db.query.blog.findFirst({
+              where: eq(blogTable.slug, blogSlug),
+            });
+            if (blog) {
+              quotes.push({
+                blogId: blog.id,
+                type: "quote" as const,
+                postId: null, // We could decode the post ID if needed
+              });
+            }
+          }
+        }
+      } catch (e) {
+        // Invalid URL, skip
+        continue;
+      }
+    }
+    
+    // Create notifications for mentions and quotes
+    const notifications = [...mentions, ...quotes];
+    
+    for (const notification of notifications) {
+      try {
+        await db
+          .insert(notificationTable)
+          .values({
+            id: crypto.randomUUID(),
+            blogId: notification.blogId,
+            type: notification.type,
+            actorId: actor.id,
+            activityId: create.id?.href || objectId,
+            objectId: objectId,
+            postId: "postId" in notification ? notification.postId : null,
+            content: content,
+            contentHtml: object.content?.toString(),
+            isRead: false,
+            created: new Date(),
+            updated: new Date(),
+          })
+          .onConflictDoNothing(); // Avoid duplicate notifications
+      } catch (error) {
+        console.error("Failed to create notification:", error);
+      }
+    }
+    
+    console.log(`Created ${notifications.length} notifications for activity ${objectId}`);
+  } catch (error) {
+    console.error("Error handling mention/quote:", error);
+  }
+}
+
 // Configure inbox listener for follow activities
 federation
   .setInboxListeners(`${routePrefix}/users/{identifier}/inbox`, `/inbox`)
@@ -727,6 +841,13 @@ federation
       }),
       { excludeBaseUris: [new URL(fedCtx.origin)] }
     );
+  })
+  .on(Create, async (fedCtx, create) => {
+    // Handle incoming mentions and quotes
+    const object = await create.getObject({ ...fedCtx, suppressError: true });
+    if (!object || (!(object instanceof Note) && !(object instanceof Article))) return;
+    
+    await handleMentionOrQuote(fedCtx, create, object);
   });
 
 // Configure outbox dispatcher for posts

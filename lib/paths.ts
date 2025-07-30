@@ -58,6 +58,10 @@ export function getBlogFediversePath(slug: string) {
   return `/@${slug}/fediverse`;
 }
 
+export function getBlogNotificationsPath(slug: string) {
+  return `/@${slug}/notifications`;
+}
+
 export function getAccountChangeEmailPath() {
   return "/account/change-email";
 }

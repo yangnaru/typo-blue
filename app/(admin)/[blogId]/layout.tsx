@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Link from "next/link";
 import {
   BarChart3,
+  Bell,
   Cog,
   ExternalLink,
   Home,
@@ -29,6 +30,7 @@ import {
   getBlogDashboardPath,
   getBlogFediversePath,
   getBlogHomePath,
+  getBlogNotificationsPath,
   getBlogSettingsPath,
   getBlogSubscribersPath,
   getRootPath,
@@ -39,6 +41,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { blog } from "@/drizzle/schema";
+import { getActorForBlog } from "@/lib/activitypub";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -65,10 +68,24 @@ export default async function RootLayout({
   }
 
   let blogs;
+  let currentBlog;
+  let activityPubEnabled = false;
+  
   if (user) {
     blogs = await db.query.blog.findMany({
       where: eq(blog.userId, user.id),
     });
+    
+    // Get current blog info
+    currentBlog = await db.query.blog.findFirst({
+      where: eq(blog.slug, blogId),
+    });
+    
+    // Check if ActivityPub is enabled for this blog
+    if (currentBlog && currentBlog.userId === user.id) {
+      const blogActor = await getActorForBlog(currentBlog.id);
+      activityPubEnabled = !!blogActor;
+    }
   }
 
   return (
@@ -139,6 +156,20 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">페디버스</TooltipContent>
                   </Tooltip>
+                  {activityPubEnabled && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={getBlogNotificationsPath(blogId)}
+                          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        >
+                          <Bell className="h-5 w-5" />
+                          <span className="sr-only">알림</span>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">알림</TooltipContent>
+                    </Tooltip>
+                  )}
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
                   <Tooltip>
@@ -218,6 +249,15 @@ export default async function RootLayout({
                           <Globe className="h-5 w-5" />
                           페디버스
                         </Link>
+                        {activityPubEnabled && (
+                          <Link
+                            href={getBlogNotificationsPath(blogId)}
+                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                          >
+                            <Bell className="h-5 w-5" />
+                            알림
+                          </Link>
+                        )}
                         <Link
                           href={getBlogHomePath(blogId)}
                           className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"

@@ -361,3 +361,41 @@ export const instanceTable = pgTable(
   },
   (table) => [check("instance_host_check", sql`${table.host} NOT LIKE '%@%'`)]
 );
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "mention",
+  "quote",
+  "reply",
+]);
+
+export const notificationTable = pgTable(
+  "notification",
+  {
+    id: uuid().primaryKey().notNull(),
+    blogId: uuid("blog_id")
+      .notNull()
+      .references(() => blog.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum().notNull(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => actorTable.id, { onDelete: "cascade" }),
+    activityId: text("activity_id").notNull(), // ActivityPub activity IRI
+    objectId: text("object_id"), // Optional: IRI of the object being mentioned/quoted
+    postId: uuid("post_id").references(() => post.id, { onDelete: "cascade" }), // Local post being mentioned/quoted (if any)
+    content: text(), // Content of the mention/quote
+    contentHtml: text("content_html"), // HTML content if available
+    isRead: boolean("is_read").notNull().default(false),
+    created: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+    updated: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+  },
+  (table) => [
+    index("notification_blog_id_idx").on(table.blogId),
+    index("notification_created_idx").on(table.created),
+    index("notification_is_read_idx").on(table.isRead),
+    unique("notification_activity_id_blog_id_unique").on(table.activityId, table.blogId),
+  ]
+);
