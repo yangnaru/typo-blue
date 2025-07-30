@@ -1,11 +1,7 @@
 "use server";
 
 import { getCurrentSession } from "@/lib/auth";
-import {
-  getOrCreateActorForBlog,
-  getActorForBlog,
-  getActivityPubDomain,
-} from "@/lib/activitypub";
+import { getOrCreateActorForBlog, getActorForBlog } from "@/lib/activitypub";
 import { db } from "@/lib/db";
 import { blog as blogTable } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -33,7 +29,7 @@ export async function setupActivityPubActorForBlog(blogSlug: string) {
       };
     }
 
-    const domain = getActivityPubDomain();
+    const domain = process.env.NEXT_PUBLIC_DOMAIN!;
     const actor = await getOrCreateActorForBlog(blog[0].id, domain);
 
     return {
@@ -109,7 +105,7 @@ export async function publishActivityPubPost(postId: string, blogSlug: string) {
       return { success: false, error: "Blog not found or unauthorized" };
     }
 
-    const domain = getActivityPubDomain();
+    const domain = process.env.NEXT_PUBLIC_DOMAIN!;
     const actor = await getOrCreateActorForBlog(blog[0].id, domain);
 
     // Get post details

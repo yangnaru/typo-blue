@@ -307,9 +307,9 @@ async function getNote(
     name: post.title,
     content: post.content,
     url: new URL(
-      `https://${
-        process.env.ACTIVITYPUB_DOMAIN || "localhost"
-      }/@${blogSlug}/${encodePostId(post.id)}`
+      `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blogSlug}/${encodePostId(
+        post.id
+      )}`
     ),
     // @ts-expect-error: toTemporalInstant is not typed on Date prototype
     published: post.published!.toTemporalInstant(),
@@ -354,9 +354,7 @@ export async function sendNoteToFollowers(
     }
 
     // Create a temporary context for sending the activity
-    const baseUrl = new URL(
-      `https://${process.env.ACTIVITYPUB_DOMAIN || "localhost"}`
-    );
+    const baseUrl = new URL(`https://${process.env.NEXT_PUBLIC_DOMAIN!}`);
     const context = federation.createContext(baseUrl, {
       db,
       canonicalOrigin: baseUrl.origin,

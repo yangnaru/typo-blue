@@ -198,10 +198,3 @@ export async function createOrUpdateRemoteActor(actorData: {
     return created[0];
   }
 }
-
-export function getActivityPubDomain(): string {
-  // In production, this should come from environment variables
-  return (
-    process.env.ACTIVITYPUB_DOMAIN || process.env.VERCEL_URL || "localhost:3000"
-  );
-}
