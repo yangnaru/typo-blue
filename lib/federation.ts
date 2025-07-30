@@ -22,7 +22,6 @@ import {
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
-import { Temporal } from "@js-temporal/polyfill";
 import { db } from "./db";
 import {
   blog as blogTable,
@@ -315,9 +314,13 @@ async function getNote(
         post.id
       )}`
     ),
-    published: post.published ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime()) : undefined,
+    published: post.published
+      ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
+      : undefined,
     updated:
-      post.published && post.first_published && +post.published > +post.first_published
+      post.published &&
+      post.first_published &&
+      +post.published > +post.first_published
         ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
         : undefined,
   });
