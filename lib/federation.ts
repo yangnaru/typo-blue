@@ -17,6 +17,7 @@ import {
   Emoji,
   isActor,
   Note,
+  Delete,
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
@@ -321,7 +322,11 @@ async function getNote(
   return note;
 }
 
-export async function sendNoteToFollowers(blogSlug: string, postId: string) {
+export async function sendNoteToFollowers(
+  blogSlug: string,
+  postId: string,
+  isDelete: boolean = false
+) {
   try {
     // Get blog and actor information
     const blogResult = await db
@@ -358,17 +363,29 @@ export async function sendNoteToFollowers(blogSlug: string, postId: string) {
     });
 
     const note = await getNote(context, post, blogSlug);
-    await context.sendActivity(
-      { identifier: blogSlug },
-      "followers",
-      new Create({
-        id: new URL("#create", note.id ?? context.origin),
-        actors: [context.getActorUri(blogSlug)],
-        object: note,
-      }),
-      { preferSharedInbox: true, excludeBaseUris: [new URL(context.origin)] }
-    );
-
+    if (isDelete) {
+      await context.sendActivity(
+        { identifier: blogSlug },
+        "followers",
+        new Delete({
+          id: new URL("#delete", note.id ?? context.origin),
+          actor: context.getActorUri(blogSlug),
+          object: note,
+        }),
+        { preferSharedInbox: true, excludeBaseUris: [new URL(context.origin)] }
+      );
+    } else {
+      await context.sendActivity(
+        { identifier: blogSlug },
+        "followers",
+        new Create({
+          id: new URL("#create", note.id ?? context.origin),
+          actors: [context.getActorUri(blogSlug)],
+          object: note,
+        }),
+        { preferSharedInbox: true, excludeBaseUris: [new URL(context.origin)] }
+      );
+    }
     console.log(`Successfully sent note to followers for blog: ${blogSlug}`);
   } catch (error) {
     console.error("Error in sendNoteToFollowers:", error);

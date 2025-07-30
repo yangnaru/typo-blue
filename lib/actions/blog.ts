@@ -184,6 +184,12 @@ export async function deletePost(blogId: string, postId: string) {
     })
     .where(eq(post.id, uuid));
 
+  try {
+    await sendNoteToFollowers(blogId, uuid, true);
+  } catch (error) {
+    console.error("Failed to send ActivityPub delete:", error);
+  }
+
   return {
     success: true,
   };
