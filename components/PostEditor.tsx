@@ -13,8 +13,9 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
-import { getBlogDashboardPath } from "@/lib/paths";
+import { getBlogDashboardPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function PostEditor({
   blogId,
@@ -31,6 +32,7 @@ export default function PostEditor({
   existingPublishedAt?: Date | null;
   existingEmailSent?: boolean;
 }) {
+  const router = useRouter();
   const [postId, setPostId] = useState(existingPostId);
   const [title, setTitle] = useState(existingTitle);
   const [content, setContent] = useState(existingContent);
@@ -48,6 +50,7 @@ export default function PostEditor({
     const res = await upsertPost(blogId, publishedAtValue, postId, title, content);
 
     if (res.success) {
+      const wasNewPost = !postId;
       setPostId(res.postId);
 
       if (publishedAtValue) {
@@ -59,6 +62,13 @@ export default function PostEditor({
         format(now, "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
+      
+      // If this was a new post, navigate to the edit URL
+      if (wasNewPost) {
+        const editPath = getBlogPostEditPath(blogId, res.postId);
+        router.replace(editPath);
+      }
+      
       setIsLoading(false);
     } else {
       toast("❗️");
