@@ -44,14 +44,14 @@ export default function PostEditor({
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
 
-    const publishedAt = status === "publish" ? new Date() : null;
-    const res = await upsertPost(blogId, publishedAt, postId, title, content);
+    const publishedAtValue = status === "publish" ? new Date() : (status === "save" ? publishedAt : null);
+    const res = await upsertPost(blogId, publishedAtValue, postId, title, content);
 
     if (res.success) {
       setPostId(res.postId);
 
-      if (publishedAt) {
-        setPublishedAt(publishedAt);
+      if (publishedAtValue) {
+        setPublishedAt(publishedAtValue);
       }
 
       const now = new Date();
