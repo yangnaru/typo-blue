@@ -144,7 +144,8 @@ export async function publishPost(
     targetPost.content
   ) {
     try {
-      await sendNoteToFollowers(blogId, uuid);
+      const isUpdate = !!targetPost.first_published;
+      await sendNoteToFollowers(blogId, uuid, false, isUpdate);
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }
@@ -286,7 +287,7 @@ export async function upsertPost(
   // Send to ActivityPub followers if this is a newly published post or an update to an already published post
   if (published && targetPost.title && targetPost.content) {
     try {
-      await sendNoteToFollowers(blogSlug, targetPost.id);
+      await sendNoteToFollowers(blogSlug, targetPost.id, false, wasAlreadyPublished);
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }

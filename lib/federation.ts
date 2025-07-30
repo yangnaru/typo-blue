@@ -4,6 +4,7 @@ import {
   Follow,
   Accept,
   Create,
+  Update,
   Context,
   DocumentLoader,
   Link,
@@ -327,7 +328,8 @@ async function getNote(
 export async function sendNoteToFollowers(
   blogSlug: string,
   postId: string,
-  isDelete: boolean = false
+  isDelete: boolean = false,
+  isUpdate: boolean = false
 ) {
   try {
     // Get blog and actor information
@@ -371,6 +373,17 @@ export async function sendNoteToFollowers(
         "followers",
         new Delete({
           id: new URL("#delete", note.id ?? context.origin),
+          actor: context.getActorUri(blogSlug),
+          object: note,
+        }),
+        { preferSharedInbox: true, excludeBaseUris: [new URL(context.origin)] }
+      );
+    } else if (isUpdate) {
+      await context.sendActivity(
+        { identifier: blogSlug },
+        "followers",
+        new Update({
+          id: new URL("#update", note.id ?? context.origin),
           actor: context.getActorUri(blogSlug),
           object: note,
         }),
