@@ -22,6 +22,7 @@ import {
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
+import { Temporal } from "@js-temporal/polyfill";
 import { db } from "./db";
 import {
   blog as blogTable,
@@ -314,13 +315,11 @@ async function getNote(
         post.id
       )}`
     ),
-    // @ts-expect-error: toTemporalInstant is not typed on Date prototype
-    published: post.published!.toTemporalInstant(),
+    published: post.published ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime()) : undefined,
     updated:
-      +post.published! > +post.first_published!
-        ? // @ts-expect-error: toTemporalInstant is not typed on Date prototype
-          post.published!.toTemporalInstant()
-        : null,
+      post.published && post.first_published && +post.published > +post.first_published
+        ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
+        : undefined,
   });
   return note;
 }
