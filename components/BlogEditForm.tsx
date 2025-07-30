@@ -145,11 +145,10 @@ export default function BlogEditForm({
                 htmlFor="terms1"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                검색 및 발견 허용
+                타이포 블루 메인에 노출 허용
               </label>
               <p className="text-sm text-muted-foreground">
-                타이포 블루 메인에 노출되거나 검색 엔진에 의해 발견될 수
-                있습니다.
+                새 글이 타이포 블루 메인에 노출될 수 있습니다.
               </p>
             </div>
           </div>
