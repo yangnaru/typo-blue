@@ -300,12 +300,14 @@ async function getNote(
   post: typeof postTable.$inferSelect,
   blogSlug: string
 ) {
+  const content = `<p>${post.title}</p>${post.content}`;
+
   const note = new Note({
     id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
     cc: ctx.getFollowersUri(blogSlug),
     name: post.title,
-    content: post.content,
+    content,
     url: new URL(
       `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blogSlug}/${encodePostId(
         post.id
@@ -347,6 +349,8 @@ export async function sendNoteToFollowers(
     const post = await db.query.post.findFirst({
       where: eq(postTable.id, postId),
     });
+
+    console.log({ post });
 
     if (!post) {
       console.log(`No post found with id: ${postId}`);
