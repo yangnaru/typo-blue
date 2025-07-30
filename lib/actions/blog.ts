@@ -6,7 +6,7 @@ import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, post } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { sendArticleToFollowers } from "../federation";
+import { sendNoteToFollowers } from "../federation";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -134,9 +134,17 @@ export async function publishPost(
   await db.update(post).set(updateData).where(eq(post.id, uuid));
 
   // Send to ActivityPub followers if this is the first time publishing
-  if (!targetPost.first_published && targetPost.title && targetPost.content) {
+  // or if the post is being republished (published > first_published)
+  if (
+    (!targetPost.first_published ||
+      (targetPost.published &&
+        targetPost.first_published &&
+        +targetPost.published > +targetPost.first_published)) &&
+    targetPost.title &&
+    targetPost.content
+  ) {
     try {
-      await sendArticleToFollowers(blogId, uuid);
+      await sendNoteToFollowers(blogId, uuid);
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }
@@ -269,7 +277,7 @@ export async function upsertPost(
     targetPost.content
   ) {
     try {
-      await sendArticleToFollowers(blogSlug, targetPost.id);
+      await sendNoteToFollowers(blogSlug, targetPost.id);
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }

@@ -1,7 +1,6 @@
 import {
   createFederation,
   Person,
-  Article,
   Follow,
   Accept,
   Create,
@@ -17,6 +16,7 @@ import {
   Hashtag,
   Emoji,
   isActor,
+  Note,
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
@@ -294,13 +294,13 @@ export async function persistActor(
     });
 }
 
-async function getArticle(
+async function getNote(
   ctx: Context<ContextData>,
   post: typeof postTable.$inferSelect,
   blogSlug: string
 ) {
-  const article = new Article({
-    id: ctx.getObjectUri(Article, { id: post.id }),
+  const note = new Note({
+    id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
     cc: ctx.getFollowersUri(blogSlug),
     name: post.title,
@@ -313,15 +313,15 @@ async function getArticle(
     // @ts-expect-error: toTemporalInstant is not typed on Date prototype
     published: post.published!.toTemporalInstant(),
     updated:
-      +post.updated! > +post.published!
+      +post.published! > +post.first_published!
         ? // @ts-expect-error: toTemporalInstant is not typed on Date prototype
-          post.updated!.toTemporalInstant()
+          post.first_published!.toTemporalInstant()
         : null,
   });
-  return article;
+  return note;
 }
 
-export async function sendArticleToFollowers(blogSlug: string, postId: string) {
+export async function sendNoteToFollowers(blogSlug: string, postId: string) {
   try {
     // Get blog and actor information
     const blogResult = await db
@@ -357,21 +357,21 @@ export async function sendArticleToFollowers(blogSlug: string, postId: string) {
       canonicalOrigin: baseUrl.origin,
     });
 
-    const article = await getArticle(context, post, blogSlug);
+    const note = await getNote(context, post, blogSlug);
     await context.sendActivity(
       { identifier: blogSlug },
       "followers",
       new Create({
-        id: new URL("#create", article.id ?? context.origin),
+        id: new URL("#create", note.id ?? context.origin),
         actors: [context.getActorUri(blogSlug)],
-        object: article,
+        object: note,
       }),
       { preferSharedInbox: true, excludeBaseUris: [new URL(context.origin)] }
     );
 
-    console.log(`Successfully sent article to followers for blog: ${blogSlug}`);
+    console.log(`Successfully sent note to followers for blog: ${blogSlug}`);
   } catch (error) {
-    console.error("Error in sendArticleToFollowers:", error);
+    console.error("Error in sendNoteToFollowers:", error);
   }
 }
 
@@ -626,7 +626,7 @@ federation.setOutboxDispatcher(
 
     // Convert posts to ActivityPub Articles using getArticle
     const articles = await Promise.all(
-      posts.map((post) => getArticle(ctx, post, identifier))
+      posts.map((post) => getNote(ctx, post, identifier))
     );
     const createArticles = articles.map(
       (article) =>
@@ -688,14 +688,14 @@ federation.setFollowingDispatcher(
 );
 
 federation.setObjectDispatcher(
-  Article,
-  `${routePrefix}/articles/{id}`,
+  Note,
+  `${routePrefix}/notes/{id}`,
   async (ctx, values) => {
     const post = await ctx.data.db.query.post.findFirst({
       where: eq(postTable.id, values.id),
     });
     if (post == null) return null;
-    return await getArticle(ctx, post, post.blogId);
+    return await getNote(ctx, post, post.blogId);
   }
 );
 
