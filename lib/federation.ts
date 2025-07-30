@@ -316,7 +316,7 @@ async function getNote(
     updated:
       +post.published! > +post.first_published!
         ? // @ts-expect-error: toTemporalInstant is not typed on Date prototype
-          post.first_published!.toTemporalInstant()
+          post.published!.toTemporalInstant()
         : null,
   });
   return note;
