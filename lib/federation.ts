@@ -327,6 +327,101 @@ async function getNote(
   return note;
 }
 
+export async function sendActorUpdateToFollowers(
+  blogSlug: string,
+  name?: string | null,
+  bioHtml?: string | null
+) {
+  try {
+    // Get blog and actor information
+    const blogResult = await db
+      .select({
+        blog: blogTable,
+        actor: actorTable,
+      })
+      .from(blogTable)
+      .innerJoin(actorTable, eq(actorTable.blogId, blogTable.id))
+      .where(eq(blogTable.slug, blogSlug))
+      .limit(1);
+
+    if (blogResult.length === 0) {
+      console.log(`No ActivityPub actor found for blog: ${blogSlug}`);
+      return;
+    }
+
+    const { blog, actor } = blogResult[0];
+
+    // Update the actor's profile information in the database
+    const updateData: {
+      name?: string | null;
+      bioHtml?: string | null;
+      updated: Date;
+    } = {
+      updated: new Date(),
+    };
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (bioHtml !== undefined) {
+      updateData.bioHtml = bioHtml;
+    }
+
+    await db
+      .update(actorTable)
+      .set(updateData)
+      .where(eq(actorTable.id, actor.id));
+
+    // Create a temporary context for sending the activity
+    const baseUrl = new URL(`https://${process.env.NEXT_PUBLIC_DOMAIN!}`);
+    const context = federation.createContext(baseUrl, {
+      db,
+      canonicalOrigin: baseUrl.origin,
+    });
+
+    // Create the updated Person object
+    const updatedPerson = new Person({
+      id: context.getActorUri(blogSlug),
+      preferredUsername: blog.slug,
+      name: updateData.name !== undefined ? updateData.name : blog.name,
+      summary: updateData.bioHtml !== undefined ? updateData.bioHtml : blog.description,
+      manuallyApprovesFollowers: false,
+      publicKey: (await context.getActorKeyPairs(blogSlug))[0].cryptographicKey,
+      inbox: context.getInboxUri(blogSlug),
+      outbox: context.getOutboxUri(blogSlug),
+      endpoints: new Endpoints({
+        sharedInbox: context.getInboxUri(),
+      }),
+      following: context.getFollowingUri(blogSlug),
+      followers: context.getFollowersUri(blogSlug),
+      url: new URL(`/@${blog.slug}`, context.canonicalOrigin),
+    });
+
+    // Send Update activity to followers
+    await context.sendActivity(
+      { identifier: blogSlug },
+      "followers",
+      new Update({
+        id: new URL(
+          `#update/${updateData.updated.toISOString()}`,
+          context.getActorUri(blogSlug)
+        ),
+        actor: context.getActorUri(blogSlug),
+        to: PUBLIC_COLLECTION,
+        object: updatedPerson,
+      }),
+      {
+        preferSharedInbox: true,
+        excludeBaseUris: [new URL(context.origin)],
+      }
+    );
+
+    console.log(`Successfully sent actor update to followers for blog: ${blogSlug}`);
+  } catch (error) {
+    console.error("Error in sendActorUpdateToFollowers:", error);
+  }
+}
+
 export async function sendNoteToFollowers(
   blogSlug: string,
   postId: string,

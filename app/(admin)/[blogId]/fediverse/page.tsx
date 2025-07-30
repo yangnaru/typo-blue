@@ -153,12 +153,12 @@ export default async function FediversePage(props: { params: PageProps }) {
               <p className="mt-2 text-sm text-muted-foreground">
                 마스토돈, 미스키 등 페디버스 플랫폼에서 블로그를 공유해보세요!
               </p>
-              {blogActorInfo && (
+              {activityPubProfile && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-sm">
                     페디버스에서{" "}
                     <span className="font-mono bg-background px-2 py-1 rounded">
-                      {blogActorInfo.handle}
+                      {activityPubProfile.handle}
                     </span>
                     을 검색하여 팔로우할 수 있습니다.
                   </p>

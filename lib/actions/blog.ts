@@ -6,7 +6,7 @@ import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, post } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
-import { sendNoteToFollowers } from "../federation";
+import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -289,6 +289,14 @@ export async function editBlogInfo(
       discoverable,
     })
     .where(eq(blog.id, targetBlog.id));
+
+  // Send ActivityPub Update activity to followers if the blog has an actor
+  try {
+    await sendActorUpdateToFollowers(blogSlug, name, description);
+  } catch (error) {
+    console.error("Failed to send ActivityPub update:", error);
+    // Don't fail the entire operation if ActivityPub update fails
+  }
 
   return {
     success: true,
