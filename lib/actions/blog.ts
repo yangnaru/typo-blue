@@ -241,7 +241,7 @@ export async function upsertPost(
     } = {
       title,
       content,
-      published,
+      published: wasAlreadyPublished && published ? new Date() : published,
       updated: new Date(),
     };
 
