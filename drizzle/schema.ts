@@ -8,8 +8,26 @@ import {
   text,
   boolean,
   index,
+  unique,
+  check,
+  json,
+  jsonb,
+  AnyPgColumn,
+  pgEnum,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { sql, SQL } from "drizzle-orm";
+
+const currentTimestamp = sql`CURRENT_TIMESTAMP`;
+
+type Uuid = string;
+
+export const actorTypeEnum = pgEnum("actor_type", [
+  "Person",
+  "Service",
+  "Group",
+  "Application",
+  "Organization",
+]);
 
 export const emailVerificationChallenge = pgTable(
   "email_verification_challenge",
@@ -141,15 +159,16 @@ export const mailingListSubscription = pgTable(
   },
   (table) => {
     return {
-      emailBlogIdKey: uniqueIndex("mailing_list_subscription_email_blog_id_key").using(
+      emailBlogIdKey: uniqueIndex(
+        "mailing_list_subscription_email_blog_id_key"
+      ).using(
         "btree",
         table.email.asc().nullsLast().op("text_ops"),
         table.blogId.asc().nullsLast().op("uuid_ops")
       ),
-      unsubscribeTokenKey: uniqueIndex("mailing_list_subscription_unsubscribe_token_key").using(
-        "btree",
-        table.unsubscribeToken.asc().nullsLast().op("text_ops")
-      ),
+      unsubscribeTokenKey: uniqueIndex(
+        "mailing_list_subscription_unsubscribe_token_key"
+      ).using("btree", table.unsubscribeToken.asc().nullsLast().op("text_ops")),
       mailingListSubscriptionBlogIdFkey: foreignKey({
         columns: [table.blogId],
         foreignColumns: [blog.id],
@@ -160,7 +179,6 @@ export const mailingListSubscription = pgTable(
     };
   }
 );
-
 
 export const emailQueue = pgTable(
   "email_queue",
@@ -193,7 +211,9 @@ export const emailQueue = pgTable(
       createdAtIdx: index("email_queue_created_at_idx").on(table.createdAt),
       blogIdIdx: index("email_queue_blog_id_idx").on(table.blogId),
       postIdIdx: index("email_queue_post_id_idx").on(table.postId),
-      subscriberEmailIdx: index("email_queue_subscriber_email_idx").on(table.subscriberEmail),
+      subscriberEmailIdx: index("email_queue_subscriber_email_idx").on(
+        table.subscriberEmail
+      ),
       sentAtIdx: index("email_queue_sent_at_idx").on(table.sentAt),
       openedAtIdx: index("email_queue_opened_at_idx").on(table.openedAt),
       clickedAtIdx: index("email_queue_clicked_at_idx").on(table.clickedAt),
@@ -237,186 +257,107 @@ export const pageViews = pgTable(
   }
 );
 
-export const activityPubActor = pgTable(
-  "activitypub_actor",
+export const actorTable = pgTable(
+  "actor",
   {
-    id: uuid().primaryKey().notNull(),
-    blogId: uuid("blog_id").notNull(),
-    handle: text().notNull(),
-    uri: text().notNull(),
+    id: uuid().$type<Uuid>().primaryKey(),
+    iri: text().notNull().unique(),
+    type: actorTypeEnum().notNull(),
+    username: text().notNull(),
+    instanceHost: text("instance_host")
+      .notNull()
+      .references(() => instanceTable.host),
+    handleHost: text("handle_host").notNull(),
+    handle: text()
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`'@' || ${actorTable.username} || '@' || ${actorTable.handleHost}`
+      ),
+    blogId: uuid("blog_id")
+      .$type<Uuid>()
+      .unique()
+      .references(() => blog.id, { onDelete: "cascade" }),
     name: text(),
-    summary: text(),
-    iconUrl: text("icon_url"),
-    publicKeyPem: text("public_key_pem").notNull(),
-    privateKeyPem: text("private_key_pem").notNull(),
+    bioHtml: text("bio_html"),
+    automaticallyApprovesFollowers: boolean("automatically_approves_followers")
+      .notNull()
+      .default(false),
+    avatarUrl: text("avatar_url"),
+    headerUrl: text("header_url"),
     inboxUrl: text("inbox_url").notNull(),
-    outboxUrl: text("outbox_url").notNull(),
-    followersUrl: text("followers_url").notNull(),
-    followingUrl: text("following_url").notNull(),
-    created: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updated: timestamp({ withTimezone: true }).notNull(),
-  },
-  (table) => {
-    return {
-      actorBlogIdFkey: foreignKey({
-        columns: [table.blogId],
-        foreignColumns: [blog.id],
-        name: "activitypub_actor_blog_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      handleKey: uniqueIndex("activitypub_actor_handle_key").using(
-        "btree",
-        table.handle.asc().nullsLast().op("text_ops")
-      ),
-      uriKey: uniqueIndex("activitypub_actor_uri_key").using(
-        "btree",
-        table.uri.asc().nullsLast().op("text_ops")
-      ),
-      blogIdKey: uniqueIndex("activitypub_actor_blog_id_key").using(
-        "btree",
-        table.blogId.asc().nullsLast().op("uuid_ops")
-      ),
-      blogIdIdx: index("activitypub_actor_blog_id_idx").on(table.blogId),
-    };
-  }
-);
-
-export const activityPubRemoteActor = pgTable(
-  "activitypub_remote_actor",
-  {
-    id: uuid().primaryKey().notNull(),
-    uri: text().notNull(),
-    handle: text(),
-    name: text(),
-    summary: text(),
-    iconUrl: text("icon_url"),
-    publicKeyPem: text("public_key_pem"),
-    inboxUrl: text("inbox_url").notNull(),
-    outboxUrl: text("outbox_url"),
-    followersUrl: text("followers_url"),
-    followingUrl: text("following_url"),
     sharedInboxUrl: text("shared_inbox_url"),
+    followersUrl: text("followers_url"),
+    featuredUrl: text("featured_url"),
+    fieldHtmls: json("field_htmls")
+      .$type<Record<string, string>>()
+      .notNull()
+      .default({}),
+    emojis: jsonb().$type<Record<string, string>>().notNull().default({}),
+    tags: jsonb().$type<Record<string, string>>().notNull().default({}),
+    sensitive: boolean().notNull().default(false),
+    successorId: uuid("successor_id")
+      .$type<Uuid>()
+      .references((): AnyPgColumn => actorTable.id, { onDelete: "set null" }),
+    aliases: text()
+      .array()
+      .notNull()
+      .default(sql`(ARRAY[]::text[])`),
+    followeesCount: integer("followees_count").notNull().default(0),
+    followersCount: integer("followers_count").notNull().default(0),
+    postsCount: integer("posts_count").notNull().default(0),
+    publicKeyPem: text("public_key_pem"),
+    privateKeyPem: text("private_key_pem"),
+    url: text(),
+    updated: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+    published: timestamp({ withTimezone: true }),
     created: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updated: timestamp({ withTimezone: true }).notNull(),
-    lastFetched: timestamp("last_fetched", { withTimezone: true }),
+      .notNull()
+      .default(currentTimestamp),
   },
-  (table) => {
-    return {
-      uriKey: uniqueIndex("activitypub_remote_actor_uri_key").using(
-        "btree",
-        table.uri.asc().nullsLast().op("text_ops")
-      ),
-      handleIdx: index("activitypub_remote_actor_handle_idx").on(table.handle),
-      lastFetchedIdx: index("activitypub_remote_actor_last_fetched_idx").on(table.lastFetched),
-    };
-  }
+  (table) => [
+    unique().on(table.username, table.instanceHost),
+    check("actor_username_check", sql`${table.username} NOT LIKE '%@%'`),
+  ]
 );
 
-export const activityPubFollow = pgTable(
-  "activitypub_follow",
+export const followingTable = pgTable(
+  "following",
   {
-    id: uuid().primaryKey().notNull(),
-    actorId: uuid("actor_id"),
-    targetActorId: uuid("target_actor_id"),
-    remoteActorId: uuid("remote_actor_id"),
-    targetRemoteActorId: uuid("target_remote_actor_id"),
-    activityId: text("activity_id").notNull(),
-    state: text().notNull().default("pending"), // pending, accepted, rejected
+    iri: text().notNull().primaryKey(),
+    followerId: uuid("follower_id")
+      .$type<Uuid>()
+      .notNull()
+      .references(() => actorTable.id, { onDelete: "cascade" }),
+    followeeId: uuid("followee_id")
+      .$type<Uuid>()
+      .notNull()
+      .references(() => actorTable.id, { onDelete: "cascade" }),
+    accepted: timestamp({ withTimezone: true }),
     created: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updated: timestamp({ withTimezone: true }).notNull(),
+      .notNull()
+      .default(currentTimestamp),
   },
-  (table) => {
-    return {
-      followActorIdFkey: foreignKey({
-        columns: [table.actorId],
-        foreignColumns: [activityPubActor.id],
-        name: "activitypub_follow_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      followTargetActorIdFkey: foreignKey({
-        columns: [table.targetActorId],
-        foreignColumns: [activityPubActor.id],
-        name: "activitypub_follow_target_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      followRemoteActorIdFkey: foreignKey({
-        columns: [table.remoteActorId],
-        foreignColumns: [activityPubRemoteActor.id],
-        name: "activitypub_follow_remote_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      followTargetRemoteActorIdFkey: foreignKey({
-        columns: [table.targetRemoteActorId],
-        foreignColumns: [activityPubRemoteActor.id],
-        name: "activitypub_follow_target_remote_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      activityIdKey: uniqueIndex("activitypub_follow_activity_id_key").using(
-        "btree",
-        table.activityId.asc().nullsLast().op("text_ops")
-      ),
-      actorIdIdx: index("activitypub_follow_actor_id_idx").on(table.actorId),
-      targetActorIdIdx: index("activitypub_follow_target_actor_id_idx").on(table.targetActorId),
-      remoteActorIdIdx: index("activitypub_follow_remote_actor_id_idx").on(table.remoteActorId),
-      targetRemoteActorIdIdx: index("activitypub_follow_target_remote_actor_id_idx").on(table.targetRemoteActorId),
-      stateIdx: index("activitypub_follow_state_idx").on(table.state),
-      createdIdx: index("activitypub_follow_created_idx").on(table.created),
-    };
-  }
+  (table) => [
+    unique().on(table.followerId, table.followeeId),
+    index().on(table.followerId),
+  ]
 );
 
-export const activityPubActivity = pgTable(
-  "activitypub_activity",
+export const instanceTable = pgTable(
+  "instance",
   {
-    id: uuid().primaryKey().notNull(),
-    activityId: text("activity_id").notNull(),
-    type: text().notNull(),
-    actorId: uuid("actor_id"),
-    remoteActorId: uuid("remote_actor_id"),
-    objectId: text("object_id"),
-    targetId: text("target_id"),
-    data: text().notNull(), // JSON string
-    direction: text().notNull(), // inbound, outbound
+    host: text().primaryKey(),
+    software: text(),
+    softwareVersion: text("software_version"),
+    updated: timestamp({ withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
     created: timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
+      .notNull()
+      .default(currentTimestamp),
   },
-  (table) => {
-    return {
-      activityActorIdFkey: foreignKey({
-        columns: [table.actorId],
-        foreignColumns: [activityPubActor.id],
-        name: "activitypub_activity_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      activityRemoteActorIdFkey: foreignKey({
-        columns: [table.remoteActorId],
-        foreignColumns: [activityPubRemoteActor.id],
-        name: "activitypub_activity_remote_actor_id_fkey",
-      })
-        .onUpdate("cascade")
-        .onDelete("cascade"),
-      activityIdKey: uniqueIndex("activitypub_activity_activity_id_key").using(
-        "btree",
-        table.activityId.asc().nullsLast().op("text_ops")
-      ),
-      typeIdx: index("activitypub_activity_type_idx").on(table.type),
-      actorIdIdx: index("activitypub_activity_actor_id_idx").on(table.actorId),
-      remoteActorIdIdx: index("activitypub_activity_remote_actor_id_idx").on(table.remoteActorId),
-      directionIdx: index("activitypub_activity_direction_idx").on(table.direction),
-      createdIdx: index("activitypub_activity_created_idx").on(table.created),
-    };
-  }
+  (table) => [check("instance_host_check", sql`${table.host} NOT LIKE '%@%'`)]
 );

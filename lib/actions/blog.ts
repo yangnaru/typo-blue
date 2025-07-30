@@ -6,6 +6,7 @@ import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, post } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
+import { sendArticleToFollowers } from "../federation";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -111,9 +112,16 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   return targetPost;
 }
 
-export async function publishPost(blogId: string, postId: string) {
+export async function publishPost(
+  request: Request,
+  blogId: string,
+  postId: string
+) {
   const uuid = decodePostId(postId);
-  const targetPost = await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+  const targetPost = await assertCurrentUserHasBlogWithIdAndPostWithId(
+    blogId,
+    uuid
+  );
 
   const updateData: { published: Date; first_published?: Date } = {
     published: new Date(),
@@ -123,10 +131,16 @@ export async function publishPost(blogId: string, postId: string) {
     updateData.first_published = updateData.published;
   }
 
-  await db
-    .update(post)
-    .set(updateData)
-    .where(eq(post.id, uuid));
+  await db.update(post).set(updateData).where(eq(post.id, uuid));
+
+  // Send to ActivityPub followers if this is the first time publishing
+  if (!targetPost.first_published && targetPost.title && targetPost.content) {
+    try {
+      await sendArticleToFollowers(blogId, uuid);
+    } catch (error) {
+      console.error("Failed to send ActivityPub article:", error);
+    }
+  }
 
   return {
     success: true,
@@ -198,7 +212,12 @@ export async function upsertPost(
     });
     wasAlreadyPublished = !!existingPost?.published;
 
-    const updateData: { title: string; content: string; published: Date | null; first_published?: Date } = {
+    const updateData: {
+      title: string;
+      content: string;
+      published: Date | null;
+      first_published?: Date;
+    } = {
       title,
       content,
       published,
@@ -236,14 +255,25 @@ export async function upsertPost(
       insertData.first_published = published;
     }
 
-    const [newPost] = await db
-      .insert(post)
-      .values(insertData)
-      .returning();
+    const [newPost] = await db.insert(post).values(insertData).returning();
     targetPost = newPost;
   }
 
   // Email sending is now manual - no automatic email on publish
+
+  // Send to ActivityPub followers if this is a newly published post
+  if (
+    published &&
+    !wasAlreadyPublished &&
+    targetPost.title &&
+    targetPost.content
+  ) {
+    try {
+      await sendArticleToFollowers(blogSlug, targetPost.id);
+    } catch (error) {
+      console.error("Failed to send ActivityPub article:", error);
+    }
+  }
 
   revalidatePath(`/@${blogSlug}`);
 
@@ -300,7 +330,7 @@ export async function sendPostEmail(blogId: string, postId: string) {
 
   try {
     const { sendPostNotificationEmail } = await import("./mailing-list");
-    
+
     return await sendPostNotificationEmail(foundBlog.id, uuid);
   } catch (error) {
     console.error("Failed to enqueue notification email:", error);

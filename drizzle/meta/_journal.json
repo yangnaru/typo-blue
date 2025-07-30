@@ -148,6 +148,20 @@
       "when": 1753708799700,
       "tag": "0020_next_gorilla_man",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1753875954182,
+      "tag": "0021_striped_vargas",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1753879823714,
+      "tag": "0022_bent_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }

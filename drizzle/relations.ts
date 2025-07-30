@@ -1,11 +1,15 @@
 import { relations } from "drizzle-orm/relations";
-import { blog, post, user, session } from "./schema";
+import { blog, post, user, session, actorTable } from "./schema";
 
 export const blogRelations = relations(blog, ({ one, many }) => ({
   posts: many(post),
   user: one(user, {
     fields: [blog.userId],
     references: [user.id],
+  }),
+  actor: one(actorTable, {
+    fields: [blog.id],
+    references: [actorTable.blogId],
   }),
 }));
 
