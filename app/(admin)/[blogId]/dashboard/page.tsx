@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Link from "next/link";
+import Image from "next/image";
 import {
   getBlogNewPostPath,
   getBlogPostEditPath,

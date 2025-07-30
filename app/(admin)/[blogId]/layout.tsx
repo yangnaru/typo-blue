@@ -12,6 +12,7 @@ import {
   PanelLeft,
   Settings,
   Type,
+  Globe,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { redirect } from "next/navigation";
 import {
   getBlogAnalyticsPath,
   getBlogDashboardPath,
+  getBlogFediversePath,
   getBlogHomePath,
   getBlogSettingsPath,
   getBlogSubscribersPath,
@@ -125,6 +127,18 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">분석</TooltipContent>
                   </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={getBlogFediversePath(blogId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                      >
+                        <Globe className="h-5 w-5" />
+                        <span className="sr-only">페디버스</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">페디버스</TooltipContent>
+                  </Tooltip>
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
                   <Tooltip>
@@ -196,6 +210,13 @@ export default async function RootLayout({
                         >
                           <BarChart3 className="h-5 w-5" />
                           분석
+                        </Link>
+                        <Link
+                          href={getBlogFediversePath(blogId)}
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                          <Globe className="h-5 w-5" />
+                          페디버스
                         </Link>
                         <Link
                           href={getBlogHomePath(blogId)}
