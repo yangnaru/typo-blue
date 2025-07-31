@@ -388,6 +388,7 @@ export const notificationTable = pgTable(
       onDelete: "cascade",
     }), // Local post being mentioned/quoted (if any)
     content: text(), // Content of the mention/quote
+    url: text(), // URL associated with the notification
     isRead: boolean("is_read").notNull().default(false),
     created: timestamp({ withTimezone: true })
       .notNull()

@@ -676,6 +676,7 @@ async function handleMentionOrQuote(
   create: Create,
   object: Note | Article
 ) {
+  console.log({ create });
   try {
     const { db } = fedCtx.data;
 
@@ -799,6 +800,7 @@ async function handleMentionOrQuote(
             objectId: objectId,
             postId: localPost[0].post.id,
             content: content,
+            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -821,6 +823,7 @@ async function handleMentionOrQuote(
             objectId: objectId,
             postId: localPost[0].post.id,
             content: content,
+            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -845,8 +848,9 @@ async function handleMentionOrQuote(
             actorId: actor.id,
             activityId: create.id?.href!,
             objectId: objectId,
-            postId: randomUUID(),
+            postId: null,
             content: content,
+            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -867,7 +871,6 @@ async function handleMentionOrQuote(
 }
 
 async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
-  console.log({ follow });
   if (follow.id == null || follow.objectId == null) return;
   const followObject = fedCtx.parseUri(follow.objectId);
   if (followObject?.type !== "actor") return;
