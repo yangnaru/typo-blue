@@ -2,7 +2,7 @@ import PostEditor from "@/components/PostEditor";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 import { decodePostId } from "@/lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -18,8 +18,8 @@ export default async function EditPost(props: { params: Params }) {
     redirect(getRootPath());
   }
 
-  const editingPost = await db.query.post.findFirst({
-    where: and(eq(post.id, uuid), isNull(post.deleted)),
+  const editingPost = await db.query.postTable.findFirst({
+    where: and(eq(postTable.id, uuid), isNull(postTable.deleted)),
   });
 
   const targetBlog = await db.query.blog.findFirst({

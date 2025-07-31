@@ -1,7 +1,7 @@
 import BlogEditForm from "@/components/BlogEditForm";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 type Params = Promise<{
@@ -26,8 +26,8 @@ export default async function EditBlogPage(props: { params: Params }) {
   }
 
   // Fetch posts count
-  const posts = await db.query.post.findMany({
-    where: eq(post.blogId, targetBlog.id),
+  const posts = await db.query.postTable.findMany({
+    where: eq(postTable.blogId, targetBlog.id),
   });
   const postsCount = posts.length;
 

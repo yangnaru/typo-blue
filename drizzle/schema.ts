@@ -39,7 +39,7 @@ export const emailVerificationChallenge = pgTable(
   }
 );
 
-export const post = pgTable(
+export const postTable = pgTable(
   "post",
   {
     id: uuid().primaryKey().notNull(),
@@ -189,7 +189,7 @@ export const emailQueue = pgTable(
       .references(() => blog.id, { onDelete: "cascade" }),
     postId: uuid("post_id")
       .notNull()
-      .references(() => post.id, { onDelete: "cascade" }),
+      .references(() => postTable.id, { onDelete: "cascade" }),
     subscriberEmail: text("subscriber_email").notNull(),
     unsubscribeToken: text("unsubscribe_token").notNull(),
     type: text("type").notNull(),
@@ -244,7 +244,7 @@ export const pageViews = pgTable(
         .onDelete("cascade"),
       pageViewsPostIdFkey: foreignKey({
         columns: [table.postId],
-        foreignColumns: [post.id],
+        foreignColumns: [postTable.id],
         name: "page_views_post_id_fkey",
       })
         .onUpdate("cascade")
@@ -366,24 +366,28 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "mention",
   "quote",
   "reply",
+  "like",
+  "emoji_react",
+  "announce",
 ]);
 
 export const notificationTable = pgTable(
   "notification",
   {
-    id: uuid().primaryKey().notNull(),
-    blogId: uuid("blog_id")
+    id: uuid()
+      .primaryKey()
       .notNull()
-      .references(() => blog.id, { onDelete: "cascade" }),
+      .default(sql`gen_random_uuid()`),
     type: notificationTypeEnum().notNull(),
     actorId: uuid("actor_id")
       .notNull()
       .references(() => actorTable.id, { onDelete: "cascade" }),
     activityId: text("activity_id").notNull(), // ActivityPub activity IRI
     objectId: text("object_id"), // Optional: IRI of the object being mentioned/quoted
-    postId: uuid("post_id").references(() => post.id, { onDelete: "cascade" }), // Local post being mentioned/quoted (if any)
+    postId: uuid("post_id").references(() => postTable.id, {
+      onDelete: "cascade",
+    }), // Local post being mentioned/quoted (if any)
     content: text(), // Content of the mention/quote
-    contentHtml: text("content_html"), // HTML content if available
     isRead: boolean("is_read").notNull().default(false),
     created: timestamp({ withTimezone: true })
       .notNull()
@@ -393,9 +397,14 @@ export const notificationTable = pgTable(
       .default(currentTimestamp),
   },
   (table) => [
-    index("notification_blog_id_idx").on(table.blogId),
     index("notification_created_idx").on(table.created),
     index("notification_is_read_idx").on(table.isRead),
-    unique("notification_activity_id_blog_id_unique").on(table.activityId, table.blogId),
+    unique("notification_activity_id_unique").on(table.activityId),
+    unique("notification_type_actor_id_object_id_content_unique").on(
+      table.type,
+      table.actorId,
+      table.objectId,
+      table.content
+    ),
   ]
 );

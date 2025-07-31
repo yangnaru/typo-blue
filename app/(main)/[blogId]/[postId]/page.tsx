@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { getBlogPostEditPath } from "@/lib/paths";
 import { db } from "@/lib/db";
-import { blog, post, user } from "@/drizzle/schema";
+import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 
@@ -36,8 +36,8 @@ export async function generateMetadata(props: {
     };
   }
 
-  const targetPost = await db.query.post.findFirst({
-    where: eq(post.id, uuid),
+  const targetPost = await db.query.postTable.findFirst({
+    where: eq(postTable.id, uuid),
   });
 
   if (!targetPost) {
@@ -110,8 +110,8 @@ export default async function BlogPost(props: { params: Params }) {
     const uuid = Buffer.from(decode((await props.params).postId)).toString(
       "hex"
     );
-    targetPost = await db.query.post.findFirst({
-      where: eq(post.id, uuid),
+    targetPost = await db.query.postTable.findFirst({
+      where: eq(postTable.id, uuid),
     });
   } catch {
     return <p>글이 존재하지 않습니다.</p>;
@@ -126,7 +126,7 @@ export default async function BlogPost(props: { params: Params }) {
   return (
     <div className="space-y-8">
       <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
-      
+
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
           <Link href={`/@${targetBlog.slug}/${encodePostId(targetPost.id)}`}>
@@ -135,7 +135,9 @@ export default async function BlogPost(props: { params: Params }) {
         </h3>
         <span className="text-neutral-500">
           {formatInTimeZone(
-            targetPost.first_published ?? targetPost.published ?? targetPost.updated,
+            targetPost.first_published ??
+              targetPost.published ??
+              targetPost.updated,
             "Asia/Seoul",
             "yyyy-MM-dd HH:mm"
           )}

@@ -14,9 +14,14 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq, desc } from "drizzle-orm";
-import { blog, notificationTable, actorTable } from "@/drizzle/schema";
+import {
+  blog,
+  notificationTable,
+  actorTable,
+  postTable,
+} from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
-import { Bell, MessageCircle, Quote, Reply } from "lucide-react";
+import { Bell, MessageCircle, Quote, Reply, Share } from "lucide-react";
 import { NotificationActions } from "@/components/NotificationActions";
 import { encodePostId } from "@/lib/utils";
 
@@ -54,10 +59,12 @@ export default async function NotificationsPage(props: { params: PageProps }) {
     .select({
       notification: notificationTable,
       actor: actorTable,
+      post: postTable,
     })
     .from(notificationTable)
     .innerJoin(actorTable, eq(notificationTable.actorId, actorTable.id))
-    .where(eq(notificationTable.blogId, currentBlog.id))
+    .innerJoin(postTable, eq(notificationTable.postId, postTable.id))
+    .where(eq(postTable.blogId, currentBlog.id))
     .orderBy(desc(notificationTable.created))
     .limit(50);
 
@@ -69,6 +76,8 @@ export default async function NotificationsPage(props: { params: PageProps }) {
         return <Quote className="h-4 w-4" />;
       case "reply":
         return <Reply className="h-4 w-4" />;
+      case "announce":
+        return <Share className="h-4 w-4" />;
       default:
         return <MessageCircle className="h-4 w-4" />;
     }
@@ -82,6 +91,8 @@ export default async function NotificationsPage(props: { params: PageProps }) {
         return "인용";
       case "reply":
         return "답글";
+      case "announce":
+        return "공유";
       default:
         return "알림";
     }
@@ -94,6 +105,8 @@ export default async function NotificationsPage(props: { params: PageProps }) {
       case "quote":
         return "secondary" as const;
       case "reply":
+        return "outline" as const;
+      case "announce":
         return "outline" as const;
       default:
         return "default" as const;
@@ -199,21 +212,22 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                           </span>
                         </div>
 
-                        {notification.notification.content && (
-                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                            {notification.notification.contentHtml ? (
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: notification.notification.contentHtml,
-                                }}
-                              />
-                            ) : (
-                              <p className="whitespace-pre-wrap">
-                                {notification.notification.content}
-                              </p>
-                            )}
-                          </div>
-                        )}
+                        {notification.notification.content &&
+                          notification.notification.type !== "announce" && (
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                              {notification.notification.content ? (
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: notification.notification.content,
+                                  }}
+                                />
+                              ) : (
+                                <p className="whitespace-pre-wrap">
+                                  {notification.notification.content}
+                                </p>
+                              )}
+                            </div>
+                          )}
 
                         <div className="flex items-center gap-2 pt-2">
                           <NotificationActions

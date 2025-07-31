@@ -4,7 +4,7 @@ import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
 import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
 
@@ -94,8 +94,8 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
     throw new Error("사용자가 없습니다.");
   }
 
-  const targetPost = await db.query.post.findFirst({
-    where: and(eq(post.id, postId), isNull(post.deleted)),
+  const targetPost = await db.query.postTable.findFirst({
+    where: and(eq(postTable.id, postId), isNull(postTable.deleted)),
     with: {
       blog: true,
     },
@@ -117,11 +117,11 @@ export async function unPublishPost(blogId: string, postId: string) {
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   await db
-    .update(post)
+    .update(postTable)
     .set({
       published: null,
     })
-    .where(eq(post.id, uuid));
+    .where(eq(postTable.id, uuid));
 
   try {
     await sendNoteToFollowers(blogId, uuid, true);
@@ -139,13 +139,13 @@ export async function deletePost(blogId: string, postId: string) {
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   await db
-    .update(post)
+    .update(postTable)
     .set({
       title: null,
       content: null,
       deleted: new Date(),
     })
-    .where(eq(post.id, uuid));
+    .where(eq(postTable.id, uuid));
 
   try {
     await sendNoteToFollowers(blogId, uuid, true);
@@ -184,8 +184,8 @@ export async function upsertPost(
   let wasAlreadyPublished = false;
 
   if (uuid) {
-    const existingPost = await db.query.post.findFirst({
-      where: eq(post.id, uuid),
+    const existingPost = await db.query.postTable.findFirst({
+      where: eq(postTable.id, uuid),
     });
     wasAlreadyPublished = !!existingPost?.published;
 
@@ -207,9 +207,9 @@ export async function upsertPost(
     }
 
     const [updatedPost] = await db
-      .update(post)
+      .update(postTable)
       .set(updateData)
-      .where(eq(post.id, uuid))
+      .where(eq(postTable.id, uuid))
       .returning();
     targetPost = updatedPost;
   } else {
@@ -234,7 +234,7 @@ export async function upsertPost(
       insertData.first_published = published;
     }
 
-    const [newPost] = await db.insert(post).values(insertData).returning();
+    const [newPost] = await db.insert(postTable).values(insertData).returning();
     targetPost = newPost;
   }
 

@@ -13,7 +13,7 @@ import Link from "next/link";
 import { encodePostId } from "@/lib/utils";
 import { and, desc, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 
 export default async function AdminRootPage() {
   await assertAdmin();
@@ -21,8 +21,8 @@ export default async function AdminRootPage() {
   const blogs = await db.query.blog.findMany({
     with: {
       posts: {
-        where: and(isNotNull(post.published), isNull(post.deleted)),
-        orderBy: desc(post.published),
+        where: and(isNotNull(postTable.published), isNull(postTable.deleted)),
+        orderBy: desc(postTable.published),
       },
     },
   });

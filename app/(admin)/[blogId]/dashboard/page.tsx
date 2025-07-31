@@ -31,7 +31,7 @@ import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq, isNull } from "drizzle-orm";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 
 type PageProps = Promise<{
   blogId: string;
@@ -49,7 +49,7 @@ export default async function Dashboard(props: { params: PageProps }) {
     with: {
       posts: {
         orderBy: (post) => [desc(post.published)],
-        where: isNull(post.deleted),
+        where: isNull(postTable.deleted),
       },
     },
   });

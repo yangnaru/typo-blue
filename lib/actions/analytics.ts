@@ -1,8 +1,24 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { pageViews, emailQueue, blog, post, mailingListSubscription } from "@/drizzle/schema";
-import { eq, and, gte, lt, sql, desc, count, isNotNull, isNull } from "drizzle-orm";
+import {
+  pageViews,
+  emailQueue,
+  blog,
+  postTable,
+  mailingListSubscription,
+} from "@/drizzle/schema";
+import {
+  eq,
+  and,
+  gte,
+  lt,
+  sql,
+  desc,
+  count,
+  isNotNull,
+  isNull,
+} from "drizzle-orm";
 import { getCurrentSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getRootPath } from "@/lib/paths";
@@ -44,7 +60,9 @@ export interface EmailAnalytics {
   clickRate: number;
 }
 
-export async function getAnalyticsOverview(blogSlug: string): Promise<AnalyticsOverview | null> {
+export async function getAnalyticsOverview(
+  blogSlug: string
+): Promise<AnalyticsOverview | null> {
   const { user: sessionUser } = await getCurrentSession();
   if (!sessionUser) {
     redirect(getRootPath());
@@ -76,8 +94,8 @@ export async function getAnalyticsOverview(blogSlug: string): Promise<AnalyticsO
       totalPosts: count(),
       publishedPosts: sql<number>`COUNT(CASE WHEN published IS NOT NULL THEN 1 END)`,
     })
-    .from(post)
-    .where(and(eq(post.blogId, targetBlog.id), isNull(post.deleted)));
+    .from(postTable)
+    .where(and(eq(postTable.blogId, targetBlog.id), isNull(postTable.deleted)));
 
   // Get subscriber count
   const [subscribersResult] = await db
@@ -107,7 +125,10 @@ export async function getAnalyticsOverview(blogSlug: string): Promise<AnalyticsO
   };
 }
 
-export async function getVisitorTrends(blogSlug: string, days: number = 30): Promise<VisitorTrend[]> {
+export async function getVisitorTrends(
+  blogSlug: string,
+  days: number = 30
+): Promise<VisitorTrend[]> {
   const { user: sessionUser } = await getCurrentSession();
   if (!sessionUser) {
     redirect(getRootPath());
@@ -143,7 +164,9 @@ export async function getVisitorTrends(blogSlug: string, days: number = 30): Pro
   return trends;
 }
 
-export async function getPostPerformance(blogSlug: string): Promise<PostPerformance[]> {
+export async function getPostPerformance(
+  blogSlug: string
+): Promise<PostPerformance[]> {
   const { user: sessionUser } = await getCurrentSession();
   if (!sessionUser) {
     redirect(getRootPath());
@@ -159,16 +182,16 @@ export async function getPostPerformance(blogSlug: string): Promise<PostPerforma
 
   const posts = await db
     .select({
-      id: post.id,
-      title: post.title,
-      publishedAt: post.published,
+      id: postTable.id,
+      title: postTable.title,
+      publishedAt: postTable.published,
       visits: sql<number>`COALESCE(pv.visits, 0)`,
       uniqueVisitors: sql<number>`COALESCE(pv.unique_visitors, 0)`,
       emailsSent: sql<number>`COALESCE(eq.emails_sent, 0)`,
       emailsOpened: sql<number>`COALESCE(eq.emails_opened, 0)`,
       emailsClicked: sql<number>`COALESCE(eq.emails_clicked, 0)`,
     })
-    .from(post)
+    .from(postTable)
     .leftJoin(
       sql`(
         SELECT 
@@ -179,7 +202,7 @@ export async function getPostPerformance(blogSlug: string): Promise<PostPerforma
         WHERE blog_id = ${targetBlog.id}
         GROUP BY post_id
       ) pv`,
-      sql`pv.post_id = ${post.id}`
+      sql`pv.post_id = ${postTable.id}`
     )
     .leftJoin(
       sql`(
@@ -192,12 +215,12 @@ export async function getPostPerformance(blogSlug: string): Promise<PostPerforma
         WHERE blog_id = ${targetBlog.id}
         GROUP BY post_id
       ) eq`,
-      sql`eq.post_id = ${post.id}`
+      sql`eq.post_id = ${postTable.id}`
     )
-    .where(and(eq(post.blogId, targetBlog.id), isNull(post.deleted)))
-    .orderBy(desc(post.published));
+    .where(and(eq(postTable.blogId, targetBlog.id), isNull(postTable.deleted)))
+    .orderBy(desc(postTable.published));
 
-  return posts.map(p => ({
+  return posts.map((p) => ({
     id: p.id,
     title: p.title || "무제",
     publishedAt: p.publishedAt,
@@ -209,7 +232,10 @@ export async function getPostPerformance(blogSlug: string): Promise<PostPerforma
   }));
 }
 
-export async function getEmailAnalytics(blogSlug: string, days: number = 30): Promise<EmailAnalytics[]> {
+export async function getEmailAnalytics(
+  blogSlug: string,
+  days: number = 30
+): Promise<EmailAnalytics[]> {
   const { user: sessionUser } = await getCurrentSession();
   if (!sessionUser) {
     redirect(getRootPath());
@@ -244,7 +270,7 @@ export async function getEmailAnalytics(blogSlug: string, days: number = 30): Pr
     .groupBy(sql`DATE(sent_at)`)
     .orderBy(sql`DATE(sent_at)`);
 
-  return emailStats.map(stat => ({
+  return emailStats.map((stat) => ({
     date: stat.date,
     sent: stat.sent,
     opened: stat.opened,

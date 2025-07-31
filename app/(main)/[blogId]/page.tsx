@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getBlogDashboardPath } from "@/lib/paths";
-import { blog, post, user } from "@/drizzle/schema";
+import { blog, postTable, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -84,8 +84,8 @@ export default async function BlogHome(props: { params: Params }) {
     where: eq(blog.slug, slug),
     with: {
       posts: {
-        where: and(isNull(post.deleted), isNotNull(post.published)),
-        orderBy: desc(post.created),
+        where: and(isNull(postTable.deleted), isNotNull(postTable.published)),
+        orderBy: desc(postTable.created),
       },
       user: true,
     },

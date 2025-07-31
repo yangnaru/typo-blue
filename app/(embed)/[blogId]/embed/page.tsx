@@ -1,6 +1,6 @@
 import PostList from "@/components/PostList";
 import { db } from "@/lib/db";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 
@@ -24,12 +24,12 @@ export default async function BlogHome(props: { params: Params }) {
     return <p>블로그가 존재하지 않습니다.</p>;
   }
 
-  const publishedPosts = await db.query.post.findMany({
+  const publishedPosts = await db.query.postTable.findMany({
     where: and(
-      eq(post.blogId, blog.id),
-      eq(post.published, isNotNull(post.published))
+      eq(postTable.blogId, blog.id),
+      eq(postTable.published, isNotNull(postTable.published))
     ),
-    orderBy: desc(post.published),
+    orderBy: desc(postTable.published),
     with: { blog: true },
   });
 

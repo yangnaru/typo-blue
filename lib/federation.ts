@@ -21,6 +21,11 @@ import {
   Delete,
   Article,
   Mention,
+  Announce,
+  Question,
+  EmojiReact,
+  Like,
+  getActorHandle,
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
@@ -30,14 +35,16 @@ import {
   instanceTable,
   actorTable,
   followingTable,
-  post as postTable,
+  postTable as postTable,
   notificationTable,
 } from "@/drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
-import { decodePostId, encodePostId } from "./utils";
+import { encodePostId } from "./utils";
+import { randomUUID } from "crypto";
+import { getActorByUri } from "./activitypub";
 
 // @ts-expect-error: toTemporalInstant is not typed on Date prototype
 Date.prototype.toTemporalInstant = toTemporalInstant;
@@ -63,20 +70,9 @@ function toDate(dateValue: any): Date | null {
   return null;
 }
 
-async function getActorHandle(
-  actor: Actor,
-  options: { trimLeadingAt?: boolean } = {}
-): Promise<string> {
-  // Simple implementation - you may need to make this more robust
-  const username = actor.name || actor.preferredUsername || "unknown";
-  const domain = actor.id ? new URL(actor.id).host : "typo.blue";
-  const handle = `${username}@${domain}`;
-  return options.trimLeadingAt ? handle : `@${handle}`;
-}
-
-async function getPersistedActor(
+export function getPersistedActor(
   db: Database,
-  iri: string
+  iri: string | URL
 ): Promise<
   | (typeof actorTable.$inferSelect & {
       instance: Instance;
@@ -85,9 +81,9 @@ async function getPersistedActor(
     })
   | undefined
 > {
-  return await db.query.actorTable.findFirst({
+  return db.query.actorTable.findFirst({
     with: { instance: true, blog: true, successor: true },
-    where: eq(actorTable.iri, iri),
+    where: eq(actorTable.iri, iri.toString()),
   });
 }
 
@@ -307,6 +303,7 @@ async function getNote(
     cc: ctx.getFollowersUri(blogSlug),
     name: post.title,
     content,
+    attributions: [ctx.getActorUri(blogSlug)],
     url: new URL(
       `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blogSlug}/${encodePostId(
         post.id
@@ -448,11 +445,9 @@ export async function sendNoteToFollowers(
       return;
     }
 
-    const post = await db.query.post.findFirst({
+    const post = await db.query.postTable.findFirst({
       where: eq(postTable.id, postId),
     });
-
-    console.log({ post });
 
     if (!post) {
       console.log(`No post found with id: ${postId}`);
@@ -509,13 +504,11 @@ export async function sendNoteToFollowers(
 
 export const fedifyRequestHandler = integrateFederation((request: Request) => ({
   db,
-  canonicalOrigin: process.env.DOMAIN
-    ? `https://${process.env.DOMAIN}`
-    : undefined,
+  canonicalOrigin: `https://${process.env.NEXT_PUBLIC_DOMAIN!}`,
 }));
 
 const pg = postgres(process.env.DATABASE_URL!);
-export const routePrefix = `/api/ap`;
+export const routePrefix = `/ap`;
 
 export const federation = createFederation<ContextData>({
   kv: new PostgresKvStore(pg),
@@ -709,10 +702,11 @@ async function handleMentionOrQuote(
 
     let isReply = false;
     let replyTargetBlogId: string | null = null;
+    let localPost;
 
     if (replyTargetId) {
       // Check if the reply target is a local post
-      const localPost = await db
+      localPost = await db
         .select({
           post: postTable,
           blog: blogTable,
@@ -727,6 +721,8 @@ async function handleMentionOrQuote(
         replyTargetBlogId = localPost[0].blog.id;
       }
     }
+
+    if (!localPost) return;
 
     // Check for mentions of local actors
     const mentions = [];
@@ -763,8 +759,6 @@ async function handleMentionOrQuote(
     const urlRegex = /https?:\/\/[^\s]+/g;
     const urls = content.match(urlRegex) || [];
 
-    console.log({ replyTargetIdUuid });
-
     for (const url of urls) {
       try {
         const urlObj = new URL(url);
@@ -775,7 +769,6 @@ async function handleMentionOrQuote(
           const pathMatch = urlObj.pathname.match(/\/@([^\/]+)\/([^\/]+)/);
           if (pathMatch) {
             const [, blogSlug, encodedPostId] = pathMatch;
-            console.log({ blogSlug, encodedPostId });
             const blog = await db.query.blog.findFirst({
               where: eq(blogTable.slug, blogSlug),
             });
@@ -800,15 +793,12 @@ async function handleMentionOrQuote(
         await db
           .insert(notificationTable)
           .values({
-            id: crypto.randomUUID(),
-            blogId: replyTargetBlogId,
             type: "reply",
             actorId: actor.id,
             activityId: create.id?.href || objectId,
             objectId: objectId,
-            postId: replyTargetIdUuid,
+            postId: localPost[0].post.id,
             content: content,
-            contentHtml: object.content?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -825,15 +815,12 @@ async function handleMentionOrQuote(
         await db
           .insert(notificationTable)
           .values({
-            id: crypto.randomUUID(),
-            blogId: quote.blogId,
             type: "quote",
             actorId: actor.id,
             activityId: create.id?.href || objectId,
             objectId: objectId,
-            postId: quote.postId,
+            postId: localPost[0].post.id,
             content: content,
-            contentHtml: object.content?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -854,15 +841,12 @@ async function handleMentionOrQuote(
         await db
           .insert(notificationTable)
           .values({
-            id: crypto.randomUUID(),
-            blogId: mention.blogId,
             type: "mention",
             actorId: actor.id,
-            activityId: create.id?.href || objectId,
+            activityId: create.id?.href!,
             objectId: objectId,
-            postId: null,
+            postId: randomUUID(),
             content: content,
-            contentHtml: object.content?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -882,70 +866,265 @@ async function handleMentionOrQuote(
   }
 }
 
+async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
+  console.log({ follow });
+  if (follow.id == null || follow.objectId == null) return;
+  const followObject = fedCtx.parseUri(follow.objectId);
+  if (followObject?.type !== "actor") return;
+  const { db } = fedCtx.data;
+  const followee = await db.query.blog.findFirst({
+    with: { actor: true },
+    where: (blog, { eq }) => eq(blog.slug, followObject.identifier),
+  });
+  if (followee == null) return;
+  const followActor = await follow.getActor(fedCtx);
+  if (followActor == null) return;
+  const follower = await persistActor(fedCtx, followActor, {
+    ...fedCtx,
+    outbox: false,
+  });
+  if (follower == null) return;
+  const rows = await db
+    .insert(followingTable)
+    .values({
+      iri: follow.id.href,
+      followerId: follower.id,
+      followeeId: followee.actor.id,
+      accepted: sql`CURRENT_TIMESTAMP`,
+    })
+    .onConflictDoNothing()
+    .returning();
+  if (rows.length < 1) return;
+  await updateFolloweesCount(db, follower.id!.toString(), 1);
+  await updateFollowersCount(db, followee.actor.id, 1);
+  await fedCtx.sendActivity(
+    { identifier: followee.slug },
+    followActor,
+    new Accept({
+      id: new URL(
+        `#accept/${follower.id}/${+rows[0].accepted!}`,
+        fedCtx.getActorUri(followee.slug)
+      ),
+      actor: fedCtx.getActorUri(followee.slug),
+      object: follow,
+    }),
+    { excludeBaseUris: [new URL(fedCtx.origin)] }
+  );
+}
+
+export type PostObject = Article | Note | Question;
+
+// typo blue only supports Note
+export function isPostObject(object: unknown): object is Note {
+  return object instanceof Note;
+}
+
+async function onPostShared(
+  fedCtx: InboxContext<ContextData>,
+  announce: Announce
+): Promise<void> {
+  if (announce.id?.origin !== announce.actorId?.origin) return;
+  const object = await announce.getObject({ ...fedCtx, suppressError: true });
+  if (!isPostObject(object)) return;
+
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+  });
+  const actor = await getActorByUri(announce.actorId?.href!);
+  if (!actor) return;
+  if (!post) return;
+
+  await db
+    .insert(notificationTable)
+    .values({
+      type: "announce",
+      actorId: actor[0].id,
+      activityId: announce.id?.href!,
+      objectId: object.id?.href!,
+      postId: post.id,
+      content: object.content?.toString(),
+      isRead: false,
+      created: new Date(),
+      updated: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [
+        notificationTable.type,
+        notificationTable.postId,
+        notificationTable.actorId,
+      ],
+      set: {
+        isRead: false,
+        updated: new Date(),
+        content: object.content?.toString(),
+      },
+    });
+}
+
+async function onPostUnshared(
+  fedCtx: InboxContext<ContextData>,
+  undo: Undo
+): Promise<void> {
+  const object = await undo.getObject({ ...fedCtx, suppressError: true });
+  if (!object) return;
+  if (!(object instanceof Announce)) return;
+  const postObject = await object.getObject({ ...fedCtx, suppressError: true });
+  if (!isPostObject(postObject)) return;
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+  });
+  if (!post) return;
+  const actor = await getActorByUri(undo.actorId?.href!);
+  if (!actor) return;
+
+  await db
+    .delete(notificationTable)
+    .where(
+      and(
+        eq(notificationTable.type, "announce"),
+        eq(notificationTable.postId, post.id),
+        eq(notificationTable.actorId, actor[0].id)
+      )
+    );
+}
+
+async function onPostLiked(
+  fedCtx: InboxContext<ContextData>,
+  like: Like
+): Promise<void> {
+  const object = await like.getObject({ ...fedCtx, suppressError: true });
+  if (!isPostObject(object)) return;
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+  });
+  if (!post) return;
+  const actor = await getActorByUri(like.actorId?.href!);
+  if (!actor) return;
+
+  await db.insert(notificationTable).values({
+    type: "like",
+    actorId: actor[0].id,
+    activityId: like.id?.href!,
+    objectId: object.id?.href!,
+    postId: post.id,
+    isRead: false,
+    created: new Date(),
+    updated: new Date(),
+  });
+}
+
+async function onPostUnliked(
+  fedCtx: InboxContext<ContextData>,
+  undo: Undo
+): Promise<void> {
+  const object = await undo.getObject({ ...fedCtx, suppressError: true });
+  if (!object) return;
+  if (!(object instanceof Like)) return;
+  const postObject = await object.getObject({ ...fedCtx, suppressError: true });
+  if (!isPostObject(postObject)) return;
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+  });
+  if (!post) return;
+  const actor = await getActorByUri(undo.actorId?.href!);
+  if (!actor) return;
+
+  await db
+    .delete(notificationTable)
+    .where(
+      and(
+        eq(notificationTable.type, "like"),
+        eq(notificationTable.postId, post.id),
+        eq(notificationTable.actorId, actor[0].id)
+      )
+    );
+}
+
+async function onReactedOnPost(
+  fedCtx: InboxContext<ContextData>,
+  react: EmojiReact
+): Promise<void> {
+  const object = await react.getObject({ ...fedCtx, suppressError: true });
+  if (!isPostObject(object)) return;
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+  });
+  if (!post) return;
+  const actor = await getActorByUri(react.actorId?.href!);
+  if (!actor) return;
+
+  await db.insert(notificationTable).values({
+    type: "emoji_react",
+    actorId: actor[0].id,
+    activityId: react.id?.href!,
+    objectId: object.id?.href!,
+    postId: post.id,
+    content: react.content?.toString(),
+    isRead: false,
+    created: new Date(),
+    updated: new Date(),
+  });
+}
+
+async function onReactionUndoneOnPost(
+  fedCtx: InboxContext<ContextData>,
+  undo: Undo
+): Promise<void> {
+  const reactionObject = await undo.getObject({
+    ...fedCtx,
+    suppressError: true,
+  });
+  if (!reactionObject) return;
+  if (!(reactionObject instanceof EmojiReact)) return;
+  const postObject = await reactionObject.getObject({
+    ...fedCtx,
+    suppressError: true,
+  });
+  if (!isPostObject(postObject)) return;
+  const post = await db.query.postTable.findFirst({
+    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+  });
+  if (!post) return;
+  const actor = await getActorByUri(undo.actorId?.href!);
+  if (!actor) return;
+
+  await db
+    .delete(notificationTable)
+    .where(
+      and(
+        eq(notificationTable.type, "emoji_react"),
+        eq(notificationTable.postId, post.id),
+        eq(notificationTable.actorId, actor[0].id),
+        eq(notificationTable.content, reactionObject.content?.toString()!)
+      )
+    );
+}
+
+async function onCreate(
+  fedCtx: InboxContext<ContextData>,
+  create: Create
+): Promise<void> {
+  const object = await create.getObject({ ...fedCtx, suppressError: true });
+  if (!object || (!(object instanceof Note) && !(object instanceof Article)))
+    return;
+  await handleMentionOrQuote(fedCtx, create, object);
+}
+
 // Configure inbox listener for follow activities
 federation
-  .setInboxListeners(
-    `${routePrefix}/users/{identifier}/inbox`,
-    `${routePrefix}/inbox`
-  )
+  .setInboxListeners(`${routePrefix}/users/{identifier}/inbox`, `/inbox`)
   .on(Undo, async (ctx, undo) => {
     const object = await undo.getObject({ ...ctx, suppressError: true });
     if (object instanceof Follow) await onUnfollowed(ctx, undo);
+    if (object instanceof Announce) await onPostUnshared(ctx, undo);
+    if (object instanceof Like) await onPostUnliked(ctx, undo);
+    if (object instanceof EmojiReact) await onReactionUndoneOnPost(ctx, undo);
   })
-  .on(Follow, async (fedCtx, follow) => {
-    if (follow.id == null || follow.objectId == null) return;
-    const followObject = fedCtx.parseUri(follow.objectId);
-    if (followObject?.type !== "actor") return;
-    const { db } = fedCtx.data;
-    const followee = await db.query.blog.findFirst({
-      with: { actor: true },
-      where: (blog, { eq }) => eq(blog.slug, followObject.identifier),
-    });
-    console.log("followee", followee);
-    if (followee == null) return;
-    const followActor = await follow.getActor(fedCtx);
-    if (followActor == null) return;
-    const follower = await persistActor(fedCtx, followActor, {
-      ...fedCtx,
-      outbox: false,
-    });
-    if (follower == null) return;
-    const rows = await db
-      .insert(followingTable)
-      .values({
-        iri: follow.id.href,
-        followerId: follower.id,
-        followeeId: followee.actor.id,
-        accepted: sql`CURRENT_TIMESTAMP`,
-      })
-      .onConflictDoNothing()
-      .returning();
-    console.log({ rows });
-    if (rows.length < 1) return;
-    await updateFolloweesCount(db, follower.id!.toString(), 1);
-    await updateFollowersCount(db, followee.actor.id, 1);
-    await fedCtx.sendActivity(
-      { identifier: followee.slug },
-      followActor,
-      new Accept({
-        id: new URL(
-          `#accept/${follower.id}/${+rows[0].accepted!}`,
-          fedCtx.getActorUri(followee.slug)
-        ),
-        actor: fedCtx.getActorUri(followee.slug),
-        object: follow,
-      }),
-      { excludeBaseUris: [new URL(fedCtx.origin)] }
-    );
-  })
-  .on(Create, async (fedCtx, create) => {
-    // Handle incoming mentions and quotes
-    const object = await create.getObject({ ...fedCtx, suppressError: true });
-    if (!object || (!(object instanceof Note) && !(object instanceof Article)))
-      return;
-
-    await handleMentionOrQuote(fedCtx, create, object);
-  });
+  .on(Announce, onPostShared)
+  .on(Follow, onFollowed)
+  .on(Create, onCreate)
+  .on(Like, onPostLiked)
+  .on(EmojiReact, onReactedOnPost);
 
 // Configure outbox dispatcher for posts
 federation.setOutboxDispatcher(
@@ -960,7 +1139,7 @@ federation.setOutboxDispatcher(
 
     if (blogResult.length === 0) return { items: [] };
 
-    const posts = await db.query.post.findMany({
+    const posts = await db.query.postTable.findMany({
       where: (post, { eq, and, isNotNull }) =>
         and(
           eq(post.blogId, blogResult[0].blogId),
@@ -1038,7 +1217,7 @@ federation.setObjectDispatcher(
   Note,
   `${routePrefix}/notes/{id}`,
   async (ctx, values) => {
-    const post = await ctx.data.db.query.post.findFirst({
+    const post = await ctx.data.db.query.postTable.findFirst({
       where: eq(postTable.id, values.id),
     });
     if (post == null) return null;

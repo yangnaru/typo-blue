@@ -2,7 +2,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blog, post } from "@/drizzle/schema";
+import { blog, postTable } from "@/drizzle/schema";
 import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
@@ -11,26 +11,26 @@ import { Card, CardContent } from "@/components/ui/card";
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
     .select({
-      id: post.id,
+      id: postTable.id,
       slug: blog.slug,
-      title: post.title,
-      published: post.published,
-      first_published: post.first_published,
-      content: post.content,
+      title: postTable.title,
+      published: postTable.published,
+      first_published: postTable.first_published,
+      content: postTable.content,
       blog: {
         slug: blog.slug,
       },
     })
-    .from(post)
-    .leftJoin(blog, eq(post.blogId, blog.id))
+    .from(postTable)
+    .leftJoin(blog, eq(postTable.blogId, blog.id))
     .where(
       and(
-        isNotNull(post.published),
-        isNull(post.deleted),
+        isNotNull(postTable.published),
+        isNull(postTable.deleted),
         eq(blog.discoverable, true)
       )
     )
-    .orderBy(desc(post.first_published))
+    .orderBy(desc(postTable.first_published))
     .limit(100);
 
   return (

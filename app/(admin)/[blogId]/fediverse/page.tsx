@@ -185,15 +185,6 @@ export default async function FediversePage(props: { params: PageProps }) {
                 {followers.map((follower) => (
                   <TableRow key={follower.id}>
                     <TableCell className="flex flex-row gap-3 items-center">
-                      {follower.avatarUrl && (
-                        <Image
-                          src={follower.avatarUrl}
-                          alt={`${follower.username} avatar`}
-                          width={40}
-                          height={40}
-                          className="rounded-full"
-                        />
-                      )}
                       <div className="flex flex-col">
                         <span className="font-medium">
                           {follower.name || follower.username}

@@ -36,12 +36,10 @@ export async function createActivityPubActor(params: CreateActorParams) {
   const sharedInboxUrl = `https://${domain}${routePrefix}/inbox`;
 
   // if instance_host does not exist, upsert it
-  const instance = await db
+  await db
     .insert(instanceTable)
     .values({
       host: domain,
-      software: "typo blue",
-      softwareVersion: "0.0.1",
       updated: new Date(),
     })
     .onConflictDoNothing();

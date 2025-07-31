@@ -169,6 +169,13 @@
       "when": 1753919160131,
       "tag": "0023_ancient_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1753977702600,
+      "tag": "0024_stale_matthew_murdock",
+      "breakpoints": true
     }
   ]
 }

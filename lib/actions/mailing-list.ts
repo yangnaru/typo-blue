@@ -1,7 +1,12 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { mailingListSubscription, blog, post, emailQueue as emailQueueTable } from "@/drizzle/schema";
+import {
+  mailingListSubscription,
+  blog,
+  postTable,
+  emailQueue as emailQueueTable,
+} from "@/drizzle/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { generateRandomString, alphabet } from "oslo/crypto";
@@ -86,12 +91,12 @@ export async function sendPostNotificationEmail(
   postId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const postData = await db.query.post.findFirst({
+    const postData = await db.query.postTable.findFirst({
       where: and(
-        eq(post.id, postId),
-        eq(post.blogId, blogId),
-        isNotNull(post.published),
-        isNull(post.deleted)
+        eq(postTable.id, postId),
+        eq(postTable.blogId, blogId),
+        isNotNull(postTable.published),
+        isNull(postTable.deleted)
       ),
       with: {
         blog: {
@@ -121,14 +126,14 @@ export async function sendPostNotificationEmail(
 
     // Create email jobs for all subscribers in bulk
     const now = new Date();
-    const emailJobs = subscribers.map(subscriber => ({
+    const emailJobs = subscribers.map((subscriber) => ({
       id: crypto.randomUUID(),
       blogId,
       postId,
       subscriberEmail: subscriber.email,
       unsubscribeToken: subscriber.unsubscribeToken,
-      type: 'post-notification' as const,
-      status: 'pending' as const,
+      type: "post-notification" as const,
+      status: "pending" as const,
       retryCount: 0,
       maxRetries: 3,
       createdAt: now,
@@ -138,9 +143,9 @@ export async function sendPostNotificationEmail(
     await db.insert(emailQueueTable).values(emailJobs);
 
     await db
-      .update(post)
+      .update(postTable)
       .set({ emailSent: new Date() })
-      .where(eq(post.id, postId));
+      .where(eq(postTable.id, postId));
 
     return {
       success: true,
@@ -148,19 +153,22 @@ export async function sendPostNotificationEmail(
     };
   } catch (error) {
     console.error("Error queueing post notification emails:", error);
-    return { success: false, message: "이메일 큐 생성 중 오류가 발생했습니다." };
+    return {
+      success: false,
+      message: "이메일 큐 생성 중 오류가 발생했습니다.",
+    };
   }
 }
 
 export async function sendPostNotificationEmailToSubscriber(
   job: EmailJob
 ): Promise<void> {
-  const postData = await db.query.post.findFirst({
+  const postData = await db.query.postTable.findFirst({
     where: and(
-      eq(post.id, job.postId),
-      eq(post.blogId, job.blogId),
-      isNotNull(post.published),
-      isNull(post.deleted)
+      eq(postTable.id, job.postId),
+      eq(postTable.blogId, job.blogId),
+      isNotNull(postTable.published),
+      isNull(postTable.deleted)
     ),
     with: {
       blog: {
@@ -185,11 +193,15 @@ export async function sendPostNotificationEmailToSubscriber(
     postData.blog.slug
   }/${encodePostId(postData.id)}`;
   const originalUnsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
-  
+
   // Create tracking URLs
-  const postUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${job.id}&url=${encodeURIComponent(originalPostUrl)}`;
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${job.id}&url=${encodeURIComponent(originalUnsubscribeUrl)}`;
-  
+  const postUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
+    job.id
+  }&url=${encodeURIComponent(originalPostUrl)}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
+    job.id
+  }&url=${encodeURIComponent(originalUnsubscribeUrl)}`;
+
   const contentText = postData.content ? htmlToText(postData.content) : "";
 
   const emailContentText = `
@@ -308,7 +320,9 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   </div>
   
   <!-- Email open tracking pixel -->
-  <img src="${process.env.NEXT_PUBLIC_URL}/api/email-open?id=${job.id}" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" alt="" />
+  <img src="${process.env.NEXT_PUBLIC_URL}/api/email-open?id=${
+    job.id
+  }" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" alt="" />
 </body>
 </html>
   `.trim();
@@ -324,9 +338,11 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   });
 
   const receipt = await transport.send(message);
-  
+
   if (!receipt.successful) {
-    throw new Error(`Failed to send email: ${receipt.errorMessages.join(", ")}`);
+    throw new Error(
+      `Failed to send email: ${receipt.errorMessages.join(", ")}`
+    );
   }
 
   // Update the job with sent timestamp

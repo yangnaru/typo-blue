@@ -2,8 +2,13 @@
 
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blog, notificationTable } from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import {
+  actorTable,
+  blog,
+  notificationTable,
+  postTable,
+} from "@/drizzle/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function markNotificationAsRead(
@@ -31,12 +36,7 @@ export async function markNotificationAsRead(
       isRead: true,
       updated: new Date(),
     })
-    .where(
-      and(
-        eq(notificationTable.id, notificationId),
-        eq(notificationTable.blogId, targetBlog.id)
-      )
-    );
+    .where(and(eq(notificationTable.id, notificationId)));
 
   revalidatePath(`/@${blogSlug}/notifications`);
 
@@ -59,18 +59,28 @@ export async function markAllNotificationsAsRead(blogSlug: string) {
   }
 
   // Update all unread notifications for this blog
-  await db
-    .update(notificationTable)
-    .set({
-      isRead: true,
-      updated: new Date(),
+  // There is no blogId column, so we update notifications whose postId belongs to this blog
+  const blogPostIds = (
+    await db.query.postTable.findMany({
+      columns: { id: true },
+      where: eq(postTable.blogId, targetBlog.id),
     })
-    .where(
-      and(
-        eq(notificationTable.blogId, targetBlog.id),
-        eq(notificationTable.isRead, false)
-      )
-    );
+  ).map((post) => post.id);
+
+  if (blogPostIds.length > 0) {
+    await db
+      .update(notificationTable)
+      .set({
+        isRead: true,
+        updated: new Date(),
+      })
+      .where(
+        and(
+          inArray(notificationTable.postId, blogPostIds),
+          eq(notificationTable.isRead, false)
+        )
+      );
+  }
 
   revalidatePath(`/@${blogSlug}/notifications`);
 
