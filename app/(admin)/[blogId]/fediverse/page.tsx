@@ -25,6 +25,7 @@ import { eq, and, isNotNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { blog, actorTable, followingTable } from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
+import { DisableFederationButton } from "@/components/DisableFederationButton";
 
 type PageProps = Promise<{
   blogId: string;
@@ -222,6 +223,22 @@ export default async function FediversePage(props: { params: PageProps }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Disable Federation Button */}
+      {activityPubProfile && (
+        <Card>
+          <CardHeader>
+            <CardTitle>페디버스 비활성화</CardTitle>
+            <CardDescription>
+              페디버스 연동을 완전히 비활성화하고 모든 게시물을 페디버스에서
+              제거합니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DisableFederationButton blogSlug={slug} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
