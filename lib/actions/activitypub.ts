@@ -12,6 +12,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { sendNoteToFollowers, federation } from "@/lib/federation";
+import { Delete } from "@fedify/fedify";
 
 export async function setupActivityPubActorForBlog(blogSlug: string) {
   const { user } = await getCurrentSession();
@@ -120,9 +121,6 @@ export async function disableFederationForBlog(blogSlug: string) {
         canonicalOrigin: baseUrl.origin,
       });
 
-      // Import Delete and Person from Fedify
-      const { Delete, Person } = await import("@fedify/fedify");
-
       // Create the Person object for the actor being deleted
       const personToDelete = await getActorForBlog(blogData.id);
 
@@ -136,7 +134,7 @@ export async function disableFederationForBlog(blogSlug: string) {
             context.getActorUri(blogSlug)
           ),
           actor: context.getActorUri(blogSlug),
-          object: personToDelete,
+          object: new URL(personToDelete!.iri!),
         }),
         {
           preferSharedInbox: true,
