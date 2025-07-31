@@ -6,14 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import Image from "next/image";
@@ -21,7 +13,7 @@ import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { blog, notificationTable, actorTable } from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
 import { Bell, MessageCircle, Quote, Reply } from "lucide-react";
