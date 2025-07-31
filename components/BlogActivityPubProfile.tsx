@@ -74,22 +74,18 @@ export function BlogActivityPubProfile({
               <Badge variant="outline">설정되지 않음</Badge>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  이 블로그에 ActivityPub 연합이 활성화되어 있지 않습니다.
-                </li>
-                <li>활성화하면 블로그가 연합우주에서 발견 가능해집니다.</li>
-                <li>
-                  마스토돈 등 ActivityPub 플랫폼 사용자들이 블로그의 업데이트를
-                  팔로우할 수 있습니다.
-                </li>
-                <li>
-                  연합우주에서의 반응(댓글, 리액션 등)을 타이포 블루에서 받아볼
-                  수 있습니다.
-                </li>
-              </ul>
-            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>이 블로그에 ActivityPub 연합이 활성화되어 있지 않습니다.</li>
+              <li>활성화하면 블로그가 연합우주에서 발견 가능해집니다.</li>
+              <li>
+                마스토돈 등 ActivityPub 플랫폼 사용자들이 블로그의 업데이트를
+                팔로우할 수 있습니다.
+              </li>
+              <li>
+                연합우주에서의 반응(댓글, 리액션 등)을 타이포 블루에서 받아볼 수
+                있습니다.
+              </li>
+            </ul>
 
             <ActivityPubSetupButton blogSlug={blogSlug} />
           </div>
