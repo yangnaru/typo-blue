@@ -8,12 +8,12 @@ import {
   Bell,
   Cog,
   ExternalLink,
-  Home,
   Mail,
   PanelLeft,
   Settings,
   Type,
   Globe,
+  Book,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -70,17 +70,17 @@ export default async function RootLayout({
   let blogs;
   let currentBlog;
   let activityPubEnabled = false;
-  
+
   if (user) {
     blogs = await db.query.blog.findMany({
       where: eq(blog.userId, user.id),
     });
-    
+
     // Get current blog info
     currentBlog = await db.query.blog.findFirst({
       where: eq(blog.slug, blogId),
     });
-    
+
     // Check if ActivityPub is enabled for this blog
     if (currentBlog && currentBlog.userId === user.id) {
       const blogActor = await getActorForBlog(currentBlog.id);
@@ -114,7 +114,7 @@ export default async function RootLayout({
                         href={getBlogDashboardPath(blogId)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                       >
-                        <Home className="h-5 w-5" />
+                        <Book className="h-5 w-5" />
                         <span className="sr-only">대시보드</span>
                       </Link>
                     </TooltipTrigger>
@@ -225,7 +225,7 @@ export default async function RootLayout({
                           href={getBlogDashboardPath(blogId)}
                           className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                         >
-                          <Home className="h-5 w-5" />
+                          <Book className="h-5 w-5" />
                           대시보드
                         </Link>
                         <Link
