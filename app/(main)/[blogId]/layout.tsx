@@ -3,6 +3,7 @@ import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { notFound } from "next/navigation";
 
 export default async function BlogLayout({
   children,
@@ -13,7 +14,7 @@ export default async function BlogLayout({
 }) {
   const blogId = decodeURIComponent((await params).blogId);
   if (!blogId.startsWith("@")) {
-    return <BlogLayoutBody>👀</BlogLayoutBody>;
+    notFound();
   }
 
   const targetBlog = await db.query.blog.findFirst({

@@ -20,6 +20,7 @@ import {
   Note,
   Delete,
   Article,
+  Mention,
 } from "@fedify/fedify";
 import { PostgresKvStore, PostgresMessageQueue } from "@fedify/postgres";
 import postgres from "postgres";
@@ -36,7 +37,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
-import { encodePostId } from "./utils";
+import { decodePostId, encodePostId } from "./utils";
 
 // @ts-expect-error: toTemporalInstant is not typed on Date prototype
 Date.prototype.toTemporalInstant = toTemporalInstant;
@@ -166,14 +167,7 @@ export async function persistActor(
     documentLoader?: DocumentLoader;
     outbox?: boolean;
   } = {}
-): Promise<
-  | (typeof actorTable.$inferSelect & {
-      instance: Instance;
-      blog: typeof blogTable.$inferSelect | null;
-      successor: typeof actorTable.$inferSelect | null;
-    })
-  | undefined
-> {
+) {
   if (actor.id == null) return undefined;
   else if (actor.inboxId == null) {
     return undefined;
@@ -280,7 +274,7 @@ export async function persistActor(
       | "Application"
       | "Organization",
   };
-  await db
+  const result = await db
     .insert(actorTable)
     .values(insertValues)
     .onConflictDoUpdate({
@@ -295,7 +289,9 @@ export async function persistActor(
           | "Organization",
       },
       setWhere: eq(actorTable.iri, actor.id.href),
-    });
+    })
+    .returning();
+  return result[0];
 }
 
 async function getNote(
@@ -386,7 +382,10 @@ export async function sendActorUpdateToFollowers(
       id: context.getActorUri(blogSlug),
       preferredUsername: blog.slug,
       name: updateData.name !== undefined ? updateData.name : blog.name,
-      summary: updateData.bioHtml !== undefined ? updateData.bioHtml : blog.description,
+      summary:
+        updateData.bioHtml !== undefined
+          ? updateData.bioHtml
+          : blog.description,
       manuallyApprovesFollowers: false,
       publicKey: (await context.getActorKeyPairs(blogSlug))[0].cryptographicKey,
       inbox: context.getInboxUri(blogSlug),
@@ -418,7 +417,9 @@ export async function sendActorUpdateToFollowers(
       }
     );
 
-    console.log(`Successfully sent actor update to followers for blog: ${blogSlug}`);
+    console.log(
+      `Successfully sent actor update to followers for blog: ${blogSlug}`
+    );
   } catch (error) {
     console.error("Error in sendActorUpdateToFollowers:", error);
   }
@@ -684,27 +685,59 @@ async function handleMentionOrQuote(
 ) {
   try {
     const { db } = fedCtx.data;
-    
+
     // Get the actor who created this post
     const actorObject = await create.getActor(fedCtx);
     if (!actorObject) return;
-    
+
     // Persist the remote actor
     const actor = await persistActor(fedCtx, actorObject, {
       ...fedCtx,
       outbox: false,
     });
     if (!actor) return;
-    
+
     const content = object.content?.toString() || "";
     const objectId = object.id?.href;
-    
+
     if (!objectId) return;
-    
+
+    // Check if this is a reply to a local post
+    const replyTargetId = object.replyTargetId?.href;
+    const replyTargetIdUuid = replyTargetId?.split("/").pop();
+    if (!replyTargetIdUuid) return;
+
+    let isReply = false;
+    let replyTargetBlogId: string | null = null;
+
+    if (replyTargetId) {
+      // Check if the reply target is a local post
+      const localPost = await db
+        .select({
+          post: postTable,
+          blog: blogTable,
+        })
+        .from(postTable)
+        .innerJoin(blogTable, eq(postTable.blogId, blogTable.id))
+        .where(eq(postTable.id, replyTargetIdUuid)) // This might need URL parsing
+        .limit(1);
+
+      if (localPost.length > 0) {
+        isReply = true;
+        replyTargetBlogId = localPost[0].blog.id;
+      }
+    }
+
     // Check for mentions of local actors
     const mentions = [];
-    for await (const tag of object.getTags({ ...fedCtx, suppressError: true })) {
-      if (tag instanceof Person && tag.id) {
+    for await (const tag of object.getTags({
+      ...fedCtx,
+      suppressError: true,
+    })) {
+      // Handle Mention objects from ActivityPub
+      if (tag instanceof Mention && tag.href) {
+        const tagHref =
+          tag.href instanceof URL ? tag.href.href : String(tag.href);
         // Check if this is a mention of a local actor
         const localActor = await db
           .select({
@@ -713,9 +746,9 @@ async function handleMentionOrQuote(
           })
           .from(actorTable)
           .innerJoin(blogTable, eq(actorTable.blogId, blogTable.id))
-          .where(eq(actorTable.iri, tag.id.href))
+          .where(eq(actorTable.iri, tagHref))
           .limit(1);
-        
+
         if (localActor.length > 0) {
           mentions.push({
             blogId: localActor[0].blog.id,
@@ -724,20 +757,25 @@ async function handleMentionOrQuote(
         }
       }
     }
-    
+
     // Check for quotes by looking for URLs in content that match local posts
     const quotes = [];
     const urlRegex = /https?:\/\/[^\s]+/g;
     const urls = content.match(urlRegex) || [];
-    
+
+    console.log({ replyTargetIdUuid });
+
     for (const url of urls) {
       try {
         const urlObj = new URL(url);
         // Check if this URL matches a local post
-        if (urlObj.hostname === fedCtx.canonicalOrigin?.replace("https://", "")) {
+        if (
+          urlObj.hostname === fedCtx.canonicalOrigin?.replace("https://", "")
+        ) {
           const pathMatch = urlObj.pathname.match(/\/@([^\/]+)\/([^\/]+)/);
           if (pathMatch) {
             const [, blogSlug, encodedPostId] = pathMatch;
+            console.log({ blogSlug, encodedPostId });
             const blog = await db.query.blog.findFirst({
               where: eq(blogTable.slug, blogSlug),
             });
@@ -745,7 +783,7 @@ async function handleMentionOrQuote(
               quotes.push({
                 blogId: blog.id,
                 type: "quote" as const,
-                postId: null, // We could decode the post ID if needed
+                postId: replyTargetIdUuid,
               });
             }
           }
@@ -755,35 +793,90 @@ async function handleMentionOrQuote(
         continue;
       }
     }
-    
-    // Create notifications for mentions and quotes
-    const notifications = [...mentions, ...quotes];
-    
-    for (const notification of notifications) {
+
+    // Create reply notification if this is a reply to a local post
+    if (isReply && replyTargetBlogId) {
       try {
         await db
           .insert(notificationTable)
           .values({
             id: crypto.randomUUID(),
-            blogId: notification.blogId,
-            type: notification.type,
+            blogId: replyTargetBlogId,
+            type: "reply",
             actorId: actor.id,
             activityId: create.id?.href || objectId,
             objectId: objectId,
-            postId: "postId" in notification ? notification.postId : null,
+            postId: replyTargetIdUuid,
             content: content,
             contentHtml: object.content?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
           })
-          .onConflictDoNothing(); // Avoid duplicate notifications
+          .onConflictDoNothing();
       } catch (error) {
-        console.error("Failed to create notification:", error);
+        console.error("Failed to create reply notification:", error);
       }
     }
-    
-    console.log(`Created ${notifications.length} notifications for activity ${objectId}`);
+
+    // Create quote notifications
+    for (const quote of quotes) {
+      try {
+        await db
+          .insert(notificationTable)
+          .values({
+            id: crypto.randomUUID(),
+            blogId: quote.blogId,
+            type: "quote",
+            actorId: actor.id,
+            activityId: create.id?.href || objectId,
+            objectId: objectId,
+            postId: quote.postId,
+            content: content,
+            contentHtml: object.content?.toString(),
+            isRead: false,
+            created: new Date(),
+            updated: new Date(),
+          })
+          .onConflictDoNothing();
+      } catch (error) {
+        console.error("Failed to create quote notification:", error);
+      }
+    }
+
+    // Create mention notifications (excluding those already covered by replies or quotes)
+    for (const mention of mentions) {
+      // Skip if this mention is the same as the reply target or quote target
+      if (isReply && mention.blogId === replyTargetBlogId) continue;
+      if (quotes.some((q) => q.blogId === mention.blogId)) continue;
+
+      try {
+        await db
+          .insert(notificationTable)
+          .values({
+            id: crypto.randomUUID(),
+            blogId: mention.blogId,
+            type: "mention",
+            actorId: actor.id,
+            activityId: create.id?.href || objectId,
+            objectId: objectId,
+            postId: null,
+            content: content,
+            contentHtml: object.content?.toString(),
+            isRead: false,
+            created: new Date(),
+            updated: new Date(),
+          })
+          .onConflictDoNothing();
+      } catch (error) {
+        console.error("Failed to create mention notification:", error);
+      }
+    }
+
+    const totalNotifications = quotes.length + mentions.length;
+    console.log(
+      `Created ${totalNotifications} notifications for activity ${objectId}`
+    );
   } catch (error) {
     console.error("Error handling mention/quote:", error);
   }
@@ -845,8 +938,9 @@ federation
   .on(Create, async (fedCtx, create) => {
     // Handle incoming mentions and quotes
     const object = await create.getObject({ ...fedCtx, suppressError: true });
-    if (!object || (!(object instanceof Note) && !(object instanceof Article))) return;
-    
+    if (!object || (!(object instanceof Note) && !(object instanceof Article)))
+      return;
+
     await handleMentionOrQuote(fedCtx, create, object);
   });
 

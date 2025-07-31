@@ -26,6 +26,7 @@ import { blog, notificationTable, actorTable } from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
 import { Bell, MessageCircle, Quote, Reply } from "lucide-react";
 import { NotificationActions } from "@/components/NotificationActions";
+import { encodePostId } from "@/lib/utils";
 
 type PageProps = Promise<{
   blogId: string;
@@ -107,7 +108,9 @@ export default async function NotificationsPage(props: { params: PageProps }) {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.notification.isRead).length;
+  const unreadCount = notifications.filter(
+    (n) => !n.notification.isRead
+  ).length;
   const hasUnreadNotifications = unreadCount > 0;
 
   return (
@@ -126,7 +129,8 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                 )}
               </CardTitle>
               <CardDescription>
-                페디버스에서 받은 멘션, 인용, 답글을 확인할 수 있습니다 ({notifications.length}개)
+                페디버스에서 받은 멘션, 인용, 답글을 확인할 수 있습니다 (
+                {notifications.length}개)
               </CardDescription>
             </div>
             {hasUnreadNotifications && (
@@ -175,14 +179,21 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge
-                            variant={getNotificationVariant(notification.notification.type)}
+                            variant={getNotificationVariant(
+                              notification.notification.type
+                            )}
                             className="flex items-center gap-1"
                           >
-                            {getNotificationIcon(notification.notification.type)}
-                            {getNotificationTypeLabel(notification.notification.type)}
+                            {getNotificationIcon(
+                              notification.notification.type
+                            )}
+                            {getNotificationTypeLabel(
+                              notification.notification.type
+                            )}
                           </Badge>
                           <span className="font-medium">
-                            {notification.actor.name || notification.actor.username}
+                            {notification.actor.name ||
+                              notification.actor.username}
                           </span>
                           <span className="text-sm text-muted-foreground">
                             {notification.actor.handle}
@@ -195,9 +206,9 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                             )}
                           </span>
                         </div>
-                        
+
                         {notification.notification.content && (
-                          <div className="prose prose-sm max-w-none">
+                          <div className="prose prose-sm max-w-none dark:prose-invert">
                             {notification.notification.contentHtml ? (
                               <div
                                 dangerouslySetInnerHTML={{
@@ -227,6 +238,20 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                                 className="text-xs"
                               >
                                 원본 보기
+                              </a>
+                            </Button>
+                          )}
+                          {notification.notification.postId && (
+                            <Button size="sm" variant="link" asChild>
+                              <a
+                                href={`/@${slug}/${encodePostId(
+                                  notification.notification.postId
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs"
+                              >
+                                로컬 포스트 보기
                               </a>
                             </Button>
                           )}

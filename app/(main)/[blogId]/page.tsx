@@ -10,6 +10,7 @@ import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
 import { incrementVisitorCount } from "@/lib/actions/blog";
+import { notFound } from "next/navigation";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -74,7 +75,9 @@ export default async function BlogHome(props: { params: Params }) {
   }
 
   const blogId = decodeURIComponent((await props.params).blogId);
-  if (!blogId.startsWith("@")) return <p>👀</p>;
+  if (!blogId.startsWith("@")) {
+    notFound();
+  }
 
   const slug = blogId.replace("@", "");
   const targetBlog = await db.query.blog.findFirst({
@@ -101,7 +104,7 @@ export default async function BlogHome(props: { params: Params }) {
   return (
     <div className="space-y-8">
       <PageViewTracker blogId={targetBlog.id} />
-      
+
       <PostList
         name="발행된 글 목록"
         blog={targetBlog}
