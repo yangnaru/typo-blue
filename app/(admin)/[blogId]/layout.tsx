@@ -152,10 +152,10 @@ export default async function RootLayout({
                           className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                         >
                           <Orbit className="h-5 w-5" />
-                          <span className="sr-only">페디버스</span>
+                          <span className="sr-only">연합우주</span>
                         </Link>
                       </TooltipTrigger>
-                      <TooltipContent side="right">페디버스</TooltipContent>
+                      <TooltipContent side="right">연합우주</TooltipContent>
                     </Tooltip>
                   )}
                   {activityPubEnabled && (
@@ -250,7 +250,7 @@ export default async function RootLayout({
                             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                           >
                             <Orbit className="h-5 w-5" />
-                            페디버스
+                            연합우주
                           </Link>
                         )}
                         {activityPubEnabled && (

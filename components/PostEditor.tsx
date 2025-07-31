@@ -16,6 +16,17 @@ import { Input } from "./ui/input";
 import { getBlogDashboardPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function PostEditor({
   blogId,
@@ -42,6 +53,7 @@ export default function PostEditor({
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(existingEmailSent);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
@@ -77,15 +89,15 @@ export default function PostEditor({
   }
 
   async function handleDelete() {
-    if (confirm("정말로 삭제하시겠습니까?")) {
-      const res = await deletePost(blogId, existingPostId!);
+    const res = await deletePost(blogId, existingPostId!);
 
-      if (res.success) {
-        alert("삭제되었습니다.");
-
-        window.location.href = getBlogDashboardPath(blogId);
-      }
+    if (res.success) {
+      toast.success("삭제되었습니다.");
+      window.location.href = getBlogDashboardPath(blogId);
+    } else {
+      toast.error("삭제에 실패했습니다.");
     }
+    setDeleteDialogOpen(false);
   }
 
   async function handleSendEmail() {
@@ -185,9 +197,32 @@ export default function PostEditor({
             </Button>
           )}
           {postId !== null && (
-            <Button variant="destructive" onClick={handleDelete}>
-              삭제
-            </Button>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  삭제
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>글 삭제</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    정말로 이 글을 삭제하시겠습니까?
+                    <br />
+                    이 작업은 되돌릴 수 없습니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    삭제
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </CardFooter>

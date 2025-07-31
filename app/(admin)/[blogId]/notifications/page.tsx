@@ -134,7 +134,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                 )}
               </CardTitle>
               <CardDescription>
-                페디버스에서 받은 멘션, 인용, 답글을 확인할 수 있습니다 (
+                연합우주에서 받은 멘션, 인용, 답글을 확인할 수 있습니다 (
                 {notifications.length}개)
               </CardDescription>
             </div>
@@ -156,7 +156,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                 아직 알림이 없습니다
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                페디버스에서 블로그를 멘션하거나 인용하면 여기에 표시됩니다.
+                연합우주에서 블로그를 멘션하거나 인용하면 여기에 표시됩니다.
               </p>
             </div>
           ) : (

@@ -167,8 +167,7 @@ export async function disableFederationForBlog(blogSlug: string) {
 
     return {
       success: true,
-      message:
-        "페디버스가 성공적으로 비활성화되었습니다. 모든 게시물이 페디버스에서 제거되었습니다.",
+      message: "연합우주 기능이 성공적으로 비활성화되었습니다.",
     };
   } catch (error) {
     console.error("Failed to disable federation:", error);

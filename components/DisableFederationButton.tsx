@@ -35,16 +35,16 @@ export function DisableFederationButton({
 
         if (result.success) {
           toast.success(
-            result.message || "페디버스가 성공적으로 비활성화되었습니다."
+            result.message || "연합우주가 성공적으로 비활성화되었습니다."
           );
           setIsOpen(false);
           router.refresh(); // Refresh the page to update the UI
         } else {
-          toast.error(result.error || "페디버스 비활성화에 실패했습니다.");
+          toast.error(result.error || "연합우주 비활성화에 실패했습니다.");
         }
       } catch (error) {
         console.error("Failed to disable federation:", error);
-        toast.error("페디버스 비활성화에 실패했습니다.");
+        toast.error("연합우주 비활성화에 실패했습니다.");
       }
     });
   };
@@ -52,22 +52,22 @@ export function DisableFederationButton({
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">페디버스 비활성화</Button>
+        <Button variant="destructive">연합우주 비활성화</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>페디버스 비활성화</AlertDialogTitle>
+          <AlertDialogTitle>연합우주 비활성화</AlertDialogTitle>
           <AlertDialogDescription>
             이 작업은 되돌릴 수 없습니다. 다음과 같은 작업이 수행됩니다:
             <ul className="list-disc pl-6 my-3 space-y-1">
-              <li>페디버스에 게시물 삭제 요청을 보냅니다.</li>
+              <li>연합우주에 게시물 삭제 요청을 보냅니다.</li>
               <li>
-                페디버스의 특성 상, 모든 게시물이 삭제되지 않을 수 있습니다.
+                연합우주의 특성 상, 모든 게시물이 삭제되지 않을 수 있습니다.
               </li>
               <li>모든 팔로워와의 연결이 해제됩니다.</li>
               <li>ActivityPub 프로필이 완전히 제거됩니다.</li>
             </ul>
-            정말로 페디버스를 비활성화하시겠습니까?
+            정말로 연합우주를 비활성화하시겠습니까?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -16,6 +16,17 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "./ui/checkbox";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Blog {
   slug: string;
@@ -39,6 +50,8 @@ export default function BlogEditForm({
     description,
     discoverable,
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [confirmationInput, setConfirmationInput] = useState("");
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     setBlog({
@@ -55,27 +68,36 @@ export default function BlogEditForm({
   }
 
   async function handleDelete() {
-    let confirmDelete;
-    if (postCount !== 0) {
-      confirmDelete =
-        prompt(
-          `정말 블로그 "${slug}"를 삭제하시겠습니까?\n\n삭제하시려면 "${slug}" 라고 입력해 주세요.`
-        ) === blog.slug;
-    } else {
-      confirmDelete = true;
-    }
-
-    if (confirmDelete) {
+    if (postCount === 0) {
+      // If no posts, delete immediately
       const res = await deleteBlog(slug);
-
       if (res.success) {
-        alert("블로그가 삭제되었습니다.");
-
+        toast.success("블로그가 삭제되었습니다.");
         window.location.href = getAccountPath();
       } else {
-        toast("블로그 삭제에 실패했습니다.");
+        toast.error("블로그 삭제에 실패했습니다.");
       }
+    } else {
+      // If has posts, show confirmation dialog
+      setDeleteDialogOpen(true);
     }
+  }
+
+  async function handleConfirmDelete() {
+    if (postCount > 0 && confirmationInput !== blog.slug) {
+      toast.error("블로그 이름을 정확히 입력해주세요.");
+      return;
+    }
+
+    const res = await deleteBlog(slug);
+    if (res.success) {
+      toast.success("블로그가 삭제되었습니다.");
+      window.location.href = getAccountPath();
+    } else {
+      toast.error("블로그 삭제에 실패했습니다.");
+    }
+    setDeleteDialogOpen(false);
+    setConfirmationInput("");
   }
 
   async function handleSubmit(
@@ -165,6 +187,39 @@ export default function BlogEditForm({
           </div>
         </CardFooter>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>블로그 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말 블로그 "{slug}"를 삭제하시겠습니까?
+              <br />
+              <br />
+              이 작업은 되돌릴 수 없습니다. 삭제하시려면 블로그 이름 "{slug}"를 아래에 정확히 입력해주세요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4">
+            <Input
+              placeholder={`"${slug}" 입력`}
+              value={confirmationInput}
+              onChange={(e) => setConfirmationInput(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmationInput("")}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={confirmationInput !== blog.slug}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }

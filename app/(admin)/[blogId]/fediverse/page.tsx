@@ -126,7 +126,7 @@ export default async function FediversePage(props: { params: PageProps }) {
         <CardHeader>
           <CardTitle>팔로워 목록</CardTitle>
           <CardDescription>
-            페디버스에서 이 블로그를 팔로우하는 사용자들 ({followers.length}명)
+            연합우주에서 이 블로그를 팔로우하는 사용자들 ({followers.length}명)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -152,12 +152,12 @@ export default async function FediversePage(props: { params: PageProps }) {
                 아직 팔로워가 없습니다
               </h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                마스토돈, 미스키 등 페디버스 플랫폼에서 블로그를 공유해보세요!
+                마스토돈, 미스키 등 연합우주 플랫폼에서 블로그를 공유해보세요!
               </p>
               {activityPubProfile && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-sm">
-                    페디버스에서{" "}
+                    연합우주에서{" "}
                     <span className="font-mono bg-background px-2 py-1 rounded">
                       {activityPubProfile.handle}
                     </span>
@@ -172,7 +172,7 @@ export default async function FediversePage(props: { params: PageProps }) {
                 <TableRow>
                   <TableHead>사용자</TableHead>
                   <TableHead className="hidden sm:table-cell">
-                    페디버스 핸들
+                    연합우주 핸들
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
                     인스턴스
@@ -228,9 +228,9 @@ export default async function FediversePage(props: { params: PageProps }) {
       {activityPubProfile && (
         <Card>
           <CardHeader>
-            <CardTitle>페디버스 비활성화</CardTitle>
+            <CardTitle>연합우주 비활성화</CardTitle>
             <CardDescription>
-              페디버스 연동을 완전히 비활성화하고 모든 게시물을 페디버스에서
+              연합우주 연동을 완전히 비활성화하고 모든 게시물을 연합우주에서
               제거합니다.
             </CardDescription>
           </CardHeader>
