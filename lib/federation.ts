@@ -884,7 +884,10 @@ async function handleMentionOrQuote(
 
 // Configure inbox listener for follow activities
 federation
-  .setInboxListeners(`${routePrefix}/users/{identifier}/inbox`, `/inbox`)
+  .setInboxListeners(
+    `${routePrefix}/users/{identifier}/inbox`,
+    `${routePrefix}/inbox`
+  )
   .on(Undo, async (ctx, undo) => {
     const object = await undo.getObject({ ...ctx, suppressError: true });
     if (object instanceof Follow) await onUnfollowed(ctx, undo);
