@@ -86,3 +86,31 @@ export async function markAllNotificationsAsRead(blogSlug: string) {
 
   return { success: true };
 }
+
+export async function deleteNotification(
+  blogSlug: string,
+  notificationId: string
+) {
+  const { user } = await getCurrentSession();
+  if (!user) {
+    throw new Error("사용자가 없습니다.");
+  }
+
+  // Get the blog and verify ownership
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogSlug),
+  });
+
+  if (!targetBlog || targetBlog.userId !== user.id) {
+    throw new Error("권한이 없습니다.");
+  }
+
+  // Delete the notification
+  await db
+    .delete(notificationTable)
+    .where(eq(notificationTable.id, notificationId));
+
+  revalidatePath(`/@${blogSlug}/notifications`);
+
+  return { success: true };
+}

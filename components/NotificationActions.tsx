@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { markNotificationAsRead, markAllNotificationsAsRead } from "@/lib/actions/notifications";
+import {
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+} from "@/lib/actions/notifications";
 import { toast } from "sonner";
 import { useTransition } from "react";
 
@@ -22,7 +26,7 @@ export function NotificationActions({
 
   const handleMarkAsRead = () => {
     if (!notificationId) return;
-    
+
     startTransition(async () => {
       try {
         await markNotificationAsRead(blogSlug, notificationId);
@@ -44,16 +48,41 @@ export function NotificationActions({
     });
   };
 
-  if (notificationId && !isRead) {
+  const handleDelete = () => {
+    if (!notificationId) return;
+
+    startTransition(async () => {
+      try {
+        await deleteNotification(blogSlug, notificationId);
+        toast.success("알림을 삭제했습니다.");
+      } catch (error) {
+        toast.error("알림 삭제에 실패했습니다.");
+      }
+    });
+  };
+
+  if (notificationId) {
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleMarkAsRead}
-        disabled={isPending}
-      >
-        읽음으로 표시
-      </Button>
+      <div className="flex gap-2">
+        {!isRead && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleMarkAsRead}
+            disabled={isPending}
+          >
+            읽음 표시
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          disabled={isPending}
+        >
+          삭제
+        </Button>
+      </div>
     );
   }
 

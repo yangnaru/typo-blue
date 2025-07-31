@@ -70,7 +70,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "mention":
+      case "reply":
         return <Bell className="h-4 w-4" />;
       case "quote":
         return <Quote className="h-4 w-4" />;
@@ -85,7 +85,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
 
   const getNotificationTypeLabel = (type: string) => {
     switch (type) {
-      case "mention":
+      case "reply":
         return "멘션";
       case "quote":
         return "인용";
@@ -93,6 +93,9 @@ export default async function NotificationsPage(props: { params: PageProps }) {
         return "답글";
       case "announce":
         return "공유";
+      case "emoji_react":
+      case "like":
+        return "리액션";
       default:
         return "알림";
     }
@@ -100,7 +103,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
 
   const getNotificationVariant = (type: string) => {
     switch (type) {
-      case "mention":
+      case "reply":
         return "default" as const;
       case "quote":
         return "secondary" as const;
@@ -166,21 +169,12 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                   key={notification.notification.id}
                   className={`transition-colors ${
                     !notification.notification.isRead
-                      ? "bg-accent/50 border-accent"
+                      ? "bg-accent/50 border-accent border-2 ring-2 ring-accent/30"
                       : ""
                   }`}
                 >
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-4">
-                      {notification.actor.avatarUrl && (
-                        <Image
-                          src={notification.actor.avatarUrl}
-                          alt={`${notification.actor.username} avatar`}
-                          width={40}
-                          height={40}
-                          className="rounded-full flex-shrink-0"
-                        />
-                      )}
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge
@@ -196,6 +190,16 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                               notification.notification.type
                             )}
                           </Badge>
+                          {notification.notification.type === "emoji_react" && (
+                            <span className="text-sm text-muted-foreground">
+                              {notification.notification.content}
+                            </span>
+                          )}
+                          {notification.notification.type === "like" && (
+                            <span className="text-sm text-muted-foreground">
+                              ♥️
+                            </span>
+                          )}
                           <span className="font-medium">
                             {notification.actor.name ||
                               notification.actor.username}
@@ -204,15 +208,48 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                             {notification.actor.handle}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {formatInTimeZone(
-                              notification.notification.created,
-                              "Asia/Seoul",
-                              "MM월 dd일 HH:mm"
+                            {notification.notification.type === "reply" &&
+                            notification.notification.activityId ? (
+                              <a
+                                href={notification.notification.url || ""}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline hover:text-primary transition-colors"
+                              >
+                                {formatInTimeZone(
+                                  notification.notification.created,
+                                  "Asia/Seoul",
+                                  "MM월 dd일 HH:mm"
+                                )}
+                              </a>
+                            ) : (
+                              formatInTimeZone(
+                                notification.notification.created,
+                                "Asia/Seoul",
+                                "MM월 dd일 HH:mm"
+                              )
                             )}
                           </span>
+                          {notification.notification.postId && (
+                            <Button size="sm" variant="link" asChild>
+                              <a
+                                href={`/@${slug}/${encodePostId(
+                                  notification.notification.postId
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs"
+                              >
+                                원본 글 보기:{" "}
+                                {notification.post.title ?? "무제"}
+                              </a>
+                            </Button>
+                          )}
                         </div>
 
-                        {notification.notification.content &&
+                        {notification.notification.type !== "emoji_react" &&
+                          notification.notification.type !== "like" &&
+                          notification.notification.content &&
                           notification.notification.type !== "announce" && (
                             <div className="prose prose-sm max-w-none dark:prose-invert">
                               {notification.notification.content ? (
@@ -228,39 +265,13 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                               )}
                             </div>
                           )}
-
+                        
                         <div className="flex items-center gap-2 pt-2">
                           <NotificationActions
                             blogSlug={slug}
                             notificationId={notification.notification.id}
                             isRead={notification.notification.isRead}
                           />
-                          {notification.notification.objectId && (
-                            <Button size="sm" variant="ghost" asChild>
-                              <a
-                                href={notification.notification.objectId}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs"
-                              >
-                                원본 보기
-                              </a>
-                            </Button>
-                          )}
-                          {notification.notification.postId && (
-                            <Button size="sm" variant="link" asChild>
-                              <a
-                                href={`/@${slug}/${encodePostId(
-                                  notification.notification.postId
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs"
-                              >
-                                로컬 포스트 보기
-                              </a>
-                            </Button>
-                          )}
                         </div>
                       </div>
                     </div>
