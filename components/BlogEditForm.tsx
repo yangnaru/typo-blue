@@ -196,7 +196,16 @@ export default function BlogEditForm({
               정말 블로그 "{slug}"를 삭제하시겠습니까?
               <br />
               <br />
-              이 작업은 되돌릴 수 없습니다. 삭제하시려면 블로그 이름 "{slug}"를 아래에 정확히 입력해주세요.
+              <span className="text-destructive font-semibold">
+                주의: 이 블로그가 ActivityPub(연합우주)에 연동되어 있다면,
+                블로그 삭제 시 연합우주에서도 프로필과 게시물이 삭제 요청됩니다.
+                <br />
+                연합우주의 특성상, 모든 게시물이 완전히 삭제되지 않을 수
+                있습니다.
+              </span>
+              <br />
+              <br />이 작업은 되돌릴 수 없습니다. 삭제하시려면 블로그 이름 "
+              {slug}"를 아래에 정확히 입력해주세요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4">

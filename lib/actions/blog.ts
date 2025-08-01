@@ -7,6 +7,7 @@ import { db } from "../db";
 import { blog, postTable } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
+import { getActorForBlog } from "./activitypub";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -76,6 +77,20 @@ export async function deleteBlog(blogId: string) {
 
   if (targetBlog.user.id !== user.id) {
     return { error: "권한이 없습니다." };
+  }
+
+  // Disable federation before deleting the blog
+  try {
+    const { disableFederationForBlog } = await import("./activitypub");
+    const federationResult = await disableFederationForBlog(blogId);
+    
+    if (!federationResult.success) {
+      console.error("Failed to disable federation during blog deletion:", federationResult.error);
+      // Continue with blog deletion even if federation cleanup fails
+    }
+  } catch (error) {
+    console.error("Error during federation cleanup:", error);
+    // Continue with blog deletion even if federation cleanup fails
   }
 
   await db.delete(blog).where(eq(blog.slug, blogId));
