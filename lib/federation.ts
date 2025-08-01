@@ -672,224 +672,103 @@ async function handleMentionOrQuote(
   create: Create,
   object: Note | Article
 ) {
-  try {
-    const { db } = fedCtx.data;
+  const { db } = fedCtx.data;
 
-    // Get the actor who created this post
-    const actorObject = await create.getActor(fedCtx);
-    if (!actorObject) return;
+  // Get the actor who created this post
+  const actorObject = await create.getActor(fedCtx);
+  if (!actorObject) return;
 
-    // Persist the remote actor
-    const actor = await persistActor(fedCtx, actorObject, {
-      ...fedCtx,
-      outbox: false,
+  // Persist the remote actor
+  const actor = await persistActor(fedCtx, actorObject, {
+    ...fedCtx,
+    outbox: false,
+  });
+  if (!actor) return;
+
+  const content = object.content?.toString() || "";
+  const objectId = object.id?.href;
+
+  if (!objectId) return;
+
+  // Handle quote notifications
+  if (object.quoteUrl) {
+    const post = await db.query.postTable.findFirst({
+      where: eq(postTable.id, object.quoteUrl.href.split("/").pop()!),
     });
-    if (!actor) return;
+    if (!post) return;
 
-    const content = object.content?.toString() || "";
-    const objectId = object.id?.href;
+    await db.insert(notificationTable).values({
+      type: "quote",
+      actorId: actor.id,
+      activityId: create.id?.href || objectId,
+      objectId: object.id?.href,
+      postId: post.id,
+      content: object.content?.toString() || "",
+      url: object.url?.toString(),
+      created: new Date(),
+      updated: new Date(),
+    });
 
-    if (!objectId) return;
+    return;
+  }
 
-    // Handle quote notifications
-    if (object.quoteUrl) {
-      const post = await db.query.postTable.findFirst({
-        where: eq(postTable.id, object.quoteUrl.href.split("/").pop()!),
-      });
-      if (!post) return;
+  // Check if this is a reply to a local post
+  const replyTargetId = object.replyTargetId?.href;
+  const replyTargetIdUuid = replyTargetId?.split("/").pop();
+  if (!replyTargetIdUuid) return;
 
-      await db.insert(notificationTable).values({
-        type: "quote",
-        actorId: actor.id,
-        activityId: create.id?.href || objectId,
-        objectId: object.id?.href,
-        postId: post.id,
-        content: object.content?.toString() || "",
-        url: object.url?.toString(),
-        created: new Date(),
-        updated: new Date(),
-      });
+  let isReply = false;
+  let replyTargetBlogId: string | null = null;
+  let localPost;
 
-      return;
+  if (replyTargetId) {
+    // Check if the reply target is a local post
+    localPost = await db
+      .select({
+        post: postTable,
+        blog: blogTable,
+      })
+      .from(postTable)
+      .innerJoin(blogTable, eq(postTable.blogId, blogTable.id))
+      .where(eq(postTable.id, replyTargetIdUuid)) // This might need URL parsing
+      .limit(1);
+
+    if (localPost.length > 0) {
+      isReply = true;
+      replyTargetBlogId = localPost[0].blog.id;
     }
+  }
 
-    // Check if this is a reply to a local post
-    const replyTargetId = object.replyTargetId?.href;
-    const replyTargetIdUuid = replyTargetId?.split("/").pop();
-    if (!replyTargetIdUuid) return;
+  if (!localPost) return;
 
-    let isReply = false;
-    let replyTargetBlogId: string | null = null;
-    let localPost;
-
-    if (replyTargetId) {
-      // Check if the reply target is a local post
-      localPost = await db
+  // Check for mentions of local actors
+  const mentions = [];
+  for await (const tag of object.getTags({
+    ...fedCtx,
+    suppressError: true,
+  })) {
+    // Handle Mention objects from ActivityPub
+    if (tag instanceof Mention && tag.href) {
+      const tagHref =
+        tag.href instanceof URL ? tag.href.href : String(tag.href);
+      // Check if this is a mention of a local actor
+      const localActor = await db
         .select({
-          post: postTable,
+          actor: actorTable,
           blog: blogTable,
         })
-        .from(postTable)
-        .innerJoin(blogTable, eq(postTable.blogId, blogTable.id))
-        .where(eq(postTable.id, replyTargetIdUuid)) // This might need URL parsing
+        .from(actorTable)
+        .innerJoin(blogTable, eq(actorTable.blogId, blogTable.id))
+        .where(eq(actorTable.iri, tagHref))
         .limit(1);
 
-      if (localPost.length > 0) {
-        isReply = true;
-        replyTargetBlogId = localPost[0].blog.id;
+      if (localActor.length > 0) {
+        mentions.push({
+          blogId: localActor[0].blog.id,
+          type: "mention" as const,
+        });
       }
     }
-
-    if (!localPost) return;
-
-    // Check for mentions of local actors
-    const mentions = [];
-    for await (const tag of object.getTags({
-      ...fedCtx,
-      suppressError: true,
-    })) {
-      // Handle Mention objects from ActivityPub
-      if (tag instanceof Mention && tag.href) {
-        const tagHref =
-          tag.href instanceof URL ? tag.href.href : String(tag.href);
-        // Check if this is a mention of a local actor
-        const localActor = await db
-          .select({
-            actor: actorTable,
-            blog: blogTable,
-          })
-          .from(actorTable)
-          .innerJoin(blogTable, eq(actorTable.blogId, blogTable.id))
-          .where(eq(actorTable.iri, tagHref))
-          .limit(1);
-
-        if (localActor.length > 0) {
-          mentions.push({
-            blogId: localActor[0].blog.id,
-            type: "mention" as const,
-          });
-        }
-      }
-    }
-
-    // Check for quotes by looking for URLs in content that match local posts
-    const quotes = [];
-    const urlRegex = /https?:\/\/[^\s]+/g;
-    const urls = content.match(urlRegex) || [];
-
-    for (const url of urls) {
-      try {
-        const urlObj = new URL(url);
-        // Check if this URL matches a local post
-        if (
-          urlObj.hostname === fedCtx.canonicalOrigin?.replace("https://", "")
-        ) {
-          const pathMatch = urlObj.pathname.match(/\/@([^\/]+)\/([^\/]+)/);
-          if (pathMatch) {
-            const [, blogSlug, encodedPostId] = pathMatch;
-            const blog = await db.query.blog.findFirst({
-              where: eq(blogTable.slug, blogSlug),
-            });
-            if (blog) {
-              quotes.push({
-                blogId: blog.id,
-                type: "quote" as const,
-                postId: replyTargetIdUuid,
-              });
-            }
-          }
-        }
-      } catch (e) {
-        // Invalid URL, skip
-        continue;
-      }
-    }
-
-    // Create reply notification if this is a reply to a local post
-    if (isReply && replyTargetBlogId) {
-      try {
-        await db
-          .insert(notificationTable)
-          .values({
-            type: "reply",
-            actorId: actor.id,
-            activityId: create.id?.href || objectId,
-            objectId: objectId,
-            postId: localPost[0].post.id,
-            content: content,
-            url:
-              object.url instanceof URL
-                ? object.url.href
-                : object.url?.toString(),
-            created: new Date(),
-            updated: new Date(),
-          })
-          .onConflictDoNothing();
-      } catch (error) {
-        console.error("Failed to create reply notification:", error);
-      }
-    }
-
-    // Create quote notifications
-    for (const quote of quotes) {
-      try {
-        await db
-          .insert(notificationTable)
-          .values({
-            type: "quote",
-            actorId: actor.id,
-            activityId: create.id?.href || objectId,
-            objectId: objectId,
-            postId: localPost[0].post.id,
-            content: content,
-            url:
-              object.url instanceof URL
-                ? object.url.href
-                : object.url?.toString(),
-            created: new Date(),
-            updated: new Date(),
-          })
-          .onConflictDoNothing();
-      } catch (error) {
-        console.error("Failed to create quote notification:", error);
-      }
-    }
-
-    // Create mention notifications (excluding those already covered by replies or quotes)
-    for (const mention of mentions) {
-      // Skip if this mention is the same as the reply target or quote target
-      if (isReply && mention.blogId === replyTargetBlogId) continue;
-      if (quotes.some((q) => q.blogId === mention.blogId)) continue;
-
-      try {
-        await db
-          .insert(notificationTable)
-          .values({
-            type: "mention",
-            actorId: actor.id,
-            activityId: create.id?.href!,
-            objectId: objectId,
-            postId: null,
-            content: content,
-            url:
-              object.url instanceof URL
-                ? object.url.href
-                : object.url?.toString(),
-            created: new Date(),
-            updated: new Date(),
-          })
-          .onConflictDoNothing();
-      } catch (error) {
-        console.error("Failed to create mention notification:", error);
-      }
-    }
-
-    const totalNotifications = quotes.length + mentions.length;
-    console.log(
-      `Created ${totalNotifications} notifications for activity ${objectId}`
-    );
-  } catch (error) {
-    console.error("Error handling mention/quote:", error);
   }
 }
 

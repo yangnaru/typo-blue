@@ -1,11 +1,6 @@
 import { db } from "./db";
-import {
-  user as userTable,
-  blog as blogTable,
-  actorTable,
-  instanceTable,
-} from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { blog as blogTable, actorTable, instanceTable } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 import { generateCryptoKeyPair, exportJwk } from "@fedify/fedify";
 import { routePrefix } from "./federation";
 
@@ -116,83 +111,10 @@ export async function getOrCreateActorForBlog(blogId: string, domain: string) {
   });
 }
 
-export async function getActorByHandle(handle: string) {
-  return await db
-    .select()
-    .from(actorTable)
-    .where(eq(actorTable.handle, handle))
-    .limit(1);
-}
-
 export async function getActorByUri(uri: string) {
   return await db
     .select()
     .from(actorTable)
     .where(eq(actorTable.iri, uri))
     .limit(1);
-}
-
-export async function getRemoteActorByUri(uri: string) {
-  return await db
-    .select()
-    .from(actorTable)
-    .where(eq(actorTable.iri, uri))
-    .limit(1);
-}
-
-export async function createOrUpdateRemoteActor(actorData: {
-  iri: string;
-  handle?: string;
-  name?: string;
-  bioHtml?: string;
-  avatarUrl?: string;
-  inboxUrl: string;
-  followersUrl?: string;
-  sharedInboxUrl?: string;
-}) {
-  const existing = await getRemoteActorByUri(actorData.iri);
-
-  const actorUrl = new URL(actorData.iri);
-  const domain = actorUrl.host;
-  const username = actorData.handle?.split("@")[0] || "unknown";
-
-  const values = {
-    type: "Person" as const,
-    username,
-    instanceHost: domain,
-    handleHost: domain,
-    iri: actorData.iri,
-    name: actorData.name,
-    bioHtml: actorData.bioHtml,
-    avatarUrl: actorData.avatarUrl,
-    inboxUrl: actorData.inboxUrl,
-    followersUrl: actorData.followersUrl,
-    sharedInboxUrl: actorData.sharedInboxUrl,
-    fieldHtmls: {},
-    emojis: {},
-    tags: {},
-    aliases: [],
-  };
-
-  if (existing.length > 0) {
-    // Update existing actor
-    const updated = await db
-      .update(actorTable)
-      .set(values)
-      .where(eq(actorTable.iri, actorData.iri))
-      .returning();
-
-    return updated[0];
-  } else {
-    // Create new remote actor
-    const created = await db
-      .insert(actorTable)
-      .values({
-        id: crypto.randomUUID(),
-        ...values,
-      })
-      .returning();
-
-    return created[0];
-  }
 }
