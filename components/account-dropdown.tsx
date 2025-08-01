@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, BookOpen, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
 import { getAccountPath } from "@/lib/paths";
@@ -33,11 +33,20 @@ export default function AccountDropdown({
         <DropdownMenuSeparator />
 
         {blogs.map((blog: any) => (
-          <DropdownMenuItem key={blog.id} className="cursor-pointer" asChild>
-            <Link href={`/@${blog.slug}`}>
-              {blog.name || "제목 없는 블로그"} (@{blog.slug})
-            </Link>
-          </DropdownMenuItem>
+          <div key={blog.id}>
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <Link href={`/@${blog.slug}`} className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                {blog.name || "제목 없는 블로그"} (@{blog.slug})
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" asChild>
+              <Link href={`/@${blog.slug}/dashboard`} className="flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                대시보드
+              </Link>
+            </DropdownMenuItem>
+          </div>
         ))}
         {blogs.length > 0 && <DropdownMenuSeparator />}
 
