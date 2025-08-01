@@ -100,19 +100,6 @@ export async function disableFederationForBlog(blogSlug: string) {
         )
       );
 
-    // Send delete activities for each published post
-    for (const post of publishedPosts) {
-      try {
-        await sendNoteToFollowers(blogSlug, post.id, true); // true = isDelete
-      } catch (error) {
-        console.error(
-          `Failed to send delete activity for post ${post.id}:`,
-          error
-        );
-        // Continue with other posts even if one fails
-      }
-    }
-
     // Send Delete activity for the actor itself
     try {
       const baseUrl = new URL(`https://${process.env.NEXT_PUBLIC_DOMAIN!}`);
