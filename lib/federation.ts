@@ -691,6 +691,28 @@ async function handleMentionOrQuote(
 
     if (!objectId) return;
 
+    // Handle quote notifications
+    if (object.quoteUrl) {
+      const post = await db.query.postTable.findFirst({
+        where: eq(postTable.id, object.quoteUrl.href.split("/").pop()!),
+      });
+      if (!post) return;
+
+      await db.insert(notificationTable).values({
+        type: "quote",
+        actorId: actor.id,
+        activityId: create.id?.href || objectId,
+        objectId: object.id?.href,
+        postId: post.id,
+        content: object.content?.toString() || "",
+        url: object.url?.toString(),
+        created: new Date(),
+        updated: new Date(),
+      });
+
+      return;
+    }
+
     // Check if this is a reply to a local post
     const replyTargetId = object.replyTargetId?.href;
     const replyTargetIdUuid = replyTargetId?.split("/").pop();
@@ -1114,6 +1136,22 @@ async function onCreate(
   await handleMentionOrQuote(fedCtx, create, object);
 }
 
+async function onPostDeleted(
+  fedCtx: InboxContext<ContextData>,
+  deleteActivity: Delete
+): Promise<void> {
+  const object = await deleteActivity.getObject({
+    ...fedCtx,
+    suppressError: true,
+  });
+  if (!object) return;
+
+  // Delete if object ID exists in notificationTable
+  await db
+    .delete(notificationTable)
+    .where(eq(notificationTable.objectId, object.id?.href!));
+}
+
 // Configure inbox listener for follow activities
 federation
   .setInboxListeners(`${routePrefix}/users/{identifier}/inbox`, `/inbox`)
@@ -1128,6 +1166,7 @@ federation
   .on(Follow, onFollowed)
   .on(Create, onCreate)
   .on(Like, onPostLiked)
+  .on(Delete, onPostDeleted)
   .on(EmojiReact, onReactedOnPost);
 
 // Configure outbox dispatcher for posts
