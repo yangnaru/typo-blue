@@ -15,9 +15,14 @@ export function setupActorDispatcher() {
     .setActorDispatcher(
       `${routePrefix}/users/{identifier}`,
       async (ctx, identifier) => {
+        // First, find the blog by slug, then find the actor by blogId
+        const blog = await db.query.blog.findFirst({
+          where: eq(blogTable.slug, identifier),
+        });
+        if (!blog) return null;
         const actor = await db.query.actorTable.findFirst({
-          where: eq(actorTable.id, identifier),
           with: { blog: true },
+          where: eq(actorTable.blogId, blog.id),
         });
         if (!actor) return null;
         if (!actor.blog) return null;
