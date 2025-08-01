@@ -1,6 +1,6 @@
 import { Note, Context, PUBLIC_COLLECTION } from "@fedify/fedify";
 import { Temporal } from "@js-temporal/polyfill";
-import { blog as blogTable, postTable } from "@/drizzle/schema";
+import { actorTable, blog as blogTable, postTable } from "@/drizzle/schema";
 import type { ContextData } from "./core";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
@@ -17,20 +17,24 @@ export async function getNote(
   post: typeof postTable.$inferSelect,
   blogId: string
 ) {
-  const blog = await db.query.blog.findFirst({
-    where: eq(blogTable.id, blogId),
+  const actor = await db.query.actorTable.findFirst({
+    where: eq(actorTable.id, blogId),
+    with: { blog: true },
   });
-  if (!blog) return null;
+  if (!actor) return null;
+  if (!actor.blog) return null;
 
   const content = `<p>${post.title}</p>${post.content}`;
   const note = new Note({
     id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
-    cc: ctx.getFollowersUri(blogId),
+    cc: ctx.getFollowersUri(actor.id),
     content,
-    attributions: [ctx.getActorUri(blogId)],
+    attributions: [ctx.getActorUri(actor.id)],
     url: new URL(
-      `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blog.slug}/${post.id}`
+      `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${actor.blog.slug}/${
+        post.id
+      }`
     ),
     published: post.published
       ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
