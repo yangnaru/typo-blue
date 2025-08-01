@@ -2,7 +2,6 @@
 
 import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
-import { decodePostId, encodePostId } from "../utils";
 import { db } from "../db";
 import { blog, postTable } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -130,7 +129,7 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
 }
 
 export async function unPublishPost(blogId: string, postId: string) {
-  const uuid = decodePostId(postId);
+  const uuid = postId;
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   await db
@@ -152,7 +151,7 @@ export async function unPublishPost(blogId: string, postId: string) {
 }
 
 export async function deletePost(blogId: string, postId: string) {
-  const uuid = decodePostId(postId);
+  const uuid = postId;
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   await db
@@ -195,7 +194,7 @@ export async function upsertPost(
     throw new Error("블로그를 찾을 수 없습니다.");
   }
 
-  const uuid = postId ? decodePostId(postId) : undefined;
+  const uuid = postId;
 
   let targetPost;
   let wasAlreadyPublished = false;
@@ -275,7 +274,7 @@ export async function upsertPost(
 
   return {
     success: true,
-    postId: encodePostId(targetPost.id),
+    postId: targetPost.id,
   };
 }
 
@@ -321,7 +320,7 @@ export async function editBlogInfo(
 }
 
 export async function sendPostEmail(blogId: string, postId: string) {
-  const uuid = decodePostId(postId);
+  const uuid = postId;
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
   const foundBlog = await db.query.blog.findFirst({

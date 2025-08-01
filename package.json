@@ -43,7 +43,6 @@
     "@types/react-dom": "19.1.6",
     "@upyo/core": "^0.1.1",
     "@upyo/mailgun": "^0.1.1",
-    "@urlpack/base62": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^2.30.0",

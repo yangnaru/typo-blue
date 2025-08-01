@@ -13,7 +13,6 @@ import { generateRandomString, alphabet } from "oslo/crypto";
 import { MailgunTransport } from "@upyo/mailgun";
 import { createMessage } from "@upyo/core";
 import { htmlToText } from "html-to-text";
-import { encodePostId } from "../utils";
 import { EmailJob } from "../queue/email-queue";
 
 export async function subscribeToMailingList(
@@ -191,7 +190,7 @@ export async function sendPostNotificationEmailToSubscriber(
   const blogName = postData.blog.name || `@${postData.blog.slug}`;
   const originalPostUrl = `${process.env.NEXT_PUBLIC_URL}/@${
     postData.blog.slug
-  }/${encodePostId(postData.id)}`;
+  }/${postData.id}`;
   const originalUnsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
 
   // Create tracking URLs

@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import ImpersonateButton from "./impersonate-button";
 import Link from "next/link";
-import { encodePostId } from "@/lib/utils";
 import { and, desc, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
@@ -40,16 +39,14 @@ export default async function AdminRootPage() {
         </TableHeader>
         <TableBody>
           {blogs.map((blog) => {
-            const encodedLatestPostId = blog.posts[0]
-              ? encodePostId(blog.posts[0].id)
-              : "";
+            const latestPostId = blog.posts[0]?.id || "";
 
             return (
               <TableRow key={blog.id}>
                 <TableCell>{blog.slug}</TableCell>
                 <TableCell>
                   {blog.posts[0] ? (
-                    <Link href={`/@${blog.slug}/${encodedLatestPostId}`}>
+                    <Link href={`/@${blog.slug}/${latestPostId}`}>
                       {blog.posts[0].title || "무제"}
                     </Link>
                   ) : (

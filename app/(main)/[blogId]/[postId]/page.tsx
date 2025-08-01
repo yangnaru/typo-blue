@@ -1,6 +1,4 @@
 import { getCurrentSession } from "@/lib/auth";
-import { encodePostId } from "@/lib/utils";
-import { decode } from "@urlpack/base62";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -21,20 +19,7 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const { user } = await getCurrentSession();
 
-  let uuid;
-  try {
-    uuid = Buffer.from(decode((await props.params).postId)).toString("hex");
-  } catch (e) {
-    return {
-      title: "존재하지 않는 글입니다.",
-    };
-  }
-
-  if (uuid.length !== 32) {
-    return {
-      title: "존재하지 않는 글입니다.",
-    };
-  }
+  const uuid = (await props.params).postId;
 
   const targetPost = await db.query.postTable.findFirst({
     where: eq(postTable.id, uuid),
@@ -105,17 +90,10 @@ export default async function BlogPost(props: { params: Params }) {
 
   const isCurrentUserBlogOwner = targetBlogUser.email === sessionUser?.email;
 
-  let targetPost;
-  try {
-    const uuid = Buffer.from(decode((await props.params).postId)).toString(
-      "hex"
-    );
-    targetPost = await db.query.postTable.findFirst({
-      where: eq(postTable.id, uuid),
-    });
-  } catch {
-    return <p>글이 존재하지 않습니다.</p>;
-  }
+  const uuid = (await props.params).postId;
+  const targetPost = await db.query.postTable.findFirst({
+    where: eq(postTable.id, uuid),
+  });
 
   if (!targetPost || (!targetPost.published && !isCurrentUserBlogOwner)) {
     return <p>글이 존재하지 않습니다.</p>;
@@ -129,7 +107,7 @@ export default async function BlogPost(props: { params: Params }) {
 
       <div className="flex flex-row gap-2 items-baseline flex-wrap">
         <h3 className="text-2xl break-keep">
-          <Link href={`/@${targetBlog.slug}/${encodePostId(targetPost.id)}`}>
+          <Link href={`/@${targetBlog.slug}/${targetPost.id}`}>
             {targetPost.title === "" ? "무제" : targetPost.title}
           </Link>
         </h3>

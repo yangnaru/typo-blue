@@ -3,14 +3,13 @@ import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
 import { blog, postTable } from "@/drizzle/schema";
-import { decodePostId } from "@/lib/utils";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 type Params = Promise<{ blogId: string; postId: string }>;
 
 export default async function EditPost(props: { params: Params }) {
-  const uuid = decodePostId((await props.params).postId);
+  const uuid = (await props.params).postId;
   const slug = decodeURIComponent((await props.params).blogId).replace("@", "");
 
   const { user } = await getCurrentSession();

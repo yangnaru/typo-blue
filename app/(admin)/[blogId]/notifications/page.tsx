@@ -22,7 +22,6 @@ import {
 import { getActorForBlog } from "@/lib/activitypub";
 import { Bell, MessageCircle, Quote, Reply, Share } from "lucide-react";
 import { NotificationActions } from "@/components/NotificationActions";
-import { encodePostId } from "@/lib/utils";
 
 type PageProps = Promise<{
   blogId: string;
@@ -230,9 +229,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                           {notification.notification.postId && (
                             <Button size="sm" variant="link" asChild>
                               <a
-                                href={`/@${slug}/${encodePostId(
-                                  notification.notification.postId
-                                )}`}
+                                href={`/@${slug}/${notification.notification.postId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs"

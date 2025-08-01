@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { encodePostId } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";
 
@@ -66,7 +65,7 @@ export async function GET(req: NextRequest, props: { params: Params }) {
 
   for (const post of targetBlog.posts) {
     const entry = root.ele("entry");
-    const postSlug = encodePostId(post.id);
+    const postSlug = post.id;
     entry.ele("title", { type: "html" }).txt(post.title || "무제");
     entry.ele("id").txt(`${url}/@${targetBlog.slug}/${postSlug}`);
     entry

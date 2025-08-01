@@ -25,7 +25,6 @@ import {
   getBlogPostPath,
   getRootPath,
 } from "@/lib/paths";
-import { encodePostId } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { SquareArrowUpRight } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
@@ -91,14 +90,14 @@ export default async function Dashboard(props: { params: PageProps }) {
                 <TableRow key={post.id} className="bg-accent">
                   <TableCell className="flex flex-row gap-2 items-center">
                     <Link
-                      href={getBlogPostEditPath(slug, encodePostId(post.id))}
+                      href={getBlogPostEditPath(slug, post.id)}
                     >
                       <span className="font-medium">
                         {post.title === "" ? "무제" : post.title}
                       </span>
                     </Link>
                     <Link
-                      href={getBlogPostPath(slug, encodePostId(post.id))}
+                      href={getBlogPostPath(slug, post.id)}
                       target="_blank"
                     >
                       <SquareArrowUpRight className="h-5 w-5" />

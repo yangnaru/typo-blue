@@ -42,7 +42,6 @@ import { eq, and, sql } from "drizzle-orm";
 import { importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
-import { encodePostId } from "./utils";
 import { randomUUID } from "crypto";
 import { getActorByUri } from "./activitypub";
 
@@ -304,9 +303,7 @@ async function getNote(
     content,
     attributions: [ctx.getActorUri(blogSlug)],
     url: new URL(
-      `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blogSlug}/${encodePostId(
-        post.id
-      )}`
+      `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${blogSlug}/${post.id}`
     ),
     published: post.published
       ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
