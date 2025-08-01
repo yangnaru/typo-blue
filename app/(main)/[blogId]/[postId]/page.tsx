@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
+import sanitize from "sanitize-html";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -123,7 +124,9 @@ export default async function BlogPost(props: { params: Params }) {
       </div>
       <div
         className="prose dark:prose-invert break-keep"
-        dangerouslySetInnerHTML={{ __html: targetPost.content ?? "" }}
+        dangerouslySetInnerHTML={{
+          __html: sanitize(targetPost.content ?? ""),
+        }}
       />
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">

@@ -22,6 +22,7 @@ import {
 import { getActorForBlog } from "@/lib/activitypub";
 import { Bell, MessageCircle, Quote, Reply, Share } from "lucide-react";
 import { NotificationActions } from "@/components/NotificationActions";
+import sanitize from "sanitize-html";
 
 type PageProps = Promise<{
   blogId: string;
@@ -248,7 +249,9 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                               {notification.notification.content ? (
                                 <div
                                   dangerouslySetInnerHTML={{
-                                    __html: notification.notification.content,
+                                    __html: sanitize(
+                                      notification.notification.content
+                                    ),
                                   }}
                                 />
                               ) : (
