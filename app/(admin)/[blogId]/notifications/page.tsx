@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
-import Image from "next/image";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -116,9 +115,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
     }
   };
 
-  const unreadCount = notifications.filter(
-    (n) => !n.notification.isRead
-  ).length;
+  const unreadCount = notifications.filter((n) => !n.notification.read).length;
   const hasUnreadNotifications = unreadCount > 0;
 
   return (
@@ -168,7 +165,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                 <Card
                   key={notification.notification.id}
                   className={`transition-colors ${
-                    !notification.notification.isRead
+                    !notification.notification.read
                       ? "bg-accent/50 border-accent border-2 ring-2 ring-accent/30"
                       : ""
                   }`}
@@ -265,12 +262,12 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                               )}
                             </div>
                           )}
-                        
+
                         <div className="flex items-center gap-2 pt-2">
                           <NotificationActions
                             blogSlug={slug}
                             notificationId={notification.notification.id}
-                            isRead={notification.notification.isRead}
+                            isRead={notification.notification.read !== null}
                           />
                         </div>
                       </div>

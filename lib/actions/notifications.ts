@@ -8,7 +8,7 @@ import {
   notificationTable,
   postTable,
 } from "@/drizzle/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function markNotificationAsRead(
@@ -33,7 +33,7 @@ export async function markNotificationAsRead(
   await db
     .update(notificationTable)
     .set({
-      isRead: true,
+      read: new Date(),
       updated: new Date(),
     })
     .where(and(eq(notificationTable.id, notificationId)));
@@ -71,13 +71,13 @@ export async function markAllNotificationsAsRead(blogSlug: string) {
     await db
       .update(notificationTable)
       .set({
-        isRead: true,
+        read: new Date(),
         updated: new Date(),
       })
       .where(
         and(
           inArray(notificationTable.postId, blogPostIds),
-          eq(notificationTable.isRead, false)
+          isNull(notificationTable.read)
         )
       );
   }

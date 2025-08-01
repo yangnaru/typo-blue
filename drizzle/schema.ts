@@ -389,7 +389,7 @@ export const notificationTable = pgTable(
     }), // Local post being mentioned/quoted (if any)
     content: text(), // Content of the mention/quote
     url: text(), // URL associated with the notification
-    isRead: boolean("is_read").notNull().default(false),
+    read: timestamp({ withTimezone: true }),
     created: timestamp({ withTimezone: true })
       .notNull()
       .default(currentTimestamp),
@@ -399,7 +399,7 @@ export const notificationTable = pgTable(
   },
   (table) => [
     index("notification_created_idx").on(table.created),
-    index("notification_is_read_idx").on(table.isRead),
+    index("notification_read_idx").on(table.read),
     unique("notification_activity_id_unique").on(table.activityId),
     unique("notification_type_actor_id_object_id_content_unique").on(
       table.type,

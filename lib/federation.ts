@@ -803,7 +803,6 @@ async function handleMentionOrQuote(
               object.url instanceof URL
                 ? object.url.href
                 : object.url?.toString(),
-            isRead: false,
             created: new Date(),
             updated: new Date(),
           })
@@ -829,7 +828,6 @@ async function handleMentionOrQuote(
               object.url instanceof URL
                 ? object.url.href
                 : object.url?.toString(),
-            isRead: false,
             created: new Date(),
             updated: new Date(),
           })
@@ -859,7 +857,6 @@ async function handleMentionOrQuote(
               object.url instanceof URL
                 ? object.url.href
                 : object.url?.toString(),
-            isRead: false,
             created: new Date(),
             updated: new Date(),
           })
@@ -934,7 +931,6 @@ async function onPostShared(
   fedCtx: InboxContext<ContextData>,
   announce: Announce
 ): Promise<void> {
-  if (announce.id?.origin !== announce.actorId?.origin) return;
   const object = await announce.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
 
@@ -945,31 +941,15 @@ async function onPostShared(
   if (!actor) return;
   if (!post) return;
 
-  await db
-    .insert(notificationTable)
-    .values({
-      type: "announce",
-      actorId: actor[0].id,
-      activityId: announce.id?.href!,
-      objectId: object.id?.href!,
-      postId: post.id,
-      content: object.content?.toString(),
-      isRead: false,
-      created: new Date(),
-      updated: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        notificationTable.type,
-        notificationTable.postId,
-        notificationTable.actorId,
-      ],
-      set: {
-        isRead: false,
-        updated: new Date(),
-        content: object.content?.toString(),
-      },
-    });
+  await db.insert(notificationTable).values({
+    type: "announce",
+    actorId: actor[0].id,
+    activityId: announce.id?.href!,
+    objectId: object.id?.href!,
+    postId: post.id,
+    created: new Date(),
+    updated: new Date(),
+  });
 }
 
 async function onPostUnshared(
@@ -993,7 +973,7 @@ async function onPostUnshared(
     .where(
       and(
         eq(notificationTable.type, "announce"),
-        eq(notificationTable.postId, post.id),
+        eq(notificationTable.objectId, object.id?.href!),
         eq(notificationTable.actorId, actor[0].id)
       )
     );
@@ -1018,7 +998,6 @@ async function onPostLiked(
     activityId: like.id?.href!,
     objectId: object.id?.href!,
     postId: post.id,
-    isRead: false,
     created: new Date(),
     updated: new Date(),
   });
@@ -1071,7 +1050,6 @@ async function onReactedOnPost(
     objectId: object.id?.href!,
     postId: post.id,
     content: react.content?.toString(),
-    isRead: false,
     created: new Date(),
     updated: new Date(),
   });
