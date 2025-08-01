@@ -155,7 +155,7 @@ export default async function Home() {
                               <Calendar className="h-3 w-3" />
                               <span>
                                 {formatInTimeZone(
-                                  post.first_published || post.published,
+                                  post.first_published!,
                                   "Asia/Seoul",
                                   "MM-dd"
                                 )}
