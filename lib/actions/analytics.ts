@@ -7,6 +7,9 @@ import {
   blog,
   postTable,
   mailingListSubscription,
+  actorTable,
+  followingTable,
+  notificationTable,
 } from "@/drizzle/schema";
 import {
   eq,
@@ -58,6 +61,17 @@ export interface EmailAnalytics {
   clicked: number;
   openRate: number;
   clickRate: number;
+}
+
+export interface ActivityPubAnalytics {
+  followersCount: number;
+  followingCount: number;
+  totalNotifications: number;
+  unreadNotifications: number;
+  mentionsCount: number;
+  likesCount: number;
+  sharesCount: number;
+  repliesCount: number;
 }
 
 export async function getAnalyticsOverview(
@@ -301,4 +315,77 @@ export async function trackPageView(
   } catch (error) {
     console.error("Error tracking page view:", error);
   }
+}
+
+export async function getActivityPubAnalytics(
+  blogSlug: string
+): Promise<ActivityPubAnalytics | null> {
+  const { user: sessionUser } = await getCurrentSession();
+  if (!sessionUser) {
+    redirect(getRootPath());
+  }
+
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogSlug),
+  });
+
+  if (!targetBlog || sessionUser.id !== targetBlog.userId) {
+    redirect(getRootPath());
+  }
+
+  // Get the actor for this blog
+  const actor = await db.query.actorTable.findFirst({
+    where: eq(actorTable.blogId, targetBlog.id),
+  });
+
+  // If no actor, return zeros
+  if (!actor) {
+    return {
+      followersCount: 0,
+      followingCount: 0,
+      totalNotifications: 0,
+      unreadNotifications: 0,
+      mentionsCount: 0,
+      likesCount: 0,
+      sharesCount: 0,
+      repliesCount: 0,
+    };
+  }
+
+  // Get followers count
+  const [followersResult] = await db
+    .select({ count: count() })
+    .from(followingTable)
+    .where(eq(followingTable.followeeId, actor.id));
+
+  // Get following count  
+  const [followingResult] = await db
+    .select({ count: count() })
+    .from(followingTable)
+    .where(eq(followingTable.followerId, actor.id));
+
+  // Get notification statistics
+  const [notificationsResult] = await db
+    .select({
+      totalNotifications: count(),
+      unreadNotifications: sql<number>`COUNT(CASE WHEN read IS NULL THEN 1 END)`,
+      mentionsCount: sql<number>`COUNT(CASE WHEN type = 'reply' THEN 1 END)`,
+      likesCount: sql<number>`COUNT(CASE WHEN type = 'like' THEN 1 END)`,
+      sharesCount: sql<number>`COUNT(CASE WHEN type = 'announce' THEN 1 END)`,
+      repliesCount: sql<number>`COUNT(CASE WHEN type = 'reply' THEN 1 END)`,
+    })
+    .from(notificationTable)
+    .innerJoin(postTable, eq(notificationTable.postId, postTable.id))
+    .where(eq(postTable.blogId, targetBlog.id));
+
+  return {
+    followersCount: followersResult?.count || 0,
+    followingCount: followingResult?.count || 0,
+    totalNotifications: notificationsResult?.totalNotifications || 0,
+    unreadNotifications: notificationsResult?.unreadNotifications || 0,
+    mentionsCount: notificationsResult?.mentionsCount || 0,
+    likesCount: notificationsResult?.likesCount || 0,
+    sharesCount: notificationsResult?.sharesCount || 0,
+    repliesCount: notificationsResult?.repliesCount || 0,
+  };
 }

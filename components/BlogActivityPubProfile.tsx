@@ -57,9 +57,7 @@ export function BlogActivityPubProfile({
               {profile.summary && (
                 <div>
                   <span className="font-medium">설명:</span>
-                  <p className="ml-2 mt-1 text-sm text-muted-foreground">
-                    {profile.summary}
-                  </p>
+                  <span className="ml-2">{profile.summary}</span>
                 </div>
               )}
             </div>

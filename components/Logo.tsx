@@ -19,11 +19,11 @@ export default async function Logo() {
   }
 
   return (
-    <h1 className="flex flex-row justify-between items-center py-2">
-      <Link href="/" className="text-xl font-extrabold">
-        typo <span className="text-blue-500">blue</span>
+    <header className="flex flex-row justify-between items-center py-4 border-b">
+      <Link href="/" className="text-2xl font-bold tracking-tight text-foreground hover:opacity-80 transition-opacity">
+        typo <span className="text-primary">blue</span>
       </Link>
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row gap-2 items-center">
         {!user && (
           <Button asChild>
             <Link href={getLoginPath()}>로그인 / 회원 가입</Link>
@@ -32,6 +32,6 @@ export default async function Logo() {
         <ModeToggle />
         {user && <AccountDropdown user={user} blogs={blogs ?? []} />}
       </div>
-    </h1>
+    </header>
   );
 }

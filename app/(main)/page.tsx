@@ -7,6 +7,10 @@ import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Calendar, ArrowRight } from "lucide-react";
+import { formatInTimeZone } from "date-fns-tz";
 
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -19,6 +23,7 @@ export default async function Home() {
       content: postTable.content,
       blog: {
         slug: blog.slug,
+        name: blog.name,
       },
     })
     .from(postTable)
@@ -34,28 +39,44 @@ export default async function Home() {
     .limit(100);
 
   return (
-    <main className="space-y-4">
+    <main>
       <Logo />
+      <div className="text-center space-y-6 py-8">
+        <div className="max-w-xl mx-auto space-y-4">
+          <p className="text-lg text-muted-foreground">
+            타이포 블루는 텍스트 전용 블로깅 플랫폼입니다
+          </p>
 
-      <p>타이포 블루는 텍스트 전용 블로깅 플랫폼입니다.</p>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <ul className="list-disc list-inside space-y-1">
+              <li>텍스트로만 게시물을 쓸 수 있습니다</li>
+              <li>사진 등의 첨부 파일은 올릴 수 없습니다</li>
+              <li>독자들이 이메일로 새 글을 구독할 수 있습니다</li>
+              <li>연합우주로 글을 발행할 수 있습니다</li>
+            </ul>
+          </div>
 
-      <ul className="list-disc list-inside">
-        <li>텍스트로만 게시물을 쓸 수 있습니다.</li>
-        <li>사진 등의 첨부 파일은 올릴 수 없습니다.</li>
-        <li>독자들이 이메일로 새 글을 구독할 수 있습니다.</li>
-      </ul>
+          <p className="text-muted-foreground pt-2">
+            지금 이메일로 가입하고 블로그를 만들어 보세요
+          </p>
+        </div>
 
-      <p>지금 이메일로 가입하고 블로그를 만들어 보세요.</p>
-
-      <nav className="space-x-2 flex">
-        <HomeWithSession />
-      </nav>
+        <nav className="space-x-2 flex">
+          <HomeWithSession />
+        </nav>
+      </div>
 
       {latestPublishedPostsFromDiscoverableBlogs.length > 0 && (
-        <>
-          <h3 className="text-normal font-bold">최근 새 글</h3>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Separator className="flex-1" />
+            <h2 className="text-xl font-semibold text-foreground">
+              최근 새 글
+            </h2>
+            <Separator className="flex-1" />
+          </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="space-y-4">
             {latestPublishedPostsFromDiscoverableBlogs
               .filter((post) => {
                 // Filter out posts with empty or whitespace-only content
@@ -88,35 +109,67 @@ export default async function Home() {
                     firstSentence = sentenceMatch[0];
                   } else {
                     // If no punctuation, take up to 80 chars or the whole paragraph
-                    firstSentence = firstParagraphText.slice(0, 80);
+                    firstSentence = firstSentence.slice(0, 80);
                   }
                 }
                 return (
-                  <Link
-                    href={getBlogPostPathWithSlugAndUuid(
-                      post.blog!.slug,
-                      post.id
-                    )}
+                  <Card
                     key={post.id}
+                    className="hover:shadow-md transition-shadow duration-200 group"
                   >
-                    <Card key={post.id} className="p-2">
-                      <CardContent className="p-2">
-                        <div className="gap-2 flex flex-col">
-                          <div className="font-semibold text-base mb-1 flex flex-row items-center gap-2">
-                            {post.title}
+                    <CardContent className="p-4">
+                      <Link
+                        href={getBlogPostPathWithSlugAndUuid(
+                          post.blog!.slug,
+                          post.id
+                        )}
+                        className="block"
+                      >
+                        <div className="space-y-3">
+                          {/* Post Title */}
+                          <div className="flex items-start justify-between gap-4">
+                            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2 flex-1">
+                              {post.title || "무제"}
+                            </h3>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
                           </div>
-                          <div>
-                            {firstSentence}
-                            {firstSentence && " ..."}
+
+                          {/* Post Preview */}
+                          {firstSentence && (
+                            <p className="text-muted-foreground text-sm line-clamp-2">
+                              {firstSentence}...
+                            </p>
+                          )}
+
+                          {/* Blog Info and Date */}
+                          <div className="flex items-center justify-between gap-4 pt-2 border-t">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {post.blog?.name || `@${post.blog?.slug}`}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                @{post.blog?.slug}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>
+                                {formatInTimeZone(
+                                  post.first_published || post.published,
+                                  "Asia/Seoul",
+                                  "MM-dd"
+                                )}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                      </Link>
+                    </CardContent>
+                  </Card>
                 );
               })}
           </div>
-        </>
+        </div>
       )}
     </main>
   );

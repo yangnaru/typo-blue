@@ -10,6 +10,10 @@ import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 import sanitize from "sanitize-html";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Calendar, Edit, ArrowLeft } from "lucide-react";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -112,40 +116,92 @@ export default async function BlogPost(props: { params: Params }) {
   await incrementVisitorCount(targetBlog.id);
 
   return (
-    <div className="space-y-8">
+    <article className="max-w-4xl mx-auto">
       <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
 
-      <div className="flex flex-row gap-2 items-baseline flex-wrap">
-        <h3 className="text-2xl break-keep">
-          <Link href={`/@${targetBlog.slug}/${targetPost.id}`}>
-            {targetPost.title === "" ? "무제" : targetPost.title}
-          </Link>
-        </h3>
-        <span className="text-neutral-500">
-          {formatInTimeZone(
-            targetPost.first_published ??
-              targetPost.published ??
-              targetPost.updated,
-            "Asia/Seoul",
-            "yyyy-MM-dd HH:mm"
-          )}
-        </span>
-      </div>
-      <div
-        className="prose dark:prose-invert break-keep"
-        dangerouslySetInnerHTML={{
-          __html: sanitize(targetPost.content ?? ""),
-        }}
-      />
-      {isCurrentUserBlogOwner && (
-        <div className="flex flex-row space-x-2">
-          <Button asChild>
-            <Link href={getBlogPostEditPath(slug, (await props.params).postId)}>
-              수정
-            </Link>
-          </Button>
+      {/* Post Header */}
+      <div className="py-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-3 flex-1">
+              <h1 className="text-4xl font-bold tracking-tight break-keep leading-tight">
+                {targetPost.title === "" ? "무제" : targetPost.title}
+              </h1>
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-sm">
+                    {formatInTimeZone(
+                      targetPost.first_published ??
+                        targetPost.published ??
+                        targetPost.updated,
+                      "Asia/Seoul",
+                      "yyyy-MM-dd HH:mm"
+                    )}
+                  </span>
+                </div>
+                {!targetPost.published && (
+                  <Badge variant="secondary" className="text-xs">
+                    초안
+                  </Badge>
+                )}
+              </div>
+            </div>
+            {isCurrentUserBlogOwner && (
+              <Button asChild>
+                <Link
+                  href={getBlogPostEditPath(slug, (await props.params).postId)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  수정
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="py-4">
+        <Separator />
+      </div>
+
+      {/* Post Content */}
+      <div className="py-6">
+        <Card>
+          <CardContent className="p-4">
+            <div
+              className="prose prose-lg dark:prose-invert max-w-none break-keep prose-headings:scroll-mt-24 prose-pre:bg-muted prose-pre:border"
+              dangerouslySetInnerHTML={{
+                __html: sanitize(targetPost.content ?? ""),
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="py-4">
+        <Separator />
+      </div>
+
+      {/* Post Footer */}
+      <div className="py-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <Link
+              href={`/@${targetBlog.slug}`}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {targetBlog.name || `@${targetBlog.slug}`}에서 발행
+            </Link>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              방문자 수: {targetBlog.visitor_count?.toLocaleString() || 0}
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
