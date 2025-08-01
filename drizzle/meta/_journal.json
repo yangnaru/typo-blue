@@ -152,29 +152,8 @@
     {
       "idx": 21,
       "version": "7",
-      "when": 1753875954182,
-      "tag": "0021_striped_vargas",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "7",
-      "when": 1753879823714,
-      "tag": "0022_bent_thunderbolt_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1753919160131,
-      "tag": "0023_ancient_miracleman",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1754001584298,
-      "tag": "0024_illegal_black_cat",
+      "when": 1754026678036,
+      "tag": "0021_odd_wildside",
       "breakpoints": true
     }
   ]

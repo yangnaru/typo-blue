@@ -1,4 +1,5 @@
 CREATE TYPE "public"."actor_type" AS ENUM('Person', 'Service', 'Group', 'Application', 'Organization');--> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('mention', 'quote', 'reply', 'like', 'emoji_react', 'announce');--> statement-breakpoint
 CREATE TABLE "actor" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"iri" text NOT NULL,
@@ -26,6 +27,8 @@ CREATE TABLE "actor" (
 	"followees_count" integer DEFAULT 0 NOT NULL,
 	"followers_count" integer DEFAULT 0 NOT NULL,
 	"posts_count" integer DEFAULT 0 NOT NULL,
+	"public_key_pem" text,
+	"private_key_pem" text,
 	"url" text,
 	"updated" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"published" timestamp with time zone,
@@ -54,6 +57,22 @@ CREATE TABLE "instance" (
 	CONSTRAINT "instance_host_check" CHECK ("instance"."host" NOT LIKE '%@%')
 );
 --> statement-breakpoint
+CREATE TABLE "notification" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"type" "notification_type" NOT NULL,
+	"actor_id" uuid NOT NULL,
+	"activity_id" text NOT NULL,
+	"object_id" text,
+	"post_id" uuid,
+	"content" text,
+	"url" text,
+	"read" timestamp with time zone,
+	"created" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updated" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	CONSTRAINT "notification_activity_id_unique" UNIQUE("activity_id"),
+	CONSTRAINT "notification_type_actor_id_object_id_content_unique" UNIQUE("type","actor_id","object_id","content")
+);
+--> statement-breakpoint
 DROP TABLE "activitypub_activity" CASCADE;--> statement-breakpoint
 DROP TABLE "activitypub_actor" CASCADE;--> statement-breakpoint
 DROP TABLE "activitypub_follow" CASCADE;--> statement-breakpoint
@@ -63,4 +82,8 @@ ALTER TABLE "actor" ADD CONSTRAINT "actor_blog_id_blog_id_fk" FOREIGN KEY ("blog
 ALTER TABLE "actor" ADD CONSTRAINT "actor_successor_id_actor_id_fk" FOREIGN KEY ("successor_id") REFERENCES "public"."actor"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "following" ADD CONSTRAINT "following_follower_id_actor_id_fk" FOREIGN KEY ("follower_id") REFERENCES "public"."actor"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "following" ADD CONSTRAINT "following_followee_id_actor_id_fk" FOREIGN KEY ("followee_id") REFERENCES "public"."actor"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "following_follower_id_index" ON "following" USING btree ("follower_id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_actor_id_actor_id_fk" FOREIGN KEY ("actor_id") REFERENCES "public"."actor"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notification" ADD CONSTRAINT "notification_post_id_post_id_fk" FOREIGN KEY ("post_id") REFERENCES "public"."post"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "following_follower_id_index" ON "following" USING btree ("follower_id");--> statement-breakpoint
+CREATE INDEX "notification_created_idx" ON "notification" USING btree ("created");--> statement-breakpoint
+CREATE INDEX "notification_read_idx" ON "notification" USING btree ("read");
