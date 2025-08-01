@@ -190,8 +190,6 @@ export async function verifyPassword(
     await db.select().from(userTable).where(eq(userTable.email, email))
   )[0];
 
-  console.log({ user });
-
   if (!user) {
     return false;
   }

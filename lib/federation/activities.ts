@@ -172,7 +172,7 @@ export async function sendNoteToFollowers(
       canonicalOrigin: baseUrl.origin,
     });
 
-    const note = await getNote(context, post, blogSlug);
+    const note = await getNote(context, post, blogResult[0].blog.id);
     if (!note) return;
 
     if (isDelete) {

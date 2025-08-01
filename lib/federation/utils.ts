@@ -28,9 +28,9 @@ export async function getNote(
   const note = new Note({
     id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
-    cc: ctx.getFollowersUri(actor.id),
+    cc: ctx.getFollowersUri(actor.blog.slug),
     content,
-    attributions: [ctx.getActorUri(actor.id)],
+    attributions: [ctx.getActorUri(actor.blog.slug)],
     url: new URL(
       `https://${process.env.NEXT_PUBLIC_DOMAIN!}/@${actor.blog.slug}/${
         post.id

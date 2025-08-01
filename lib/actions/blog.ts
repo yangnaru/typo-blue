@@ -128,9 +128,17 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
   return targetPost;
 }
 
-export async function unPublishPost(blogId: string, postId: string) {
+export async function unPublishPost(blogSlug: string, postId: string) {
   const uuid = postId;
-  await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+  await assertCurrentUserHasBlogWithIdAndPostWithId(blogSlug, uuid);
+
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogSlug),
+  });
+
+  if (!targetBlog) {
+    throw new Error("블로그를 찾을 수 없습니다.");
+  }
 
   await db
     .update(postTable)
@@ -140,7 +148,7 @@ export async function unPublishPost(blogId: string, postId: string) {
     .where(eq(postTable.id, uuid));
 
   try {
-    await sendNoteToFollowers(blogId, uuid, true);
+    await sendNoteToFollowers(targetBlog.slug, uuid, true);
   } catch (error) {
     console.error("Failed to send ActivityPub delete:", error);
   }
@@ -154,6 +162,14 @@ export async function deletePost(blogId: string, postId: string) {
   const uuid = postId;
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
 
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.id, blogId),
+  });
+
+  if (!targetBlog) {
+    throw new Error("블로그를 찾을 수 없습니다.");
+  }
+
   await db
     .update(postTable)
     .set({
@@ -164,7 +180,7 @@ export async function deletePost(blogId: string, postId: string) {
     .where(eq(postTable.id, uuid));
 
   try {
-    await sendNoteToFollowers(blogId, uuid, true);
+    await sendNoteToFollowers(targetBlog.slug, uuid, true);
   } catch (error) {
     console.error("Failed to send ActivityPub delete:", error);
   }
@@ -260,7 +276,7 @@ export async function upsertPost(
   if (published && targetPost.title && targetPost.content) {
     try {
       await sendNoteToFollowers(
-        targetBlog.id,
+        targetBlog.slug,
         targetPost.id,
         false,
         wasAlreadyPublished
