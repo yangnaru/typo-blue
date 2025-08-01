@@ -301,7 +301,6 @@ async function getNote(
     id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
     cc: ctx.getFollowersUri(blogSlug),
-    name: post.title,
     content,
     attributions: [ctx.getActorUri(blogSlug)],
     url: new URL(
@@ -800,7 +799,10 @@ async function handleMentionOrQuote(
             objectId: objectId,
             postId: localPost[0].post.id,
             content: content,
-            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
+            url:
+              object.url instanceof URL
+                ? object.url.href
+                : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -823,7 +825,10 @@ async function handleMentionOrQuote(
             objectId: objectId,
             postId: localPost[0].post.id,
             content: content,
-            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
+            url:
+              object.url instanceof URL
+                ? object.url.href
+                : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
@@ -850,7 +855,10 @@ async function handleMentionOrQuote(
             objectId: objectId,
             postId: null,
             content: content,
-            url: object.url instanceof URL ? object.url.href : object.url?.toString(),
+            url:
+              object.url instanceof URL
+                ? object.url.href
+                : object.url?.toString(),
             isRead: false,
             created: new Date(),
             updated: new Date(),
