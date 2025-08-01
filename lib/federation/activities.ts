@@ -8,7 +8,6 @@ import {
   Note,
   Delete,
   Article,
-  Mention,
   Announce,
   EmojiReact,
   Like,
@@ -279,7 +278,7 @@ async function handleMentionOrQuote(
       activityId: create.id?.href || objectId,
       objectId: object.id?.href,
       postId: post.id,
-      content: object.content?.toString() || "",
+      content,
       url: object.url?.toString(),
       created: new Date(),
       updated: new Date(),
@@ -312,34 +311,20 @@ async function handleMentionOrQuote(
       replyTargetBlogId = localPost[0].blog.id;
     }
   }
-
   if (!localPost) return;
 
-  const mentions = [];
-  for await (const tag of object.getTags({
-    ...fedCtx,
-    suppressError: true,
-  })) {
-    if (tag instanceof Mention && tag.href) {
-      const tagHref =
-        tag.href instanceof URL ? tag.href.href : String(tag.href);
-      const localActor = await db
-        .select({
-          actor: actorTable,
-          blog: blogTable,
-        })
-        .from(actorTable)
-        .innerJoin(blogTable, eq(actorTable.blogId, blogTable.id))
-        .where(eq(actorTable.iri, tagHref))
-        .limit(1);
-
-      if (localActor.length > 0) {
-        mentions.push({
-          blogId: localActor[0].blog.id,
-          type: "mention" as const,
-        });
-      }
-    }
+  if (isReply && replyTargetBlogId) {
+    await db.insert(notificationTable).values({
+      type: "reply",
+      actorId: actor.id,
+      activityId: create.id?.href || objectId,
+      objectId: objectId,
+      postId: localPost[0].post.id,
+      content,
+      url: object.url?.toString(),
+      created: new Date(),
+      updated: new Date(),
+    });
   }
 }
 
