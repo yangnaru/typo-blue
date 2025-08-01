@@ -42,7 +42,6 @@ import { eq, and, sql } from "drizzle-orm";
 import { importJwk } from "@fedify/fedify";
 import { getXForwardedRequest } from "x-forwarded-fetch";
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
-import { randomUUID } from "crypto";
 import { getActorByUri } from "./activitypub";
 
 // @ts-expect-error: toTemporalInstant is not typed on Date prototype
