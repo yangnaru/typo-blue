@@ -158,12 +158,12 @@ export async function unPublishPost(blogSlug: string, postId: string) {
   };
 }
 
-export async function deletePost(blogId: string, postId: string) {
+export async function deletePost(blogSlug: string, postId: string) {
   const uuid = postId;
-  await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);
+  await assertCurrentUserHasBlogWithIdAndPostWithId(blogSlug, uuid);
 
   const targetBlog = await db.query.blog.findFirst({
-    where: eq(blog.id, blogId),
+    where: eq(blog.slug, blogSlug),
   });
 
   if (!targetBlog) {
