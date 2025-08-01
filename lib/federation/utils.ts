@@ -18,7 +18,7 @@ export async function getNote(
   blogId: string
 ) {
   const actor = await db.query.actorTable.findFirst({
-    where: eq(actorTable.id, blogId),
+    where: eq(actorTable.blogId, blogId),
     with: { blog: true },
   });
   if (!actor) return null;
