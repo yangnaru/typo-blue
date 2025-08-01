@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -26,6 +25,7 @@ import { blog, actorTable, followingTable } from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
 import { DisableFederationButton } from "@/components/DisableFederationButton";
 import { BlogActivityPubProfile } from "@/components/BlogActivityPubProfile";
+import Link from "next/link";
 
 type PageProps = Promise<{
   blogId: string;
@@ -49,50 +49,23 @@ export default async function FediversePage(props: { params: PageProps }) {
   if (!sessionUser || sessionUser.id !== currentBlog?.userId) {
     redirect(getRootPath());
   }
+  const blogActor = alias(actorTable, "blogActor");
+  const followerActor = alias(actorTable, "followerActor");
 
-  // Fetch followers
-  let followers: Array<{
-    id: string;
-    handle: string;
-    username: string;
-    instanceHost: string;
-    name: string | null;
-    avatarUrl: string | null;
-    followedAt: Date | null;
-  }> = [];
-
-  try {
-    // Get followers by finding actors that follow this blog's actor
-    const blogActor = alias(actorTable, "blogActor");
-    const followerActor = alias(actorTable, "followerActor");
-
-    const followersResult = await db
-      .select({
-        follower: followerActor,
-        followingInfo: followingTable,
-      })
-      .from(followingTable)
-      .innerJoin(followerActor, eq(followerActor.id, followingTable.followerId))
-      .innerJoin(blogActor, eq(blogActor.id, followingTable.followeeId))
-      .where(
-        and(
-          eq(blogActor.blogId, currentBlog.id),
-          isNotNull(followingTable.accepted)
-        )
-      );
-
-    followers = followersResult.map((f) => ({
-      id: f.follower.id,
-      handle: f.follower.handle,
-      username: f.follower.username,
-      instanceHost: f.follower.instanceHost,
-      name: f.follower.name,
-      avatarUrl: f.follower.avatarUrl,
-      followedAt: f.followingInfo.accepted || f.followingInfo.created,
-    }));
-  } catch (error) {
-    console.error("Failed to fetch followers:", error);
-  }
+  const follows = await db
+    .select({
+      follower: followerActor,
+      followingInfo: followingTable,
+    })
+    .from(followingTable)
+    .innerJoin(followerActor, eq(followerActor.id, followingTable.followerId))
+    .innerJoin(blogActor, eq(blogActor.id, followingTable.followeeId))
+    .where(
+      and(
+        eq(blogActor.blogId, currentBlog.id),
+        isNotNull(followingTable.accepted)
+      )
+    );
 
   // Check if ActivityPub is enabled for this blog
   let activityPubEnabled = false;
@@ -139,12 +112,12 @@ export default async function FediversePage(props: { params: PageProps }) {
             <CardHeader>
               <CardTitle>팔로워 목록</CardTitle>
               <CardDescription>
-                연합우주에서 이 블로그를 팔로우하는 사용자들 ({followers.length}
+                연합우주에서 이 블로그를 팔로우하는 사용자들 ({follows.length}
                 명)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {followers.length === 0 ? (
+              {follows.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="mb-4">
                     <svg
@@ -178,44 +151,38 @@ export default async function FediversePage(props: { params: PageProps }) {
                       <TableHead className="hidden sm:table-cell">
                         연합우주 핸들
                       </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        인스턴스
-                      </TableHead>
                       <TableHead className="hidden lg:table-cell">
                         팔로우 일시
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {followers.map((follower) => (
-                      <TableRow key={follower.id}>
+                    {follows.map((follow) => (
+                      <TableRow key={follow.follower.id}>
                         <TableCell className="flex flex-row gap-3 items-center">
                           <div className="flex flex-col">
                             <span className="font-medium">
-                              {follower.name || follower.username}
+                              {follow.follower.name || follow.follower.username}
                             </span>
-                            {follower.name && (
+                            {follow.follower.name && (
                               <span className="text-sm text-muted-foreground">
-                                @{follower.username}
+                                @{follow.follower.username}
                               </span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
-                            {follower.handle}
+                            <Link href={follow.follower.url!} target="_blank">
+                              {follow.follower.handle}
+                            </Link>
                           </span>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant="secondary">
-                            {follower.instanceHost}
-                          </Badge>
-                        </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {follower.followedAt && (
+                          {follow.followingInfo.accepted && (
                             <span className="text-sm text-muted-foreground">
                               {formatInTimeZone(
-                                follower.followedAt,
+                                follow.followingInfo.accepted,
                                 "Asia/Seoul",
                                 "yyyy년 MM월 dd일 HH:mm"
                               )}
