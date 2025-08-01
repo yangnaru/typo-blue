@@ -103,15 +103,17 @@ export function setupOutboxDispatcher() {
       const articles = await Promise.all(
         posts.map((post) => getNote(ctx, post, identifier))
       );
-      const createArticles = articles.map(
-        (article) =>
-          new Create({
-            id: new URL("#create", article.id ?? ctx.origin),
-            actors: [ctx.getActorUri(identifier)],
-            object: article,
-          })
-      );
-      return { items: createArticles };
+      if (articles.length === 0) return { items: [] };
+
+      const createArticles = articles.map((article) => {
+        if (!article) return null;
+        return new Create({
+          id: new URL("#create", article.id ?? ctx.origin),
+          actors: [ctx.getActorUri(identifier)],
+          object: article,
+        });
+      });
+      return { items: createArticles.filter((article) => article != null) };
     }
   );
 }

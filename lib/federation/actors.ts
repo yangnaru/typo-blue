@@ -26,19 +26,17 @@ type PersistInstanceOptions = {
   skipUpdate?: boolean;
 };
 
-export function getPersistedActor(
+export async function getPersistedActor(
   db: Database,
   iri: string | URL
 ): Promise<
   | (typeof actorTable.$inferSelect & {
-      instance: Instance;
       blog: typeof blogTable.$inferSelect | null;
-      successor: typeof actorTable.$inferSelect | null;
     })
   | undefined
 > {
-  return db.query.actorTable.findFirst({
-    with: { instance: true, blog: true, successor: true },
+  return await db.query.actorTable.findFirst({
+    with: { blog: true },
     where: eq(actorTable.iri, iri.toString()),
   });
 }

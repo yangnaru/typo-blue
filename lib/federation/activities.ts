@@ -173,6 +173,8 @@ export async function sendNoteToFollowers(
     });
 
     const note = await getNote(context, post, blogSlug);
+    if (!note) return;
+
     if (isDelete) {
       await context.sendActivity(
         { identifier: blogSlug },
