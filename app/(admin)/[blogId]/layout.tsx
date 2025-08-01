@@ -42,6 +42,7 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { blog } from "@/drizzle/schema";
 import { getActorForBlog } from "@/lib/activitypub";
+import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -70,6 +71,7 @@ export default async function RootLayout({
   let blogs;
   let currentBlog;
   let activityPubEnabled = false;
+  let unreadNotificationCount = 0;
 
   if (user) {
     blogs = await db.query.blog.findMany({
@@ -85,6 +87,11 @@ export default async function RootLayout({
     if (currentBlog && currentBlog.userId === user.id) {
       const blogActor = await getActorForBlog(currentBlog.id);
       activityPubEnabled = !!blogActor;
+
+      // Get unread notification count if ActivityPub is enabled
+      if (activityPubEnabled) {
+        unreadNotificationCount = await getUnreadNotificationCount(blogId);
+      }
     }
   }
 
@@ -161,9 +168,12 @@ export default async function RootLayout({
                       <TooltipTrigger asChild>
                         <Link
                           href={getBlogNotificationsPath(blogId)}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8 relative"
                         >
                           <Bell className="h-5 w-5" />
+                          {unreadNotificationCount > 0 && (
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background"></div>
+                          )}
                           <span className="sr-only">알림</span>
                         </Link>
                       </TooltipTrigger>
@@ -244,9 +254,11 @@ export default async function RootLayout({
                         </Link>
                         <Link
                           href={getBlogFediversePath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground relative"
                         >
-                          <Orbit className="h-5 w-5" />
+                          <div className="relative">
+                            <Orbit className="h-5 w-5" />
+                          </div>
                           연합우주
                         </Link>
                         {activityPubEnabled && (
@@ -255,6 +267,9 @@ export default async function RootLayout({
                             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                           >
                             <Bell className="h-5 w-5" />
+                            {unreadNotificationCount > 0 && (
+                              <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background"></div>
+                            )}
                             알림
                           </Link>
                         )}

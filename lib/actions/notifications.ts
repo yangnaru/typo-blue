@@ -8,7 +8,7 @@ import {
   notificationTable,
   postTable,
 } from "@/drizzle/schema";
-import { eq, and, inArray, isNull } from "drizzle-orm";
+import { eq, and, inArray, isNull, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function markNotificationAsRead(
@@ -113,4 +113,45 @@ export async function deleteNotification(
   revalidatePath(`/@${blogSlug}/notifications`);
 
   return { success: true };
+}
+
+export async function getUnreadNotificationCount(blogSlug: string): Promise<number> {
+  const { user } = await getCurrentSession();
+  if (!user) {
+    return 0;
+  }
+
+  // Get the blog and verify ownership
+  const targetBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogSlug),
+  });
+
+  if (!targetBlog || targetBlog.userId !== user.id) {
+    return 0;
+  }
+
+  // Get all post IDs for this blog
+  const blogPostIds = (
+    await db.query.postTable.findMany({
+      columns: { id: true },
+      where: eq(postTable.blogId, targetBlog.id),
+    })
+  ).map((post) => post.id);
+
+  if (blogPostIds.length === 0) {
+    return 0;
+  }
+
+  // Count unread notifications for posts in this blog
+  const result = await db
+    .select({ count: count() })
+    .from(notificationTable)
+    .where(
+      and(
+        inArray(notificationTable.postId, blogPostIds),
+        isNull(notificationTable.read)
+      )
+    );
+
+  return result[0]?.count || 0;
 }
