@@ -193,7 +193,7 @@ export default function BlogEditForm({
           <AlertDialogHeader>
             <AlertDialogTitle>블로그 삭제</AlertDialogTitle>
             <AlertDialogDescription>
-              정말 블로그 "{slug}"를 삭제하시겠습니까?
+              정말 블로그 &quot;{slug}&quot;를 삭제하시겠습니까?
               <br />
               <br />
               <span className="text-destructive font-semibold">
@@ -204,8 +204,9 @@ export default function BlogEditForm({
                 있습니다.
               </span>
               <br />
-              <br />이 작업은 되돌릴 수 없습니다. 삭제하시려면 블로그 이름 "
-              {slug}"를 아래에 정확히 입력해주세요.
+              <br />이 작업은 되돌릴 수 없습니다. 삭제하시려면 블로그 이름
+              &quot;
+              {slug}&quot;를 아래에 정확히 입력해주세요.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4">
