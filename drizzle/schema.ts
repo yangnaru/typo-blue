@@ -383,10 +383,12 @@ export const notificationTable = pgTable(
       .notNull()
       .references(() => actorTable.id, { onDelete: "cascade" }),
     activityId: text("activity_id").notNull(), // ActivityPub activity IRI
-    objectId: text("object_id"), // Optional: IRI of the object being mentioned/quoted
-    postId: uuid("post_id").references(() => postTable.id, {
-      onDelete: "cascade",
-    }), // Local post being mentioned/quoted (if any)
+    objectId: text("object_id").notNull(),
+    postId: uuid("post_id")
+      .references(() => postTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     content: text(), // Content of the mention/quote
     url: text(), // URL associated with the notification
     read: timestamp({ withTimezone: true }),

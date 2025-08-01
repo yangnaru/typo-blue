@@ -155,6 +155,13 @@
       "when": 1754026678036,
       "tag": "0021_odd_wildside",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1754027510365,
+      "tag": "0022_cool_blazing_skull",
+      "breakpoints": true
     }
   ]
 }

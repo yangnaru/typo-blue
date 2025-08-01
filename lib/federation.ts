@@ -950,6 +950,7 @@ async function onPostShared(
     activityId: announce.id?.href!,
     objectId: object.id?.href!,
     postId: post.id,
+    content: "", // PostgreSQL unique nulls
     created: new Date(),
     updated: new Date(),
   };
@@ -961,14 +962,15 @@ async function onPostUnshared(
   fedCtx: InboxContext<ContextData>,
   undo: Undo
 ): Promise<void> {
-  const object = await undo.getObject({ ...fedCtx, suppressError: true });
-  if (!object) return;
-  if (!(object instanceof Announce)) return;
-  const postObject = await object.getObject({ ...fedCtx, suppressError: true });
-  if (!isPostObject(postObject)) return;
+  const announce = await undo.getObject({ ...fedCtx, suppressError: true });
+  if (!(announce instanceof Announce)) return;
+  if (
+    !isPostObject(await announce.getObject({ ...fedCtx, suppressError: true }))
+  )
+    return;
 
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+    where: eq(postTable.id, announce.objectId?.href.split("/").pop()!),
   });
   if (!post) return;
 
@@ -985,8 +987,9 @@ async function onPostUnshared(
     .where(
       and(
         eq(notificationTable.type, "announce"),
-        eq(notificationTable.objectId, object.id?.href!),
-        eq(notificationTable.actorId, actor.id)
+        eq(notificationTable.postId, post.id),
+        eq(notificationTable.actorId, actor.id),
+        eq(notificationTable.content, "")
       )
     );
 }
