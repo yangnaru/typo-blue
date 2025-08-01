@@ -33,7 +33,8 @@ export function setupActorDispatcher() {
           name: actor.blog.name,
           summary: actor.blog.description,
           manuallyApprovesFollowers: false,
-          publicKey: (await ctx.getActorKeyPairs(actor.id))[0].cryptographicKey,
+          publicKey: (await ctx.getActorKeyPairs(blog.slug))[0]
+            .cryptographicKey,
           inbox: ctx.getInboxUri(identifier),
           outbox: ctx.getOutboxUri(identifier),
           endpoints: new Endpoints({
@@ -48,10 +49,17 @@ export function setupActorDispatcher() {
     .setKeyPairsDispatcher(async (ctx, identifier) => {
       const { db } = ctx.data;
 
-      const actor = await db.query.actorTable.findFirst({
-        where: eq(actorTable.id, identifier),
-        with: { blog: true },
+      // Find actor by treating identifier as blog slug
+      const blog = await db.query.blog.findFirst({
+        where: eq(blogTable.slug, identifier),
       });
+      let actor = null;
+      if (blog) {
+        actor = await db.query.actorTable.findFirst({
+          where: eq(actorTable.blogId, blog.id),
+          with: { blog: true },
+        });
+      }
       if (!actor) return [];
       if (!actor.blog) return [];
 
