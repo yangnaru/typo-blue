@@ -147,9 +147,11 @@ export default async function Home() {
                               <Badge variant="secondary" className="text-xs">
                                 {post.blog?.name || `@${post.blog?.slug}`}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                @{post.blog?.slug}
-                              </span>
+                              {post.blog?.name && (
+                                <span className="text-xs text-muted-foreground">
+                                  @{post.blog?.slug}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3" />
