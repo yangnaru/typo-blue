@@ -672,7 +672,6 @@ async function handleMentionOrQuote(
   create: Create,
   object: Note | Article
 ) {
-  console.log({ create });
   try {
     const { db } = fedCtx.data;
 
@@ -934,19 +933,28 @@ async function onPostShared(
   const post = await db.query.postTable.findFirst({
     where: eq(postTable.id, object.id?.href.split("/").pop()!),
   });
-  const actor = await getActorByUri(announce.actorId?.href!);
-  if (!actor) return;
   if (!post) return;
 
-  await db.insert(notificationTable).values({
-    type: "announce",
-    actorId: actor[0].id,
+  const actorObject = await announce.getActor(fedCtx);
+  if (!actorObject) return;
+  const actor = await persistActor(fedCtx, actorObject, {
+    ...fedCtx,
+    outbox: false,
+  });
+  if (!actor) return;
+
+  const values = {
+    id: crypto.randomUUID(),
+    type: "announce" as const,
+    actorId: actor.id,
     activityId: announce.id?.href!,
     objectId: object.id?.href!,
     postId: post.id,
     created: new Date(),
     updated: new Date(),
-  });
+  };
+
+  await db.insert(notificationTable).values(values);
 }
 
 async function onPostUnshared(
@@ -958,12 +966,19 @@ async function onPostUnshared(
   if (!(object instanceof Announce)) return;
   const postObject = await object.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(postObject)) return;
+
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+    where: eq(postTable.id, object.id?.href.split("/").pop()!),
   });
   if (!post) return;
-  const actor = await getActorByUri(undo.actorId?.href!);
-  if (!actor) return;
+
+  const actorObject = await undo.getActor(fedCtx);
+  if (actorObject == null) return;
+  const actor = await persistActor(fedCtx, actorObject, {
+    ...fedCtx,
+    outbox: false,
+  });
+  if (actor == null) return;
 
   await db
     .delete(notificationTable)
@@ -971,7 +986,7 @@ async function onPostUnshared(
       and(
         eq(notificationTable.type, "announce"),
         eq(notificationTable.objectId, object.id?.href!),
-        eq(notificationTable.actorId, actor[0].id)
+        eq(notificationTable.actorId, actor.id)
       )
     );
 }
