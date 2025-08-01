@@ -55,6 +55,15 @@ export async function generateMetadata(props: {
   return {
     title: postTitle,
     description: blogName + (blogDescription ? ` — ${blogDescription}` : ""),
+    alternates: {
+      types: {
+        "application/activity+json": [
+          {
+            url: `https://${process.env.NEXT_PUBLIC_DOMAIN}/ap/notes/${targetPost.id}`,
+          },
+        ],
+      },
+    },
   };
 }
 
