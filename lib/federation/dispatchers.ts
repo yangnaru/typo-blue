@@ -15,28 +15,20 @@ export function setupActorDispatcher() {
     .setActorDispatcher(
       `${routePrefix}/users/{identifier}`,
       async (ctx, identifier) => {
-        const result = await db
-          .select({
-            blog: blogTable,
-            actor: actorTable,
-          })
-          .from(blogTable)
-          .innerJoin(actorTable, eq(actorTable.blogId, blogTable.id))
-          .where(eq(blogTable.slug, identifier))
-          .limit(1);
-
-        if (result.length === 0) return null;
-
-        const { blog, actor } = result[0];
+        const actor = await db.query.actorTable.findFirst({
+          where: eq(actorTable.id, identifier),
+          with: { blog: true },
+        });
+        if (!actor) return null;
+        if (!actor.blog) return null;
 
         return new Person({
           id: ctx.getActorUri(identifier),
-          preferredUsername: blog.slug,
-          name: blog.name,
-          summary: blog.description,
+          preferredUsername: actor.blog.slug,
+          name: actor.blog.name,
+          summary: actor.blog.description,
           manuallyApprovesFollowers: false,
-          publicKey: (await ctx.getActorKeyPairs(identifier))[0]
-            .cryptographicKey,
+          publicKey: (await ctx.getActorKeyPairs(actor.id))[0].cryptographicKey,
           inbox: ctx.getInboxUri(identifier),
           outbox: ctx.getOutboxUri(identifier),
           endpoints: new Endpoints({
@@ -44,28 +36,23 @@ export function setupActorDispatcher() {
           }),
           following: ctx.getFollowingUri(identifier),
           followers: ctx.getFollowersUri(identifier),
-          url: new URL(`/@${blog.slug}`, ctx.canonicalOrigin),
+          url: new URL(`/@${actor.blog.slug}`, ctx.canonicalOrigin),
         });
       }
     )
     .setKeyPairsDispatcher(async (ctx, identifier) => {
       const { db } = ctx.data;
 
-      const blogWithActor = await db.query.blog.findFirst({
-        with: { actor: true },
-        where: (blog, { eq }) => eq(blog.slug, identifier),
+      const actor = await db.query.actorTable.findFirst({
+        where: eq(actorTable.id, identifier),
+        with: { blog: true },
       });
-
-      if (
-        !blogWithActor?.actor ||
-        !blogWithActor.actor.publicKeyPem ||
-        !blogWithActor.actor.privateKeyPem
-      ) {
-        return [];
-      }
+      if (!actor) return [];
+      if (!actor.blog) return [];
 
       try {
-        const { publicKeyPem, privateKeyPem } = blogWithActor.actor;
+        const { publicKeyPem, privateKeyPem } = actor;
+        if (!publicKeyPem || !privateKeyPem) return [];
 
         const privateKey = await importJwk(
           JSON.parse(privateKeyPem),

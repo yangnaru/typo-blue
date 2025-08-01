@@ -8,6 +8,13 @@ import {
   notificationTable,
 } from "./schema";
 
+export const actorRelations = relations(actorTable, ({ one }) => ({
+  blog: one(blog, {
+    fields: [actorTable.blogId],
+    references: [blog.id],
+  }),
+}));
+
 export const blogRelations = relations(blog, ({ one, many }) => ({
   posts: many(postTable),
   user: one(user, {
