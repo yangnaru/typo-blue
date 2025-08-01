@@ -309,15 +309,18 @@ export async function sendAccountDeletionVerificationCode(): Promise<string> {
     from: process.env.EMAIL_FROM!,
     to: user.email,
     subject: "타이포 블루 계정 삭제 인증 코드",
-    content: { 
+    content: {
       text: `계정 삭제 인증 코드: ${code}\n\n이 코드는 10분 후에 만료됩니다. 계정 삭제를 원하지 않으시면 이 메일을 무시하세요.`,
-      html: `<h2>계정 삭제 인증 코드</h2><p><strong>${code}</strong></p><p>이 코드는 10분 후에 만료됩니다.</p><p>계정 삭제를 원하지 않으시면 이 메일을 무시하세요.</p>`
+      html: `<h2>계정 삭제 인증 코드</h2><p><strong>${code}</strong></p><p>이 코드는 10분 후에 만료됩니다.</p><p>계정 삭제를 원하지 않으시면 이 메일을 무시하세요.</p>`,
     },
   });
 
   const receipt = await transport.send(message);
   if (receipt.successful) {
-    console.log("Account deletion verification message sent with ID:", receipt.messageId);
+    console.log(
+      "Account deletion verification message sent with ID:",
+      receipt.messageId
+    );
   } else {
     console.error("Send failed:", receipt.errorMessages.join(", "));
     throw new Error("이메일 발송에 실패했습니다.");
@@ -326,7 +329,10 @@ export async function sendAccountDeletionVerificationCode(): Promise<string> {
   return challenge.id;
 }
 
-export async function deleteAccount(challengeId: string, code: string): Promise<boolean> {
+export async function deleteAccount(
+  challengeId: string,
+  code: string
+): Promise<boolean> {
   const { user, session } = await getCurrentSession();
 
   if (!user || !session) {
@@ -360,15 +366,17 @@ export async function deleteAccount(challengeId: string, code: string): Promise<
   await db.transaction(async (tx) => {
     // Delete all user's blogs (cascade will handle posts and related data)
     await tx.delete(blogTable).where(eq(blogTable.userId, user.id));
-    
+
     // Delete all user's sessions
     await tx.delete(sessionTable).where(eq(sessionTable.userId, user.id));
-    
+
     // Delete the user
     await tx.delete(userTable).where(eq(userTable.id, user.id));
-    
+
     // Clean up the verification challenge
-    await tx.delete(emailVerificationChallenge).where(eq(emailVerificationChallenge.id, challengeId));
+    await tx
+      .delete(emailVerificationChallenge)
+      .where(eq(emailVerificationChallenge.id, challengeId));
   });
 
   // Clear the session cookie
