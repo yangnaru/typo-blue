@@ -52,7 +52,7 @@ function BlogLayoutBody({
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header with navigation and dark mode toggle */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="w-full border-b bg-background">
         <div className="max-w-4xl mx-auto flex h-14 items-center justify-between">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/" className="flex items-center gap-2">
