@@ -11,7 +11,7 @@ import {
 } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { sendNoteToFollowers, federation } from "@/lib/federation";
+import { federation } from "@/lib/federation";
 import { Delete } from "@fedify/fedify";
 
 export async function setupActivityPubActorForBlog(blogSlug: string) {

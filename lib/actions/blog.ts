@@ -260,7 +260,7 @@ export async function upsertPost(
   if (published && targetPost.title && targetPost.content) {
     try {
       await sendNoteToFollowers(
-        blogSlug,
+        targetBlog.id,
         targetPost.id,
         false,
         wasAlreadyPublished
