@@ -144,20 +144,18 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">분석</TooltipContent>
                   </Tooltip>
-                  {activityPubEnabled && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={getBlogFediversePath(blogId)}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-                        >
-                          <Orbit className="h-5 w-5" />
-                          <span className="sr-only">연합우주</span>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">연합우주</TooltipContent>
-                    </Tooltip>
-                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={getBlogFediversePath(blogId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                      >
+                        <Orbit className="h-5 w-5" />
+                        <span className="sr-only">연합우주</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">연합우주</TooltipContent>
+                  </Tooltip>
                   {activityPubEnabled && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -244,15 +242,13 @@ export default async function RootLayout({
                           <BarChart3 className="h-5 w-5" />
                           분석
                         </Link>
-                        {activityPubEnabled && (
-                          <Link
-                            href={getBlogFediversePath(blogId)}
-                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                          >
-                            <Orbit className="h-5 w-5" />
-                            연합우주
-                          </Link>
-                        )}
+                        <Link
+                          href={getBlogFediversePath(blogId)}
+                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                        >
+                          <Orbit className="h-5 w-5" />
+                          연합우주
+                        </Link>
                         {activityPubEnabled && (
                           <Link
                             href={getBlogNotificationsPath(blogId)}
