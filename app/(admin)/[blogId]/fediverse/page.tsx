@@ -14,7 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
-import Image from "next/image";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -147,7 +146,7 @@ export default async function FediversePage(props: { params: PageProps }) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>사용자</TableHead>
+                      <TableHead>이름</TableHead>
                       <TableHead className="hidden sm:table-cell">
                         연합우주 핸들
                       </TableHead>
@@ -160,16 +159,9 @@ export default async function FediversePage(props: { params: PageProps }) {
                     {follows.map((follow) => (
                       <TableRow key={follow.follower.id}>
                         <TableCell className="flex flex-row gap-3 items-center">
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {follow.follower.name || follow.follower.username}
-                            </span>
-                            {follow.follower.name && (
-                              <span className="text-sm text-muted-foreground">
-                                @{follow.follower.username}
-                              </span>
-                            )}
-                          </div>
+                          {follow.follower.name ?? (
+                            <span className="text-muted-foreground">없음</span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
@@ -205,7 +197,7 @@ export default async function FediversePage(props: { params: PageProps }) {
           <CardHeader>
             <CardTitle>연합우주 비활성화</CardTitle>
             <CardDescription>
-              연합우주 연동을 완전히 비활성화하고 모든 게시물을 연합우주에서
+              연합우주 연동을 비활성화하고 모든 게시물을 연합우주에서
               제거합니다.
             </CardDescription>
           </CardHeader>

@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ActivityPubSetupButton } from "@/components/ActivityPubSetupButton";
+import Link from "next/link";
+import { getBlogSettingsPath } from "@/lib/paths";
 
 interface ActivityPubProfileData {
   handle: string;
@@ -41,12 +43,16 @@ export function BlogActivityPubProfile({
                 </code>
               </div>
 
-              {profile.name && (
-                <div>
-                  <span className="font-medium">표시 이름:</span>
-                  <span className="ml-2">{profile.name}</span>
-                </div>
-              )}
+              <div>
+                <span className="font-medium">이름:</span>
+                <span className="ml-2">{profile.name}</span>
+                <Link
+                  href={getBlogSettingsPath(blogSlug)}
+                  className="ml-2 text-sm text-muted-foreground"
+                >
+                  (블로그 제목이 연합우주의 이름으로 활용됩니다)
+                </Link>
+              </div>
 
               {profile.summary && (
                 <div>
@@ -74,7 +80,7 @@ export function BlogActivityPubProfile({
               <Badge variant="outline">설정되지 않음</Badge>
             </div>
 
-            <ul className="list-disc pl-5 space-y-1">
+            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
               <li>이 블로그에 ActivityPub 연합이 활성화되어 있지 않습니다.</li>
               <li>활성화하면 블로그가 연합우주에서 발견 가능해집니다.</li>
               <li>
