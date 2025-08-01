@@ -168,16 +168,12 @@ export default async function BlogPost(props: { params: Params }) {
 
       {/* Post Content */}
       <div className="py-6">
-        <Card>
-          <CardContent className="p-4">
-            <div
-              className="prose prose-lg dark:prose-invert max-w-none break-keep prose-headings:scroll-mt-24 prose-pre:bg-muted prose-pre:border"
-              dangerouslySetInnerHTML={{
-                __html: sanitize(targetPost.content ?? ""),
-              }}
-            />
-          </CardContent>
-        </Card>
+        <div
+          className="prose dark:prose-invert max-w-none break-keep prose-headings:scroll-mt-24 prose-pre:bg-muted prose-pre:border"
+          dangerouslySetInnerHTML={{
+            __html: sanitize(targetPost.content ?? ""),
+          }}
+        />
       </div>
 
       <div className="py-4">
