@@ -50,7 +50,7 @@ export function BlogActivityPubProfile({
                   href={getBlogSettingsPath(blogSlug)}
                   className="ml-2 text-sm text-muted-foreground"
                 >
-                  (블로그 제목이 연합우주의 이름으로 활용됩니다)
+                  (블로그 제목이 연합우주에서의 이름으로 활용됩니다)
                 </Link>
               </div>
 
