@@ -24,6 +24,7 @@
 - 메일링 리스트 관리 및 이메일 알림 발송
 - 블로그 설정 및 모양 사용자 정의
 - Atom 피드로 블로그 콘텐츠 내보내기
+- ActivityPub 프로토콜을 통한 연합 블로그 (Mastodon 등과 연동)
 - 블로그 관리를 위한 관리자 대시보드
 
 ### 주요 기능
@@ -33,6 +34,7 @@
 - **이메일 시스템**: 구독 및 알림을 위한 Mailgun 통합
 - **세션 기반 인증**: 이메일 인증을 통한 안전한 로그인
 - **관리자 인터페이스**: 블로그 관리를 위한 전용 관리자 패널
+- **ActivityPub 연합**: Mastodon, Misskey 등 Fediverse와 연동하는 소셜 네트워킹
 - **반응형 디자인**: 다크 모드를 지원하는 모바일 친화적 인터페이스
 - **한국어 지원**: 한국어 기본 인터페이스
 
@@ -52,6 +54,7 @@
 - **Drizzle ORM** - 타입 안전 데이터베이스 쿼리
 - **Argon2** - 비밀번호 해싱
 - **Mailgun** - 이메일 서비스 통합
+- **Fedify** - ActivityPub 프로토콜 및 연합 기능 구현
 
 ### 개발 도구
 - **TypeScript** - 타입 체크
@@ -176,12 +179,19 @@ typo-blue/
 - **`mailingListSubscription`** - 이메일 구독
 - **`postEmailSent`** - 이메일 발송 추적
 - **`emailVerificationChallenge`** - 이메일 인증 코드
+- **`actor`** - ActivityPub 액터 (블로그별 연합 프로필)
+- **`instance`** - 외부 ActivityPub 인스턴스 정보
+- **`follow`** - 연합 팔로우 관계
+- **`notification`** - 연합 활동 알림
 
 ### 주요 관계
 - 사용자 → 블로그 (1:다, 최대 3개)
 - 블로그 → 포스트 (1:다)
 - 블로그 → 메일링 리스트 구독 (1:다)
 - 포스트 → 이메일 발송 기록 (1:1)
+- 블로그 → ActivityPub 액터 (1:1)
+- 액터 → 팔로우 관계 (1:다)
+- 액터 → 알림 (1:다)
 
 ## 개발 가이드
 
@@ -217,6 +227,15 @@ typo-blue/
 - 링크 관리
 - HTML 새니타이제이션
 - 확장 가능한 도구모음
+
+### ActivityPub 연합
+
+ActivityPub 프로토콜을 통한 연합 기능:
+- **액터 관리**: 각 블로그가 독립적인 ActivityPub 액터로 동작
+- **WebFinger 지원**: `@blog@domain.com` 형식의 핸들 조회
+- **연합 활동**: Follow, Like, Announce, Create 등 표준 ActivityPub 활동
+- **인박스/아웃박스**: 연합 메시지 수신 및 발송 처리
+- **Fediverse 호환성**: Mastodon, Misskey, Pleroma 등과 상호 운용
 
 ## 기여하기
 
@@ -340,7 +359,7 @@ npm start
 | `MAILGUN_DOMAIN` | Mailgun 도메인 | 예 |
 | `EMAIL_FROM` | 발신 이메일 주소 | 예 |
 | `NEXT_PUBLIC_URL` | 애플리케이션 공개 URL | 예 |
-| `NEXT_PUBLIC_DOMAIN` | 애플리케이션 공개 도메인 | 예 |
+| `NEXT_PUBLIC_DOMAIN` | ActivityPub 연합을 위한 공개 도메인 | 예 |
 | `SESSION_COOKIE_DOMAIN` | 세션용 쿠키 도메인 | 예 |
 | `ADMIN_USER_ID` | 관리자 사용자 ID | 선택 |
 
