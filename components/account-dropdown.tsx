@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, LayoutDashboard, PenTool, Home } from "lucide-react";
+import { LayoutDashboard, PenTool, Home, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
 import {
@@ -30,7 +30,7 @@ export default function AccountDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
-          <UserIcon />
+          <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mx-2">
@@ -68,9 +68,12 @@ export default function AccountDropdown({
         {blogs.length > 0 && <DropdownMenuSeparator />}
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href={getAccountPath()}>내 계정</Link>
+          <Link href={getAccountPath()}>
+            <User className="h-4 w-4" />내 계정
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" onClick={logout}>
+          <LogOut className="h-4 w-4" />
           로그아웃
         </DropdownMenuItem>
       </DropdownMenuContent>
