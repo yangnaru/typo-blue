@@ -10,10 +10,9 @@ import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 import sanitize from "sanitize-html";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Edit, ArrowLeft } from "lucide-react";
+import { Calendar, Edit } from "lucide-react";
 import { notFound } from "next/navigation";
 
 type MetadataParams = Promise<{
@@ -29,6 +28,13 @@ export async function generateMetadata(props: {
 
   const targetPost = await db.query.postTable.findFirst({
     where: eq(postTable.id, uuid),
+    with: {
+      blog: {
+        with: {
+          actor: true,
+        },
+      },
+    },
   });
 
   if (!targetPost) {
@@ -37,38 +43,32 @@ export async function generateMetadata(props: {
     };
   }
 
-  const targetBlog = await db.query.blog.findFirst({
-    where: eq(blog.id, targetPost?.blogId),
-  });
-
-  if (!targetBlog) {
+  if (!targetPost.published && targetPost.blog?.userId !== user?.id) {
     return {
       title: "존재하지 않는 글입니다.",
     };
   }
 
-  if (!targetPost.published && targetBlog.userId !== user?.id) {
-    return {
-      title: "존재하지 않는 글입니다.",
-    };
-  }
-
-  const blogName = targetBlog.name ?? `@${targetBlog.slug}`;
-  const blogDescription = targetBlog.description ?? "";
+  const blogName = targetPost.blog?.name ?? `@${targetPost.blog?.slug}`;
+  const blogDescription = targetPost.blog?.description ?? "";
   const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
 
   return {
     title: postTitle,
     description: blogName + (blogDescription ? ` — ${blogDescription}` : ""),
-    alternates: {
-      types: {
-        "application/activity+json": [
-          {
-            url: `https://${process.env.NEXT_PUBLIC_DOMAIN}/ap/notes/${targetPost.id}`,
+    ...(targetPost.blog?.actor?.id
+      ? {
+          alternates: {
+            types: {
+              "application/activity+json": [
+                {
+                  url: `https://${process.env.NEXT_PUBLIC_DOMAIN}/ap/notes/${targetPost.id}`,
+                },
+              ],
+            },
           },
-        ],
-      },
-    },
+        }
+      : {}),
   };
 }
 
