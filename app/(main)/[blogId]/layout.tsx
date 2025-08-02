@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import AccountDropdown from "@/components/account-dropdown";
+import { getBlogHomePath } from "@/lib/paths";
 
 export default async function BlogLayout({
   children,
@@ -18,7 +19,7 @@ export default async function BlogLayout({
   params: Promise<{ blogId: string }>;
 }) {
   const { user } = await getCurrentSession();
-  
+
   let blogs;
   if (user) {
     blogs = await db.query.blog.findMany({
@@ -35,7 +36,11 @@ export default async function BlogLayout({
     where: eq(blog.slug, blogId.replace("@", "")),
   });
 
-  return <BlogLayoutBody blog={targetBlog} user={user} userBlogs={blogs}>{children}</BlogLayoutBody>;
+  return (
+    <BlogLayoutBody blog={targetBlog} user={user} userBlogs={blogs}>
+      {children}
+    </BlogLayoutBody>
+  );
 }
 
 function BlogLayoutBody({
@@ -55,9 +60,11 @@ function BlogLayoutBody({
       <header className="w-full border-b bg-background">
         <div className="max-w-4xl mx-auto flex h-14 items-center justify-between">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              <span className="hidden sm:inline">홈으로</span>
+            <Link
+              href={getBlogHomePath(blog?.slug)}
+              className="flex items-center gap-2"
+            >
+              {blog?.name?.trim() || `@${blog?.slug}`}
             </Link>
           </Button>
           <div className="flex items-center gap-2">
