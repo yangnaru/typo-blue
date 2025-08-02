@@ -9,9 +9,6 @@ export default function AccountLayout({
   return (
     <>
       <Logo />
-      <h2 className="text-xl my-2">
-        <Link href="/account">계정 관리</Link>
-      </h2>
       {children}
     </>
   );
