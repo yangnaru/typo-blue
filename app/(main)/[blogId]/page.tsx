@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PenTool } from "lucide-react";
+import PoweredBy from "@/components/PoweredBy";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -216,6 +217,12 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
         </div>
       )}
+
+      <div className="py-4">
+        <Separator />
+      </div>
+
+      <PoweredBy />
     </div>
   );
 }
