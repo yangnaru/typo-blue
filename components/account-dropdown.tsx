@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { User as UserIcon, BookOpen, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
-import { getAccountPath } from "@/lib/paths";
+import { getAccountPath, getBlogPostsPath } from "@/lib/paths";
 
 export default function AccountDropdown({
   user,
@@ -42,7 +42,7 @@ export default function AccountDropdown({
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link
-                href={`/@${blog.slug}/dashboard`}
+                href={getBlogPostsPath(blog.slug)}
                 className="flex items-center gap-2"
               >
                 <LayoutDashboard className="h-4 w-4" />글 목록
