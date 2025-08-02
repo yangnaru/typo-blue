@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
+import { notFound } from "next/navigation";
 
 type Params = Promise<{
   blogId: string;
@@ -21,7 +22,7 @@ export default async function BlogHome(props: { params: Params }) {
   });
 
   if (!targetBlog) {
-    return <p>블로그가 존재하지 않습니다.</p>;
+    notFound();
   }
 
   const publishedPosts = await db.query.postTable.findMany({

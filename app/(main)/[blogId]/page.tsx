@@ -113,7 +113,7 @@ export default async function BlogHome(props: { params: Params }) {
   });
 
   if (!targetBlog) {
-    return <p>블로그가 존재하지 않습니다.</p>;
+    notFound();
   }
 
   const isCurrentUserBlogOwner =
