@@ -6,18 +6,15 @@ import Link from "next/link";
 import {
   BarChart3,
   Bell,
-  Cog,
   ExternalLink,
   Mail,
-  PanelLeft,
   Settings,
   Type,
   Book,
   Orbit,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import AdminNavigationSheet from "@/components/admin-navigation-sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -106,20 +103,18 @@ export default async function RootLayout({
         >
           <TooltipProvider>
             <div className="flex min-h-screen w-full flex-col bg-muted/40">
-              <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-                <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-                  <Link
-                    href={getBlogDashboardPath(blogId)}
-                    className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-                  >
-                    <Type className="h-4 w-4 transition-all group-hover:scale-110" />
-                    <span className="sr-only">@{blogId}</span>
-                  </Link>
+              <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-background sm:flex">
+                <div className="flex flex-col items-center gap-3 px-3 py-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Type className="h-5 w-5" />
+                  </div>
+                </div>
+                <nav className="flex flex-col items-center gap-3 px-3">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogDashboardPath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <Book className="h-5 w-5" />
                         <span className="sr-only">대시보드</span>
@@ -131,7 +126,7 @@ export default async function RootLayout({
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogSubscribersPath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <Mail className="h-5 w-5" />
                         <span className="sr-only">구독자</span>
@@ -143,7 +138,7 @@ export default async function RootLayout({
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogAnalyticsPath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <BarChart3 className="h-5 w-5" />
                         <span className="sr-only">분석</span>
@@ -155,7 +150,7 @@ export default async function RootLayout({
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogFediversePath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <Orbit className="h-5 w-5" />
                         <span className="sr-only">연합우주</span>
@@ -168,11 +163,11 @@ export default async function RootLayout({
                       <TooltipTrigger asChild>
                         <Link
                           href={getBlogNotificationsPath(blogId)}
-                          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8 relative"
+                          className="relative flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                         >
                           <Bell className="h-5 w-5" />
                           {unreadNotificationCount > 0 && (
-                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background"></div>
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full border-2 border-background"></div>
                           )}
                           <span className="sr-only">알림</span>
                         </Link>
@@ -181,12 +176,12 @@ export default async function RootLayout({
                     </Tooltip>
                   )}
                 </nav>
-                <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+                <nav className="mt-auto flex flex-col items-center gap-3 px-3 py-4">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogHomePath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <ExternalLink className="h-5 w-5" />
                         <span className="sr-only">블로그로 가기</span>
@@ -194,12 +189,11 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">블로그로 가기</TooltipContent>
                   </Tooltip>
-
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
                         href={getBlogSettingsPath(blogId)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <Settings className="h-5 w-5" />
                         <span className="sr-only">설정</span>
@@ -209,101 +203,19 @@ export default async function RootLayout({
                   </Tooltip>
                 </nav>
               </aside>
-              <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-                <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sm:h-auto sm:border-0 sm:bg-background sm:px-6">
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="sm:hidden"
-                      >
-                        <PanelLeft className="h-5 w-5" />
-                        <span className="sr-only">메뉴 여닫기</span>
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="sm:max-w-xs">
-                      <nav className="grid gap-6 text-lg font-medium">
-                        <Link
-                          href={getBlogDashboardPath(blogId)}
-                          className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-                        >
-                          <Type className="h-5 w-5 transition-all group-hover:scale-110" />
-                          <span className="sr-only">typo.blue</span>
-                        </Link>
-                        <Link
-                          href={getBlogDashboardPath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <Book className="h-5 w-5" />
-                          대시보드
-                        </Link>
-                        <Link
-                          href={getBlogSubscribersPath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <Mail className="h-5 w-5" />
-                          구독자
-                        </Link>
-                        <Link
-                          href={getBlogAnalyticsPath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <BarChart3 className="h-5 w-5" />
-                          분석
-                        </Link>
-                        <Link
-                          href={getBlogFediversePath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground relative"
-                        >
-                          <div className="relative">
-                            <Orbit className="h-5 w-5" />
-                          </div>
-                          연합우주
-                        </Link>
-                        {activityPubEnabled && (
-                          <Link
-                            href={getBlogNotificationsPath(blogId)}
-                            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                          >
-                            <Bell className="h-5 w-5" />
-                            {unreadNotificationCount > 0 && (
-                              <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-background"></div>
-                            )}
-                            알림
-                          </Link>
-                        )}
-                        <Link
-                          href={getBlogHomePath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                          블로그로 가기
-                        </Link>
-                        <Link
-                          href={getBlogSettingsPath(blogId)}
-                          className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                        >
-                          <Cog className="h-5 w-5" />
-                          설정
-                        </Link>
-                      </nav>
-                    </SheetContent>
-                  </Sheet>
-                  <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
-                    <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-                      <div className="flex flex-row gap-2 w-full justify-end">
-                        <ModeToggle />
-                        <AccountDropdown user={user} blogs={blogs ?? []} />
-                      </div>
-                    </div>
+              <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-16">
+                <header className="flex h-14 items-center justify-between border-b px-4 sm:h-auto sm:border-0 sm:px-6">
+                  <AdminNavigationSheet
+                    blogId={blogId}
+                    activityPubEnabled={activityPubEnabled}
+                    unreadNotificationCount={unreadNotificationCount}
+                  />
+                  <div className="flex items-center gap-2 ml-auto">
+                    <ModeToggle />
+                    <AccountDropdown user={user} blogs={blogs ?? []} />
                   </div>
                 </header>
-                <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
-                  <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
-                    {children}
-                  </div>
-                </main>
+                <main className="flex-1 p-4 sm:p-6">{children}</main>
               </div>
             </div>
           </TooltipProvider>
