@@ -9,10 +9,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, BookOpen, LayoutDashboard, PenTool } from "lucide-react";
+import { User as UserIcon, LayoutDashboard, PenTool, Home } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
-import { getAccountPath, getBlogHomePath, getBlogPostsPath, getBlogNewPostPath } from "@/lib/paths";
+import {
+  getAccountPath,
+  getBlogHomePath,
+  getBlogPostsPath,
+  getBlogNewPostPath,
+} from "@/lib/paths";
 
 export default function AccountDropdown({
   user,
@@ -39,8 +44,7 @@ export default function AccountDropdown({
                 href={getBlogHomePath(blog.slug)}
                 className="flex items-center gap-2"
               >
-                <BookOpen className="h-4 w-4" />
-                {blog.name || "제목 없는 블로그"} (@{blog.slug})
+                <Home className="h-4 w-4" />내 블로그
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
