@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Edit, ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -91,7 +92,7 @@ export default async function BlogPost(props: { params: Params }) {
   });
 
   if (!targetBlog) {
-    return <p>블로그가 존재하지 않습니다.</p>;
+    notFound();
   }
 
   const targetBlogUser = await db.query.user.findFirst({
@@ -99,18 +100,27 @@ export default async function BlogPost(props: { params: Params }) {
   });
 
   if (!targetBlogUser) {
-    return <p>블로그 작성자를 찾을 수 없습니다.</p>;
+    notFound();
   }
 
   const isCurrentUserBlogOwner = targetBlogUser.email === sessionUser?.email;
 
   const uuid = (await props.params).postId;
+  // If the postId is not a valid UUID, return a 404 error
+  if (
+    !uuid.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    )
+  ) {
+    notFound();
+  }
+
   const targetPost = await db.query.postTable.findFirst({
     where: eq(postTable.id, uuid),
   });
 
   if (!targetPost || (!targetPost.published && !isCurrentUserBlogOwner)) {
-    return <p>글이 존재하지 않습니다.</p>;
+    notFound();
   }
 
   await incrementVisitorCount(targetBlog.id);
