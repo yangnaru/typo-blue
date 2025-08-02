@@ -86,6 +86,7 @@ export default async function Home() {
               })
               .map((post) => {
                 let firstSentence = "";
+                let isTruncated = false;
                 if (post.content) {
                   // Extract the first <p>...</p> block (case-insensitive, dot matches newline)
                   const match = post.content.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
@@ -101,14 +102,24 @@ export default async function Home() {
                       .replace(/<[^>]+>/g, "")
                       .trim();
                   }
-                  // Extract the first sentence (ends with . ! or ?)
-                  const sentenceMatch =
-                    firstParagraphText.match(/.*?[.!?](?=\s|$)/);
+                  // Extract the first sentence or reasonable preview
+                  const sentenceMatch = firstParagraphText.match(/.*?[.!?](?=\s|$)/);
                   if (sentenceMatch) {
                     firstSentence = sentenceMatch[0];
+                    isTruncated = firstSentence.length < firstParagraphText.length;
+                  } else if (firstParagraphText.length <= 100) {
+                    // If paragraph is short, use the whole thing
+                    firstSentence = firstParagraphText;
+                    isTruncated = false;
                   } else {
-                    // If no punctuation, take up to 80 chars or the whole paragraph
-                    firstSentence = firstSentence.slice(0, 80);
+                    // For longer text, truncate at word/character boundary
+                    firstSentence = firstParagraphText.slice(0, 80);
+                    // Try to break at a space if possible
+                    const lastSpace = firstSentence.lastIndexOf(' ');
+                    if (lastSpace > 40) {
+                      firstSentence = firstSentence.slice(0, lastSpace);
+                    }
+                    isTruncated = true;
                   }
                 }
                 return (
@@ -136,7 +147,7 @@ export default async function Home() {
                           {/* Post Preview */}
                           {firstSentence && (
                             <p className="text-muted-foreground text-sm line-clamp-2">
-                              {firstSentence}...
+                              {firstSentence}{isTruncated ? "..." : ""}
                             </p>
                           )}
 
