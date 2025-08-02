@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageViewTracker } from "@/components/PageViewTracker";
-import { getBlogHomePath, getBlogPostEditPath } from "@/lib/paths";
+import { getBlogPostEditPath, getRootPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -32,31 +32,28 @@ export async function generateMetadata(props: {
       blog: {
         with: {
           actor: true,
+          user: true,
         },
       },
     },
   });
 
   if (!targetPost) {
-    return {
-      title: "존재하지 않는 글입니다.",
-    };
+    notFound();
   }
 
-  if (!targetPost.published && targetPost.blog?.userId !== user?.id) {
-    return {
-      title: "존재하지 않는 글입니다.",
-    };
+  if (!targetPost.published && targetPost.blog.user.id !== user?.id) {
+    notFound();
   }
 
-  const blogName = targetPost.blog?.name ?? `@${targetPost.blog?.slug}`;
-  const blogDescription = targetPost.blog?.description ?? "";
+  const blogName = targetPost.blog.name ?? `@${targetPost.blog.slug}`;
+  const blogDescription = targetPost.blog.description ?? "";
   const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
 
   return {
     title: postTitle,
     description: blogName + (blogDescription ? ` — ${blogDescription}` : ""),
-    ...(targetPost.blog?.actor?.id
+    ...(targetPost.blog.actor?.id
       ? {
           alternates: {
             types: {
@@ -130,7 +127,7 @@ export default async function BlogPost(props: { params: Params }) {
       <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
 
       {/* Post Header */}
-      <div className="py-6">
+      <div className="pt-6 pb-3">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-3 flex-1">
@@ -191,19 +188,17 @@ export default async function BlogPost(props: { params: Params }) {
       </div>
 
       {/* Post Footer */}
-      <div className="py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <Link
-              href={getBlogHomePath(targetBlog.slug)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {targetBlog.name || `@${targetBlog.slug}`}에서 발행
-            </Link>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>HIT: {targetBlog.visitor_count?.toLocaleString() || 0}</span>
-          </div>
+      <div className="flex items-center justify-between py-6">
+        <div className="flex items-center gap-2 text-sm">
+          <Link
+            href={getRootPath()}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            powered by typo blue
+          </Link>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>HIT: {targetBlog.visitor_count?.toLocaleString() || 0}</span>
         </div>
       </div>
     </article>
