@@ -1,11 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import { getBlogPostPath, getRootPath } from "@/lib/paths";
@@ -19,7 +12,6 @@ import {
   actorTable,
   postTable,
 } from "@/drizzle/schema";
-import { getActorForBlog } from "@/lib/activitypub";
 import { Bell, MessageCircle, Quote, Reply, Share } from "lucide-react";
 import { NotificationActions } from "@/components/NotificationActions";
 import sanitize from "sanitize-html";
@@ -44,12 +36,6 @@ export default async function NotificationsPage(props: { params: PageProps }) {
   }
 
   if (!sessionUser || sessionUser.id !== currentBlog?.userId) {
-    redirect(getRootPath());
-  }
-
-  // Check if ActivityPub is enabled for this blog
-  const blogActor = await getActorForBlog(currentBlog.id);
-  if (!blogActor) {
     redirect(getRootPath());
   }
 
@@ -123,14 +109,16 @@ export default async function NotificationsPage(props: { params: PageProps }) {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold">연합우주 알림</h1>
-          <Badge variant="destructive">{unreadCount}</Badge>
           {hasUnreadNotifications && (
-            <div className="flex items-center gap-2 ml-auto">
-              <NotificationActions
-                blogSlug={slug}
-                hasUnreadNotifications={hasUnreadNotifications}
-              />
-            </div>
+            <>
+              <Badge variant="destructive">{unreadCount}</Badge>
+              <div className="flex items-center gap-2 ml-auto">
+                <NotificationActions
+                  blogSlug={slug}
+                  hasUnreadNotifications={hasUnreadNotifications}
+                />
+              </div>
+            </>
           )}
         </div>
 
