@@ -34,8 +34,8 @@ export function getBlogPostEditPath(slug: string, encodedPostId: string) {
   return `/@${slug}/posts/${encodedPostId}/edit`;
 }
 
-export function getBlogDashboardPath(slug: string) {
-  return `/@${slug}/dashboard`;
+export function getBlogPostsPath(slug: string) {
+  return `/@${slug}/posts`;
 }
 
 export function getBlogSettingsPath(slug: string) {

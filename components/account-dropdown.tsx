@@ -41,9 +41,11 @@ export default function AccountDropdown({
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <Link href={`/@${blog.slug}/dashboard`} className="flex items-center gap-2">
-                <LayoutDashboard className="h-4 w-4" />
-                대시보드
+              <Link
+                href={`/@${blog.slug}/dashboard`}
+                className="flex items-center gap-2"
+              >
+                <LayoutDashboard className="h-4 w-4" />글 목록
               </Link>
             </DropdownMenuItem>
           </div>

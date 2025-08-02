@@ -14,10 +14,15 @@ import {
   Book,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   getBlogAnalyticsPath,
-  getBlogDashboardPath,
+  getBlogPostsPath,
   getBlogFediversePath,
   getBlogHomePath,
   getBlogNotificationsPath,
@@ -58,12 +63,11 @@ export default function AdminNavigationSheet({
           </div>
           <div className="border-t pt-4 space-y-2">
             <Link
-              href={getBlogDashboardPath(blogId)}
+              href={getBlogPostsPath(blogId)}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               onClick={handleLinkClick}
             >
-              <Book className="h-5 w-5" />
-              대시보드
+              <Book className="h-5 w-5" />글 목록
             </Link>
             <Link
               href={getBlogSubscribersPath(blogId)}

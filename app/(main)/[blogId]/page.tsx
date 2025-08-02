@@ -4,7 +4,7 @@ import { PageViewTracker } from "@/components/PageViewTracker";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getBlogDashboardPath } from "@/lib/paths";
+import { getBlogPostsPath } from "@/lib/paths";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
@@ -141,14 +141,12 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
           {isCurrentUserBlogOwner && (
             <Button asChild>
-              <Link href={getBlogDashboardPath(targetBlog.slug)}>
-                블로그 관리
-              </Link>
+              <Link href={getBlogPostsPath(targetBlog.slug)}>블로그 관리</Link>
             </Button>
           )}
         </div>
       </div>
-      
+
       <div className="py-4">
         <Separator />
       </div>
@@ -196,7 +194,8 @@ export default async function BlogHome(props: { params: Params }) {
                     </code>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    위 핸들을 복사하여 연합우주 클라이언트에서 검색하고 팔로우하세요
+                    위 핸들을 복사하여 연합우주 클라이언트에서 검색하고
+                    팔로우하세요
                   </p>
                 </CardContent>
               </Card>

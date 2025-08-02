@@ -24,7 +24,7 @@ import AccountDropdown from "@/components/account-dropdown";
 import { redirect } from "next/navigation";
 import {
   getBlogAnalyticsPath,
-  getBlogDashboardPath,
+  getBlogPostsPath,
   getBlogFediversePath,
   getBlogHomePath,
   getBlogNotificationsPath,
@@ -113,14 +113,14 @@ export default async function RootLayout({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
-                        href={getBlogDashboardPath(blogId)}
+                        href={getBlogPostsPath(blogId)}
                         className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
                         <Book className="h-5 w-5" />
-                        <span className="sr-only">대시보드</span>
+                        <span className="sr-only">글 목록</span>
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right">대시보드</TooltipContent>
+                    <TooltipContent side="right">글 목록</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>

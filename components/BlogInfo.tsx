@@ -2,7 +2,7 @@
 
 import format from "date-fns/format";
 import Link from "next/link";
-import { getBlogDashboardPath, getBlogHomePath } from "@/lib/paths";
+import { getBlogPostsPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";
 
 export default function BlogInfo({ blog }: { blog: any }) {
@@ -19,10 +19,7 @@ export default function BlogInfo({ blog }: { blog: any }) {
       </div>
       <div className="flex flex-col space-y-2 items-end">
         <Button asChild>
-          <Link
-            href={getBlogDashboardPath(blog.slug)}
-            className="w-24 text-center"
-          >
+          <Link href={getBlogPostsPath(blog.slug)} className="w-24 text-center">
             블로그 관리
           </Link>
         </Button>

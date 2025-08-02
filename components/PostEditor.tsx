@@ -21,7 +21,7 @@ import {
 } from "./ui/card";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import { getBlogDashboardPath, getBlogPostEditPath } from "@/lib/paths";
+import { getBlogPostsPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -125,7 +125,7 @@ export default function PostEditor({
 
     if (res.success) {
       toast.success("삭제되었습니다.");
-      window.location.href = getBlogDashboardPath(blogId);
+      window.location.href = getBlogPostsPath(blogId);
     } else {
       toast.error("삭제에 실패했습니다.");
     }
@@ -180,11 +180,10 @@ export default function PostEditor({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(getBlogDashboardPath(blogId))}
+            onClick={() => router.push(getBlogPostsPath(blogId))}
             className="gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
-            대시보드로
+            <ArrowLeft className="h-4 w-4" />글 목록으로
           </Button>
           <div className="flex items-center gap-2">
             {publishedAt ? (
