@@ -41,6 +41,7 @@ export async function generateMetadata(props: {
     where: eq(blog.slug, slug),
     with: {
       user: true,
+      actor: true,
     },
   });
 
@@ -62,6 +63,15 @@ export async function generateMetadata(props: {
             url: `${process.env.NEXT_PUBLIC_URL}/${blogId}/feed.xml`,
           },
         ],
+        ...(targetBlog.actor
+          ? {
+              "application/activity+json": [
+                {
+                  url: `https://${process.env.NEXT_PUBLIC_DOMAIN}/ap/users/${targetBlog.slug}`,
+                },
+              ],
+            }
+          : {}),
       },
     },
   };
