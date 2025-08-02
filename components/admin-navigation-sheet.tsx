@@ -14,7 +14,7 @@ import {
   Book,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
   getBlogAnalyticsPath,
   getBlogDashboardPath,
@@ -51,6 +51,7 @@ export default function AdminNavigationSheet({
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64">
+        <SheetTitle className="sr-only">네비게이션 메뉴</SheetTitle>
         <nav className="flex flex-col gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Type className="h-6 w-6" />
