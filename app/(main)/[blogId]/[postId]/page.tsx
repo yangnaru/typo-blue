@@ -202,9 +202,7 @@ export default async function BlogPost(props: { params: Params }) {
             </Link>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              방문자 수: {targetBlog.visitor_count?.toLocaleString() || 0}
-            </span>
+            <span>HIT: {targetBlog.visitor_count?.toLocaleString() || 0}</span>
           </div>
         </div>
       </div>
