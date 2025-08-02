@@ -74,17 +74,22 @@ export default async function RootLayout({
   if (user) {
     blogs = await db.query.blog.findMany({
       where: eq(blog.userId, user.id),
+      with: {
+        actor: true,
+      },
     });
 
     // Get current blog info
     currentBlog = await db.query.blog.findFirst({
       where: eq(blog.slug, blogId),
+      with: {
+        actor: true,
+      },
     });
 
     // Check if ActivityPub is enabled for this blog
     if (currentBlog && currentBlog.userId === user.id) {
-      const blogActor = await getActorForBlog(currentBlog.id);
-      activityPubEnabled = !!blogActor;
+      activityPubEnabled = !!currentBlog.actor;
 
       // Get unread notification count if ActivityPub is enabled
       if (activityPubEnabled) {

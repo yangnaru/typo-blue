@@ -24,7 +24,15 @@ import {
 import { getCurrentSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getRootPath } from "@/lib/paths";
-import { Eye, Users, Mail, MousePointerClick, TrendingUp, FileText, Globe, Bell, Heart, Share, MessageCircle } from "lucide-react";
+import {
+  Eye,
+  Users,
+  Mail,
+  FileText,
+  Globe,
+  Bell,
+  MessageCircle,
+} from "lucide-react";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 
 type PageProps = Promise<{
@@ -42,7 +50,13 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
   const decodedBlogId = decodeURIComponent(blogId);
   const slug = decodedBlogId.replace("@", "");
 
-  const [overview, visitorTrends, postPerformance, emailAnalytics, activityPubAnalytics] = await Promise.all([
+  const [
+    overview,
+    visitorTrends,
+    postPerformance,
+    emailAnalytics,
+    activityPubAnalytics,
+  ] = await Promise.all([
     getAnalyticsOverview(slug),
     getVisitorTrends(slug, 30),
     getPostPerformance(slug),
@@ -74,7 +88,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(overview.totalVisits)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(overview.totalVisits)}
+            </div>
             <p className="text-xs text-muted-foreground">
               {formatNumber(overview.uniqueVisitors)} 순 방문자
             </p>
@@ -87,7 +103,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(overview.publishedPosts)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(overview.publishedPosts)}
+            </div>
             <p className="text-xs text-muted-foreground">
               {formatNumber(overview.totalPosts)} 전체 글
             </p>
@@ -100,7 +118,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(overview.totalSubscribers)}</div>
+            <div className="text-2xl font-bold">
+              {formatNumber(overview.totalSubscribers)}
+            </div>
             <p className="text-xs text-muted-foreground">이메일 구독자</p>
           </CardContent>
         </Card>
@@ -112,95 +132,119 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {overview.emailsSent > 0 
-                ? formatPercentage((overview.emailsOpened / overview.emailsSent) * 100)
-                : "0%"
-              }
+              {overview.emailsSent > 0
+                ? formatPercentage(
+                    (overview.emailsOpened / overview.emailsSent) * 100
+                  )
+                : "0%"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {formatNumber(overview.emailsSent)}개 중 {formatNumber(overview.emailsOpened)}개 열림
+              {formatNumber(overview.emailsSent)}개 중{" "}
+              {formatNumber(overview.emailsOpened)}개 열림
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* ActivityPub Analytics */}
-      {activityPubAnalytics && (activityPubAnalytics.followersCount > 0 || activityPubAnalytics.followingCount > 0 || activityPubAnalytics.totalNotifications > 0) && (
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Globe className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">연합우주 분석</h2>
+      {activityPubAnalytics &&
+        (activityPubAnalytics.followersCount > 0 ||
+          activityPubAnalytics.followingCount > 0 ||
+          activityPubAnalytics.totalNotifications > 0) && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Globe className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">연합우주 분석</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">팔로워</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(activityPubAnalytics.followersCount)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    연합우주 팔로워
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">팔로잉</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(activityPubAnalytics.followingCount)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">팔로우 중</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">알림</CardTitle>
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(activityPubAnalytics.totalNotifications)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatNumber(activityPubAnalytics.unreadNotifications)}{" "}
+                    읽지 않음
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    상호작용
+                  </CardTitle>
+                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatNumber(
+                      activityPubAnalytics.likesCount +
+                        activityPubAnalytics.sharesCount +
+                        activityPubAnalytics.repliesCount
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatNumber(activityPubAnalytics.likesCount)} 좋아요,{" "}
+                    {formatNumber(activityPubAnalytics.sharesCount)} 공유
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">팔로워</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(activityPubAnalytics.followersCount)}</div>
-                <p className="text-xs text-muted-foreground">연합우주 팔로워</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">팔로잉</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(activityPubAnalytics.followingCount)}</div>
-                <p className="text-xs text-muted-foreground">팔로우 중</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">알림</CardTitle>
-                <Bell className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(activityPubAnalytics.totalNotifications)}</div>
-                <p className="text-xs text-muted-foreground">
-                  {formatNumber(activityPubAnalytics.unreadNotifications)} 읽지 않음
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">상호작용</CardTitle>
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatNumber(activityPubAnalytics.likesCount + activityPubAnalytics.sharesCount + activityPubAnalytics.repliesCount)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {formatNumber(activityPubAnalytics.likesCount)} 좋아요, {formatNumber(activityPubAnalytics.sharesCount)} 공유
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+        )}
 
       {/* Visitor Trends */}
       <Card>
         <CardHeader>
           <CardTitle>방문자 추이 (최근 30일)</CardTitle>
-          <CardDescription>
-            블로그의 일별 방문자 통계
-          </CardDescription>
+          <CardDescription>블로그의 일별 방문자 통계</CardDescription>
         </CardHeader>
         <CardContent>
           {visitorTrends.length > 0 ? (
             <div className="space-y-2">
               {visitorTrends.slice(-7).map((trend) => (
-                <div key={trend.date} className="flex items-center justify-between">
+                <div
+                  key={trend.date}
+                  className="flex items-center justify-between"
+                >
                   <span className="text-sm">{trend.date}</span>
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium">{trend.visits} 방문</span>
+                    <span className="text-sm font-medium">
+                      {trend.visits} 방문
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {trend.uniqueVisitors} 순방문자
                     </span>
@@ -209,7 +253,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">아직 방문자 데이터가 없습니다.</p>
+            <p className="text-muted-foreground">
+              아직 방문자 데이터가 없습니다.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -218,9 +264,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
       <Card>
         <CardHeader>
           <CardTitle>글 성과</CardTitle>
-          <CardDescription>
-            글의 조회수와 이메일 참여 지표
-          </CardDescription>
+          <CardDescription>글의 조회수와 이메일 참여 지표</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -260,7 +304,11 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         <div>
                           <span>{formatNumber(post.emailsOpened)}</span>
                           <span className="text-xs text-muted-foreground ml-1">
-                            ({formatPercentage((post.emailsOpened / post.emailsSent) * 100)})
+                            (
+                            {formatPercentage(
+                              (post.emailsOpened / post.emailsSent) * 100
+                            )}
+                            )
                           </span>
                         </div>
                       ) : (
@@ -271,7 +319,10 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground"
+                  >
                     글이 없습니다
                   </TableCell>
                 </TableRow>
@@ -285,9 +336,7 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
       <Card>
         <CardHeader>
           <CardTitle>이메일 분석 (최근 30일)</CardTitle>
-          <CardDescription>
-            이메일 발송 및 참여 통계
-          </CardDescription>
+          <CardDescription>이메일 발송 및 참여 통계</CardDescription>
         </CardHeader>
         <CardContent>
           {emailAnalytics.length > 0 ? (
@@ -299,7 +348,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatNumber(emailAnalytics.reduce((sum, day) => sum + day.sent, 0))}
+                      {formatNumber(
+                        emailAnalytics.reduce((sum, day) => sum + day.sent, 0)
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -310,8 +361,10 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {formatPercentage(
-                        emailAnalytics.reduce((sum, day) => sum + day.openRate, 0) /
-                        Math.max(emailAnalytics.length, 1)
+                        emailAnalytics.reduce(
+                          (sum, day) => sum + day.openRate,
+                          0
+                        ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
                   </CardContent>
@@ -323,8 +376,10 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {formatPercentage(
-                        emailAnalytics.reduce((sum, day) => sum + day.clickRate, 0) /
-                        Math.max(emailAnalytics.length, 1)
+                        emailAnalytics.reduce(
+                          (sum, day) => sum + day.clickRate,
+                          0
+                        ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
                   </CardContent>
@@ -334,7 +389,10 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">최근 이메일 성과</h4>
                 {emailAnalytics.slice(-7).map((day) => (
-                  <div key={day.date} className="flex items-center justify-between">
+                  <div
+                    key={day.date}
+                    className="flex items-center justify-between"
+                  >
                     <span className="text-sm">{day.date}</span>
                     <div className="flex items-center space-x-4">
                       <span className="text-sm">
@@ -352,7 +410,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
               </div>
             </div>
           ) : (
-            <p className="text-muted-foreground">아직 이메일 데이터가 없습니다.</p>
+            <p className="text-muted-foreground">
+              아직 이메일 데이터가 없습니다.
+            </p>
           )}
         </CardContent>
       </Card>

@@ -99,6 +99,11 @@ export default async function FediversePage(props: { params: PageProps }) {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">연합우주</h1>
+        <p className="text-muted-foreground">연합우주 프로필 관리</p>
+      </div>
+
       <BlogActivityPubProfile
         blogSlug={currentBlog.slug}
         profile={activityPubProfile}

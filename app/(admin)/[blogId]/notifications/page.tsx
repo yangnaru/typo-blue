@@ -119,26 +119,25 @@ export default async function NotificationsPage(props: { params: PageProps }) {
   const hasUnreadNotifications = unreadCount > 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div>
         <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          <h1 className="text-2xl font-bold">알림</h1>
+          <h1 className="text-3xl font-bold">연합우주 알림</h1>
+          <Badge variant="destructive">{unreadCount}</Badge>
           {hasUnreadNotifications && (
-            <Badge variant="destructive">{unreadCount}</Badge>
+            <div className="flex items-center gap-2 ml-auto">
+              <NotificationActions
+                blogSlug={slug}
+                hasUnreadNotifications={hasUnreadNotifications}
+              />
+            </div>
           )}
         </div>
-        {hasUnreadNotifications && (
-          <NotificationActions
-            blogSlug={slug}
-            hasUnreadNotifications={hasUnreadNotifications}
-          />
-        )}
-      </div>
 
-      <p className="text-sm text-muted-foreground">
-        연합우주에서 받은 멘션, 인용, 답글을 확인할 수 있습니다.
-      </p>
+        <p className="text-muted-foreground">
+          연합우주에서 받은 멘션, 인용, 답글을 확인할 수 있습니다.
+        </p>
+      </div>
 
       {notifications.length === 0 ? (
         <div className="text-center py-8 border rounded-lg bg-muted/30">
