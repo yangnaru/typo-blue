@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
-import { deletePost, unPublishPost, upsertPost, sendPostEmail } from "@/lib/actions/blog";
+import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import {
+  deletePost,
+  unPublishPost,
+  upsertPost,
+  sendPostEmail,
+} from "@/lib/actions/blog";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import {
   Card,
   CardContent,
@@ -13,6 +20,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
+import { Separator } from "./ui/separator";
 import { getBlogDashboardPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -27,6 +35,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Save,
+  Send,
+  Eye,
+  Trash2,
+  Clock,
+  Calendar,
+  FileText,
+  Mail,
+  MailCheck,
+  ArrowLeft,
+  Settings,
+} from "lucide-react";
 
 export default function PostEditor({
   blogId,
@@ -58,8 +79,19 @@ export default function PostEditor({
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
 
-    const publishedAtValue = status === "publish" ? new Date() : (status === "save" ? publishedAt : null);
-    const res = await upsertPost(blogId, publishedAtValue, postId, title, content);
+    const publishedAtValue =
+      status === "publish"
+        ? new Date()
+        : status === "save"
+        ? publishedAt
+        : null;
+    const res = await upsertPost(
+      blogId,
+      publishedAtValue,
+      postId,
+      title,
+      content
+    );
 
     if (res.success) {
       const wasNewPost = !postId;
@@ -74,13 +106,13 @@ export default function PostEditor({
         format(now, "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
-      
+
       // If this was a new post, navigate to the edit URL
       if (wasNewPost) {
         const editPath = getBlogPostEditPath(blogId, res.postId);
         router.replace(editPath);
       }
-      
+
       setIsLoading(false);
     } else {
       toast("❗️");
@@ -107,10 +139,10 @@ export default function PostEditor({
     }
 
     setIsEmailLoading(true);
-    
+
     try {
       const res = await sendPostEmail(blogId, postId);
-      
+
       if (res.success) {
         setEmailSent(true);
         toast("이메일이 성공적으로 발송되었습니다! ✅");
@@ -124,108 +156,226 @@ export default function PostEditor({
     }
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{existingPostId ? "글 수정" : "새 글 작성"}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <Input
-          type="text"
-          className="prose dark:prose-invert"
-          placeholder="제목"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+  // Calculate post statistics
+  const wordCount = useMemo(() => {
+    const cleanContent = content.replace(/<[^>]*>/g, "").trim();
+    return cleanContent.split(/\s+/).filter((word) => word.length > 0).length;
+  }, [content]);
 
-        {existingPostId && content && (
+  const readingTime = useMemo(() => {
+    const wordsPerMinute = 200;
+    return Math.ceil(wordCount / wordsPerMinute);
+  }, [wordCount]);
+
+  const lastSaved = useMemo(() => {
+    const now = new Date();
+    return formatInTimeZone(now, "Asia/Seoul", "HH:mm");
+  }, []);
+
+  return (
+    <div className="max-w-prose mx-auto space-y-8">
+      {/* Header with navigation and status */}
+      <div className="flex items-center justify-between pb-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(getBlogDashboardPath(blogId))}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            대시보드로
+          </Button>
+          <div className="flex items-center gap-2">
+            {publishedAt ? (
+              <Badge variant="default" className="gap-1">
+                <Eye className="h-3 w-3" />
+                발행됨
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="gap-1">
+                <Save className="h-3 w-3" />
+                초안
+              </Badge>
+            )}
+            {emailSent && (
+              <Badge variant="outline" className="gap-1">
+                <MailCheck className="h-3 w-3" />
+                이메일 발송됨
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {postId && (
+            <>
+              <Clock className="h-4 w-4" />
+              마지막 저장: {lastSaved}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Title input */}
+      <Card>
+        <CardContent className="p-6">
+          <Input
+            type="text"
+            placeholder="제목을 입력하세요"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-2xl md:text-3xl lg:text-4xl font-bold border-0 px-0 py-3 md:py-4 lg:py-5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Main editor with border */}
+      <Card>
+        <CardContent className="p-6">
           <Tiptap
             name="content"
             content={content}
-            className="prose dark:prose-invert min-h-[50vh] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="prose dark:prose-invert prose-lg max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
             onChange={(_name, html) => {
               setContent(html);
             }}
           />
-        )}
-        {!existingPostId && (
-          <Tiptap
-            name="content"
-            content={""}
-            className="prose dark:prose-invert min-h-[50vh] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            onChange={(_name, html) => {
-              setContent(html);
-            }}
-          />
-        )}
-      </CardContent>
-      <CardFooter>
-        <div className="flex flex-row space-x-2 items-baseline">
-          <Button disabled={isLoading} onClick={() => handleSavePost("save")}>
-            저장
-          </Button>
-          {publishedAt === null && (
-            <Button
-              disabled={isLoading}
-              onClick={() => handleSavePost("publish")}
-            >
-              발행
-            </Button>
-          )}
-          {publishedAt !== null && (
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                const res = await unPublishPost(blogId, postId!);
+        </CardContent>
+      </Card>
 
-                if (res.success) {
-                  setPublishedAt(null);
-                  toast("발행 취소 완료 ✅");
-                }
-              }}
-            >
-              발행 취소
-            </Button>
-          )}
-          {publishedAt !== null && postId !== null && (
-            <Button
-              variant="secondary"
-              disabled={isEmailLoading || emailSent}
-              onClick={handleSendEmail}
-            >
-              {emailSent ? "이메일 발송 완료" : "이메일 발송"}
-            </Button>
-          )}
-          {postId !== null && (
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  삭제
+      {/* Actions - clean card at bottom */}
+      <Card className="border-t-2 border-t-border">
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            {/* Primary actions with metadata */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  disabled={isLoading}
+                  onClick={() => handleSavePost("save")}
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  저장
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>글 삭제</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    정말로 이 글을 삭제하시겠습니까?
-                    <br />
-                    이 작업은 되돌릴 수 없습니다.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>취소</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+
+                {publishedAt === null ? (
+                  <Button
+                    disabled={isLoading}
+                    onClick={() => handleSavePost("publish")}
+                    size="sm"
+                    className="gap-2"
                   >
-                    삭제
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-      </CardFooter>
-    </Card>
+                    <Send className="h-4 w-4" />
+                    발행
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const res = await unPublishPost(blogId, postId!);
+                      if (res.success) {
+                        setPublishedAt(null);
+                        toast("발행 취소 완료 ✅");
+                      }
+                    }}
+                    className="gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    발행 취소
+                  </Button>
+                )}
+
+                {publishedAt !== null && postId !== null && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={isEmailLoading || emailSent}
+                    onClick={handleSendEmail}
+                    className="gap-2"
+                  >
+                    {emailSent ? (
+                      <>
+                        <MailCheck className="h-4 w-4" />
+                        이메일 발송 완료
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4" />
+                        이메일 발송
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              {/* Post metadata next to actions */}
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                {publishedAt && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {formatInTimeZone(publishedAt, "Asia/Seoul", "MM/dd HH:mm")}
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  {wordCount}단어
+                </div>
+                {readingTime > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {readingTime}분
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Secondary actions */}
+            {postId !== null && (
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                <div></div>
+                <AlertDialog
+                  open={deleteDialogOpen}
+                  onOpenChange={setDeleteDialogOpen}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" className="gap-2">
+                      <Trash2 className="h-4 w-4" />글 삭제
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <Trash2 className="h-5 w-5 text-destructive" />글 삭제
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-2">
+                        정말로 이 글을 삭제하시겠습니까?
+                        <br />
+                        <br />
+                        <span className="text-sm text-destructive font-medium">
+                          이 작업은 되돌릴 수 없습니다.
+                        </span>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>취소</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        삭제
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
