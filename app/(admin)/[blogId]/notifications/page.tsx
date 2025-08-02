@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
-import { getRootPath } from "@/lib/paths";
+import { getBlogPostPath, getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -125,9 +125,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
           <Bell className="h-5 w-5" />
           <h1 className="text-2xl font-bold">알림</h1>
           {hasUnreadNotifications && (
-            <Badge variant="destructive">
-              {unreadCount}
-            </Badge>
+            <Badge variant="destructive">{unreadCount}</Badge>
           )}
         </div>
         {hasUnreadNotifications && (
@@ -137,7 +135,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
           />
         )}
       </div>
-      
+
       <p className="text-sm text-muted-foreground">
         연합우주에서 받은 멘션, 인용, 답글을 확인할 수 있습니다.
       </p>
@@ -166,13 +164,15 @@ export default async function NotificationsPage(props: { params: PageProps }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
                   <Badge
-                    variant={getNotificationVariant(notification.notification.type)}
+                    variant={getNotificationVariant(
+                      notification.notification.type
+                    )}
                     className="flex items-center gap-1 text-xs h-5 px-2 py-0.5 shrink-0"
                   >
                     {getNotificationIcon(notification.notification.type)}
                     {getNotificationTypeLabel(notification.notification.type)}
                   </Badge>
-                  
+
                   {notification.notification.type === "emoji_react" && (
                     <span className="text-xs text-muted-foreground">
                       {notification.notification.content}
@@ -181,18 +181,26 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                   {notification.notification.type === "like" && (
                     <span className="text-xs">♥️</span>
                   )}
-                  
+
                   <span className="font-medium text-sm truncate">
                     {notification.actor.name || notification.actor.username}
                   </span>
                   <span className="text-xs text-muted-foreground truncate">
                     {notification.actor.handle}
                   </span>
-                  
+
                   {notification.notification.postId && (
-                    <Button size="sm" variant="link" className="h-auto p-0 text-xs text-muted-foreground" asChild>
+                    <Button
+                      size="sm"
+                      variant="link"
+                      className="h-auto p-0 text-xs text-muted-foreground"
+                      asChild
+                    >
                       <a
-                        href={`/@${slug}/${notification.notification.postId}`}
+                        href={getBlogPostPath(
+                          slug,
+                          notification.notification.postId
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -201,7 +209,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground">
                     {notification.notification.type === "reply" &&

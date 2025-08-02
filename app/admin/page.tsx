@@ -13,6 +13,7 @@ import Link from "next/link";
 import { and, desc, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
+import { getBlogPostPath } from "@/lib/paths";
 
 export default async function AdminRootPage() {
   await assertAdmin();
@@ -46,7 +47,7 @@ export default async function AdminRootPage() {
                 <TableCell>{blog.slug}</TableCell>
                 <TableCell>
                   {blog.posts[0] ? (
-                    <Link href={`/@${blog.slug}/${latestPostId}`}>
+                    <Link href={getBlogPostPath(blog.slug, latestPostId)}>
                       {blog.posts[0].title || "무제"}
                     </Link>
                   ) : (

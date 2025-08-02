@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageViewTracker } from "@/components/PageViewTracker";
-import { getBlogPostEditPath } from "@/lib/paths";
+import { getBlogHomePath, getBlogPostEditPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -195,7 +195,7 @@ export default async function BlogPost(props: { params: Params }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
             <Link
-              href={`/@${targetBlog.slug}`}
+              href={getBlogHomePath(targetBlog.slug)}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               {targetBlog.name || `@${targetBlog.slug}`}에서 발행

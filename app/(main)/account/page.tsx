@@ -15,6 +15,7 @@ import {
   getAccountSetPasswordPath,
   getBlogHomePath,
   getBlogNewPath,
+  getBlogPostPath,
   getBlogPostsPath,
 } from "@/lib/paths";
 import format from "date-fns/format";
@@ -198,7 +199,7 @@ export default async function AccountHome() {
                               >
                                 <div className="flex-1 min-w-0">
                                   <Link
-                                    href={`/${blog.slug}/${post.id}`}
+                                    href={getBlogPostPath(blog.slug, post.id)}
                                     className="text-sm font-medium hover:underline line-clamp-1"
                                   >
                                     {post.title || "제목 없음"}

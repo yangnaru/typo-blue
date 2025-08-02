@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText } from "lucide-react";
+import { getBlogPostPath } from "@/lib/paths";
 
 export default function PostList({
   name,
@@ -32,16 +33,21 @@ export default function PostList({
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground text-lg">아직 글이 없습니다</p>
-          <p className="text-muted-foreground text-sm">첫 번째 글을 작성해보세요!</p>
+          <p className="text-muted-foreground text-sm">
+            첫 번째 글을 작성해보세요!
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {posts.map((post) => {
             return (
-              <Card key={post.id} className="hover:shadow-md transition-shadow duration-200">
+              <Card
+                key={post.id}
+                className="hover:shadow-md transition-shadow duration-200"
+              >
                 <CardContent className="p-4">
                   <Link
-                    href={`/@${blog.slug}/${post.id}`}
+                    href={getBlogPostPath(blog.slug, post.id)}
                     target={embed ? "_blank" : "_self"}
                     className="block group"
                   >
@@ -63,7 +69,11 @@ export default function PostList({
                           ) : (
                             <div className="flex items-center gap-2">
                               <span className="tabular-nums">
-                                {formatInTimeZone(post.updated, "Asia/Seoul", dateFormat)}
+                                {formatInTimeZone(
+                                  post.updated,
+                                  "Asia/Seoul",
+                                  dateFormat
+                                )}
                               </span>
                               <Badge variant="secondary" className="text-xs">
                                 초안
