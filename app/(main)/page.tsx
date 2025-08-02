@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, ArrowRight } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
+import { SELF_DESCRIPTION } from "@/lib/const";
 
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -43,9 +44,7 @@ export default async function Home() {
       <Logo />
       <div className="text-center space-y-6 py-8">
         <div className="max-w-xl mx-auto space-y-4">
-          <p className="text-lg text-muted-foreground">
-            타이포 블루는 텍스트 전용 블로깅 플랫폼입니다
-          </p>
+          <p className="text-lg text-muted-foreground">{SELF_DESCRIPTION}</p>
 
           <div className="text-sm text-muted-foreground space-y-2">
             <ul className="list-disc list-inside space-y-1">

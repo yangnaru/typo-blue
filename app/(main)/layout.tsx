@@ -2,12 +2,13 @@ import "../globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { SELF_DESCRIPTION } from "@/lib/const";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "타이포 블루",
-  description: "타이포 블루는 글로 자신을 표현하는 공간입니다.",
+  description: `${SELF_DESCRIPTION}.`,
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
 };
 
