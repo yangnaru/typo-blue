@@ -21,7 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import AccountDropdown from "@/components/account-dropdown";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   getBlogAnalyticsPath,
   getBlogPostsPath,
@@ -38,7 +38,6 @@ import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { blog } from "@/drizzle/schema";
-import { getActorForBlog } from "@/lib/activitypub";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 import { SELF_DESCRIPTION } from "@/lib/const";
 
@@ -66,37 +65,24 @@ export default async function RootLayout({
     redirect(getRootPath());
   }
 
-  let blogs;
-  let currentBlog;
-  let activityPubEnabled = false;
-  let unreadNotificationCount = 0;
+  const currentBlog = await db.query.blog.findFirst({
+    where: eq(blog.slug, blogId),
+    with: {
+      actor: true,
+      user: true,
+    },
+  });
 
-  if (user) {
-    blogs = await db.query.blog.findMany({
-      where: eq(blog.userId, user.id),
-      with: {
-        actor: true,
-      },
-    });
-
-    // Get current blog info
-    currentBlog = await db.query.blog.findFirst({
-      where: eq(blog.slug, blogId),
-      with: {
-        actor: true,
-      },
-    });
-
-    // Check if ActivityPub is enabled for this blog
-    if (currentBlog && currentBlog.userId === user.id) {
-      activityPubEnabled = !!currentBlog.actor;
-
-      // Get unread notification count if ActivityPub is enabled
-      if (activityPubEnabled) {
-        unreadNotificationCount = await getUnreadNotificationCount(blogId);
-      }
-    }
+  if (!currentBlog) {
+    notFound();
   }
+
+  if (currentBlog.user.id !== user.id) {
+    redirect(getRootPath());
+  }
+
+  const activityPubEnabled = !!currentBlog.actor;
+  const unreadNotificationCount = await getUnreadNotificationCount(blogId);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -218,7 +204,7 @@ export default async function RootLayout({
                   />
                   <div className="flex items-center gap-2 ml-auto">
                     <ModeToggle />
-                    <AccountDropdown user={user} blogs={blogs ?? []} />
+                    <AccountDropdown user={user} blogs={[currentBlog]} />
                   </div>
                 </header>
                 <main className="flex-1 p-4 sm:p-6">{children}</main>
