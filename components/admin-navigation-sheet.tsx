@@ -32,13 +32,11 @@ import {
 
 interface AdminNavigationSheetProps {
   blogId: string;
-  activityPubEnabled: boolean;
   unreadNotificationCount: number;
 }
 
 export default function AdminNavigationSheet({
   blogId,
-  activityPubEnabled,
   unreadNotificationCount,
 }: AdminNavigationSheetProps) {
   const [open, setOpen] = useState(false);
@@ -93,19 +91,17 @@ export default function AdminNavigationSheet({
               <Orbit className="h-5 w-5" />
               연합우주
             </Link>
-            {activityPubEnabled && (
-              <Link
-                href={getBlogNotificationsPath(blogId)}
-                className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                onClick={handleLinkClick}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadNotificationCount > 0 && (
-                  <div className="absolute left-6 top-1 h-2 w-2 bg-destructive rounded-full"></div>
-                )}
-                알림
-              </Link>
-            )}
+            <Link
+              href={getBlogNotificationsPath(blogId)}
+              className="relative flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={handleLinkClick}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadNotificationCount > 0 && (
+                <div className="absolute left-6 top-1 h-2 w-2 bg-destructive rounded-full"></div>
+              )}
+              알림
+            </Link>
           </div>
           <div className="border-t pt-4 space-y-2 mt-auto">
             <Link

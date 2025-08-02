@@ -196,7 +196,6 @@ export default async function RootLayout({
                 <header className="flex h-14 items-center justify-between border-b px-4 sm:h-auto sm:border-0 sm:px-6">
                   <AdminNavigationSheet
                     blogId={blogId}
-                    activityPubEnabled={activityPubEnabled}
                     unreadNotificationCount={unreadNotificationCount}
                   />
                   <div className="flex items-center gap-2 ml-auto">
