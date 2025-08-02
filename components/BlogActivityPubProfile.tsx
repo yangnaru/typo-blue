@@ -38,7 +38,7 @@ export function BlogActivityPubProfile({
             <div className="space-y-2">
               <div>
                 <span className="font-medium">핸들:</span>
-                <code className="ml-2 px-2 py-1 bg-muted rounded text-sm">
+                <code className="ml-2 px-2 py-1 bg-muted rounded text-sm select-all">
                   {profile.handle}
                 </code>
               </div>
@@ -66,8 +66,8 @@ export function BlogActivityPubProfile({
               <p>
                 블로그가 이제 연합우주에서 발견 가능합니다! 마스토돈, 플레로마
                 및 기타 ActivityPub 호환 플랫폼의 사용자들이{" "}
-                <strong>{profile.handle}</strong>에서 블로그를 팔로우하여 새 글
-                발행 시 업데이트를 받을 수 있습니다.
+                <strong className="select-all">{profile.handle}</strong>에서
+                블로그를 팔로우하여 새 글 발행 시 업데이트를 받을 수 있습니다.
               </p>
             </div>
           </div>
