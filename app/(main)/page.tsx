@@ -56,7 +56,7 @@ export default async function Home() {
           </div>
 
           <p className="text-muted-foreground pt-2">
-            지금 이메일로 가입하고 블로그를 만들어 보세요
+            지금 이메일로 가입하고 블로그를 만들어 보세요!
           </p>
         </div>
 
@@ -103,10 +103,12 @@ export default async function Home() {
                       .trim();
                   }
                   // Extract the first sentence or reasonable preview
-                  const sentenceMatch = firstParagraphText.match(/.*?[.!?](?=\s|$)/);
+                  const sentenceMatch =
+                    firstParagraphText.match(/.*?[.!?](?=\s|$)/);
                   if (sentenceMatch) {
                     firstSentence = sentenceMatch[0];
-                    isTruncated = firstSentence.length < firstParagraphText.length;
+                    isTruncated =
+                      firstSentence.length < firstParagraphText.length;
                   } else if (firstParagraphText.length <= 100) {
                     // If paragraph is short, use the whole thing
                     firstSentence = firstParagraphText;
@@ -115,7 +117,7 @@ export default async function Home() {
                     // For longer text, truncate at word/character boundary
                     firstSentence = firstParagraphText.slice(0, 80);
                     // Try to break at a space if possible
-                    const lastSpace = firstSentence.lastIndexOf(' ');
+                    const lastSpace = firstSentence.lastIndexOf(" ");
                     if (lastSpace > 40) {
                       firstSentence = firstSentence.slice(0, lastSpace);
                     }
@@ -147,7 +149,8 @@ export default async function Home() {
                           {/* Post Preview */}
                           {firstSentence && (
                             <p className="text-muted-foreground text-sm line-clamp-2">
-                              {firstSentence}{isTruncated ? "..." : ""}
+                              {firstSentence}
+                              {isTruncated ? "..." : ""}
                             </p>
                           )}
 
