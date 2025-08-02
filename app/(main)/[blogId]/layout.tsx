@@ -64,7 +64,8 @@ function BlogLayoutBody({
               href={getBlogHomePath(blog?.slug)}
               className="flex items-center gap-2"
             >
-              {blog?.name?.trim() || `@${blog?.slug}`}
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">블로그 홈</span>
             </Link>
           </Button>
           <div className="flex items-center gap-2">
