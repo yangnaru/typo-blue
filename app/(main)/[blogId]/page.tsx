@@ -4,7 +4,7 @@ import { PageViewTracker } from "@/components/PageViewTracker";
 import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getBlogPostsPath } from "@/lib/paths";
+import { getBlogNewPostPath, getBlogPostsPath } from "@/lib/paths";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { PenTool } from "lucide-react";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -151,7 +152,9 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
           {isCurrentUserBlogOwner && (
             <Button asChild>
-              <Link href={getBlogPostsPath(targetBlog.slug)}>블로그 관리</Link>
+              <Link href={getBlogNewPostPath(targetBlog.slug)}>
+                <PenTool className="h-4 w-4" />새 글 작성
+              </Link>
             </Button>
           )}
         </div>

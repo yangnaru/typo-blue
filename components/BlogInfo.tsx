@@ -10,7 +10,7 @@ export default function BlogInfo({ blog }: { blog: any }) {
     <div className="border rounded-lg p-6 flex flex-row justify-between items-start gap-6">
       <div className="space-y-3 flex-1">
         <div>
-          <Link 
+          <Link
             href={getBlogHomePath(blog.slug)}
             className="text-lg font-semibold hover:underline"
           >
@@ -24,9 +24,7 @@ export default function BlogInfo({ blog }: { blog: any }) {
       </div>
       <div className="flex-shrink-0">
         <Button asChild>
-          <Link href={getBlogPostsPath(blog.slug)}>
-            블로그 관리
-          </Link>
+          <Link href={getBlogPostsPath(blog.slug)}>블로그 관리</Link>
         </Button>
       </div>
     </div>
