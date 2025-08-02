@@ -81,6 +81,7 @@ export default async function RootLayout({
     redirect(getRootPath());
   }
 
+  const isFederationEnabled = !!currentBlog.actor;
   const unreadNotificationCount = await getUnreadNotificationCount(blogId);
 
   return (
@@ -137,6 +138,23 @@ export default async function RootLayout({
                     </TooltipTrigger>
                     <TooltipContent side="right">분석</TooltipContent>
                   </Tooltip>
+                  {isFederationEnabled && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={getBlogNotificationsPath(blogId)}
+                          className="relative flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
+                        >
+                          <Bell className="h-5 w-5" />
+                          {unreadNotificationCount > 0 && (
+                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full border-2 border-background"></div>
+                          )}
+                          <span className="sr-only">알림</span>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">알림</TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
@@ -148,21 +166,6 @@ export default async function RootLayout({
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">연합우주</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogNotificationsPath(blogId)}
-                        className="relative flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Bell className="h-5 w-5" />
-                        {unreadNotificationCount > 0 && (
-                          <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full border-2 border-background"></div>
-                        )}
-                        <span className="sr-only">알림</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">알림</TooltipContent>
                   </Tooltip>
                 </nav>
                 <nav className="mt-auto flex flex-col items-center gap-3 px-3 py-4">
