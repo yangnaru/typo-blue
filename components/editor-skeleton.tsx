@@ -36,7 +36,7 @@ export function EditorSkeleton() {
           </div>
 
           {/* Content area skeleton */}
-          <div className="space-y-4 min-h-[70vh]">
+          <div className="space-y-4 min-h-[30vh]">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-4/5" />
             <Skeleton className="h-6 w-3/4" />

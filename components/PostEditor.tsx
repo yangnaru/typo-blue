@@ -324,6 +324,16 @@ export default function PostEditor({
     return Math.ceil(wordCount / wordsPerMinute);
   }, [wordCount]);
 
+  // Dynamic min height based on content
+  const editorMinHeight = useMemo(() => {
+    // If there's substantial content, use larger height
+    if (content.length > 500 || title.length > 0) {
+      return 'min-h-[50vh]';
+    }
+    // For empty or minimal content, use smaller height
+    return 'min-h-[30vh]';
+  }, [content.length, title.length]);
+
   const lastSaved = useMemo(() => {
     const now = new Date();
     return formatInTimeZone(now, "Asia/Seoul", "HH:mm");
@@ -426,7 +436,7 @@ export default function PostEditor({
             <Tiptap
               name="content"
               content={content}
-              className="prose dark:prose-invert max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
+              className={`prose dark:prose-invert max-w-none ${editorMinHeight} focus:outline-none border-0 shadow-none p-0 bg-transparent transition-all duration-300`}
               onChange={(_name, html) => {
                 setContent(html);
               }}
