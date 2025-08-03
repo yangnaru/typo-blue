@@ -175,7 +175,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
     <div className="space-y-4">
       <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle>월별 발행 현황</CardTitle>
               <div className="flex items-center gap-2">
                 {/* Selection Mode Toggle */}
