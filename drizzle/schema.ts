@@ -65,6 +65,13 @@ export const postTable = pgTable(
         .onUpdate("cascade")
         .onDelete("cascade"),
       firstPublishedRequired: sql`CONSTRAINT first_published_required CHECK (published IS NULL OR first_published IS NOT NULL)`,
+      // Indexes for calendar component performance
+      blogIdIdx: index("post_blog_id_idx").on(table.blogId),
+      firstPublishedIdx: index("post_first_published_idx").on(table.first_published),
+      publishedIdx: index("post_published_idx").on(table.published),
+      // Composite index for calendar queries (blog_id + first_published)
+      blogIdFirstPublishedIdx: index("post_blog_id_first_published_idx").on(table.blogId, table.first_published),
+      createdIdx: index("post_created_idx").on(table.created),
     };
   }
 );

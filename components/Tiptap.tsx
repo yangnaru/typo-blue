@@ -4,7 +4,17 @@ import Typography from "@tiptap/extension-typography";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useCallback } from "react";
-import "remixicon/fonts/remixicon.css";
+import { 
+  Heading1, 
+  Heading2, 
+  Heading3, 
+  Bold, 
+  Italic, 
+  List, 
+  ListOrdered, 
+  Link as LinkIcon, 
+  LinkBreak 
+} from "lucide-react";
 
 function Tiptap({
   name,
@@ -69,54 +79,106 @@ function Tiptap({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="*:text-xl space-x-1 pl-1">
+      <div className="flex items-center gap-1 pl-1" role="toolbar" aria-label="텍스트 편집 도구">
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
-          className="ri-h-1 text-muted-foreground hover:text-foreground"
-        ></button>
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          aria-label="제목 1 적용"
+          title="제목 1"
+        >
+          <Heading1 className="h-4 w-4" />
+        </button>
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
-          className="ri-h-2 text-muted-foreground hover:text-foreground"
-        ></button>
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          aria-label="제목 2 적용"
+          title="제목 2"
+        >
+          <Heading2 className="h-4 w-4" />
+        </button>
         <button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
-          className="ri-h-3 text-muted-foreground hover:text-foreground"
-        ></button>
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          aria-label="제목 3 적용"
+          title="제목 3"
+        >
+          <Heading3 className="h-4 w-4" />
+        </button>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className="ri-bold text-muted-foreground hover:text-foreground"
-        ></button>
+          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+            editor.isActive("bold") 
+              ? "text-foreground bg-accent" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label="굵게 적용"
+          title="굵게 (Ctrl+B)"
+        >
+          <Bold className="h-4 w-4" />
+        </button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className="ri-italic text-muted-foreground hover:text-foreground"
-        ></button>
+          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+            editor.isActive("italic") 
+              ? "text-foreground bg-accent" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label="기울임 적용"
+          title="기울임 (Ctrl+I)"
+        >
+          <Italic className="h-4 w-4" />
+        </button>
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className="ri-list-unordered text-muted-foreground hover:text-foreground"
-        ></button>
+          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+            editor.isActive("bulletList") 
+              ? "text-foreground bg-accent" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label="글머리 기호 목록 적용"
+          title="글머리 기호 목록"
+        >
+          <List className="h-4 w-4" />
+        </button>
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className="ri-list-ordered text-muted-foreground hover:text-foreground"
-        ></button>
+          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+            editor.isActive("orderedList") 
+              ? "text-foreground bg-accent" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label="번호 목록 적용"
+          title="번호 목록"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </button>
         <button
           onClick={setLink}
-          className={
-            editor.isActive("link")
-              ? "is-active ri-link text-muted-foreground hover:text-foreground"
-              : "ri-link text-muted-foreground hover:text-foreground"
-          }
-        ></button>
+          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+            editor.isActive("link") 
+              ? "text-foreground bg-accent" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          aria-label="링크 추가"
+          title="링크 추가/편집"
+        >
+          <LinkIcon className="h-4 w-4" />
+        </button>
         <button
           onClick={() => editor.chain().focus().unsetLink().run()}
           disabled={!editor.isActive("link")}
-          className="ri-link-unlink text-muted-foreground hover:text-foreground"
-        ></button>
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="링크 제거"
+          title="링크 제거"
+        >
+          <LinkBreak className="h-4 w-4" />
+        </button>
       </div>
       <EditorContent editor={editor} />
     </div>

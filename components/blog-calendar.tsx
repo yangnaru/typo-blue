@@ -4,8 +4,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { format, isSameDay, isSameMonth, differenceInDays, isToday, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { useState, useCallback, useEffect } from "react";
+import { format, isSameDay, isSameMonth, differenceInDays, isToday, subDays, isWithinInterval, startOfDay, endOfDay, addDays, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight, Edit3, ExternalLink, Calendar as CalendarIcon, MousePointer } from "lucide-react";
 import Link from "next/link";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
@@ -139,19 +139,19 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
   const { longestStreak, currentStreak } = calculateStreaks();
 
   // Navigation functions
-  const goToPreviousMonth = () => {
+  const goToPreviousMonth = useCallback(() => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  };
+  }, []);
 
-  const goToNextMonth = () => {
+  const goToNextMonth = useCallback(() => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  };
+  }, []);
 
-  const goToCurrentMonth = () => {
+  const goToCurrentMonth = useCallback(() => {
     setCurrentMonth(new Date());
-  };
+  }, []);
 
-  const toggleSelectionMode = () => {
+  const toggleSelectionMode = useCallback(() => {
     const newMode = selectionMode === 'single' ? 'range' : 'single';
     setSelectionMode(newMode);
     
@@ -161,18 +161,108 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
     } else {
       setSelectedDate(undefined);
     }
-  };
+  }, [selectionMode]);
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setSelectedDate(undefined);
     setSelectedRange(undefined);
-  };
+  }, []);
 
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.target !== document.body && !(event.target as Element)?.closest('[data-calendar-container]')) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        if (event.ctrlKey || event.metaKey) {
+          goToPreviousMonth();
+        } else if (selectedDate) {
+          const newDate = subDays(selectedDate, 1);
+          setSelectedDate(newDate);
+        }
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        if (event.ctrlKey || event.metaKey) {
+          goToNextMonth();
+        } else if (selectedDate) {
+          const newDate = addDays(selectedDate, 1);
+          setSelectedDate(newDate);
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (selectedDate) {
+          const newDate = subDays(selectedDate, 7);
+          setSelectedDate(newDate);
+          if (!isSameMonth(newDate, currentMonth)) {
+            setCurrentMonth(newDate);
+          }
+        }
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        if (selectedDate) {
+          const newDate = addDays(selectedDate, 7);
+          setSelectedDate(newDate);
+          if (!isSameMonth(newDate, currentMonth)) {
+            setCurrentMonth(newDate);
+          }
+        }
+        break;
+      case 'Home':
+        event.preventDefault();
+        const today = new Date();
+        setSelectedDate(today);
+        setCurrentMonth(today);
+        break;
+      case 'PageUp':
+        event.preventDefault();
+        if (event.shiftKey) {
+          setCurrentMonth(prev => subMonths(prev, 12));
+        } else {
+          goToPreviousMonth();
+        }
+        break;
+      case 'PageDown':
+        event.preventDefault();
+        if (event.shiftKey) {
+          setCurrentMonth(prev => addMonths(prev, 12));
+        } else {
+          goToNextMonth();
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        clearSelection();
+        break;
+      case 'Enter':
+      case ' ':
+        if (selectedDate && selectionMode === 'single') {
+          event.preventDefault();
+          // Handle selection confirmation if needed
+        }
+        break;
+    }
+  }, [selectedDate, currentMonth, selectionMode, goToPreviousMonth, goToNextMonth, clearSelection]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   const isCurrentMonth = isSameMonth(currentMonth, new Date());
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-calendar-container tabIndex={0} role="application" aria-label="블로그 발행 캘린더">
+      <div className="sr-only" id="calendar-instructions">
+        키보드 단축키: 화살표 키로 날짜 이동, Ctrl+화살표로 월 이동, Home으로 오늘로 이동, PageUp/PageDown으로 월 변경, Escape로 선택 해제
+      </div>
       <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -185,6 +275,8 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                     size="sm"
                     onClick={() => selectionMode !== 'single' && toggleSelectionMode()}
                     disabled={selectionMode === 'single'}
+                    aria-label="단일 날짜 선택 모드"
+                    title="하나의 날짜만 선택"
                   >
                     <MousePointer className="h-4 w-4" />
                   </Button>
@@ -193,6 +285,8 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                     size="sm"
                     onClick={() => selectionMode !== 'range' && toggleSelectionMode()}
                     disabled={selectionMode === 'range'}
+                    aria-label="날짜 범위 선택 모드"
+                    title="날짜 범위 선택"
                   >
                     <CalendarIcon className="h-4 w-4" />
                   </Button>
@@ -200,19 +294,42 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                 
                 {/* Clear Selection */}
                 {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
-                  <Button variant="outline" size="sm" onClick={clearSelection}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearSelection}
+                    aria-label="날짜 선택 해제"
+                    title="선택된 날짜를 해제합니다"
+                  >
                     선택 해제
                   </Button>
                 )}
                 
                 {/* Month Navigation */}
-                <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToPreviousMonth}
+                  aria-label="이전 달로 이동"
+                  title="이전 달 (Ctrl+←)"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="min-w-[120px] text-center font-medium">
+                <span 
+                  className="min-w-[120px] text-center font-medium"
+                  role="status"
+                  aria-live="polite"
+                  aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
+                >
                   {format(currentMonth, "yyyy년 MM월")}
                 </span>
-                <Button variant="outline" size="sm" onClick={goToNextMonth}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToNextMonth}
+                  aria-label="다음 달로 이동"
+                  title="다음 달 (Ctrl+→)"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <Button 
@@ -220,7 +337,8 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                   size="sm" 
                   onClick={goToCurrentMonth} 
                   disabled={isCurrentMonth}
-                  title="이번 달로 이동"
+                  aria-label="이번 달로 이동"
+                  title="이번 달로 이동 (Home)"
                 >
                   <CalendarIcon className="h-4 w-4" />
                 </Button>

@@ -29,12 +29,19 @@ export default function AccountDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button 
+          variant="outline" 
+          size="icon"
+          aria-label="계정 메뉴"
+          title="계정 설정 및 블로그 관리"
+        >
           <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="mx-2">
-        <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+      <DropdownMenuContent className="mx-2" aria-label="계정 메뉴">
+        <DropdownMenuLabel aria-label={`로그인된 계정: ${user.email}`}>
+          {user.email}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         {blogs.map((blog: any) => (

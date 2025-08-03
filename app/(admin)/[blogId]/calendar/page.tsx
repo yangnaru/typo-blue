@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { desc, eq, isNull } from "drizzle-orm";
+import { desc, eq, isNull, isNotNull, and } from "drizzle-orm";
 import { blog, postTable } from "@/drizzle/schema";
 import { BlogCalendar } from "@/components/blog-calendar";
 import { getRootPath } from "@/lib/paths";
@@ -19,12 +19,6 @@ export default async function CalendarPage(props: { params: PageProps }) {
   const slug = decodedBlogId.replace("@", "");
   const currentBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, slug),
-    with: {
-      posts: {
-        orderBy: (post) => [desc(post.published)],
-        where: isNull(postTable.deleted),
-      },
-    },
   });
 
   if (!currentBlog) {
@@ -35,8 +29,25 @@ export default async function CalendarPage(props: { params: PageProps }) {
     redirect(getRootPath());
   }
 
+  // Optimized query: Only fetch published posts with first_published dates for calendar
+  const posts = await db.query.postTable.findMany({
+    where: and(
+      eq(postTable.blogId, currentBlog.id),
+      isNull(postTable.deleted),
+      isNotNull(postTable.published),
+      isNotNull(postTable.first_published)
+    ),
+    orderBy: [desc(postTable.first_published)],
+    columns: {
+      id: true,
+      title: true,
+      published: true,
+      first_published: true,
+    },
+  });
+
   // Transform posts to match the component interface
-  const transformedPosts = currentBlog.posts.map(post => ({
+  const transformedPosts = posts.map(post => ({
     id: post.id,
     title: post.title,
     published: post.published ? new Date(post.published) : null,

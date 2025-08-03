@@ -173,9 +173,9 @@ export default function PostEditor({
   }, []);
 
   return (
-    <div className="max-w-prose mx-auto space-y-8">
+    <div className="max-w-prose mx-auto space-y-8" role="main" aria-label="블로그 글 편집">
       {/* Header with navigation and status */}
-      <div className="flex items-center justify-between pb-4">
+      <div className="flex items-center justify-between pb-4" role="region" aria-label="글 상태 및 네비게이션">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -225,21 +225,31 @@ export default function PostEditor({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="text-2xl md:text-3xl lg:text-4xl font-bold border-0 px-0 py-3 md:py-4 lg:py-5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+            aria-label="글 제목"
+            aria-describedby="title-help"
           />
+          <div id="title-help" className="sr-only">
+            블로그 글의 제목을 입력하세요. 이 제목은 공개된 글에서 표시됩니다.
+          </div>
         </CardContent>
       </Card>
 
       {/* Main editor with border */}
       <Card>
         <CardContent className="p-6">
-          <Tiptap
-            name="content"
-            content={content}
-            className="prose dark:prose-invert prose-lg max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
-            onChange={(_name, html) => {
-              setContent(html);
-            }}
-          />
+          <div role="region" aria-label="글 내용 편집기" aria-describedby="editor-help">
+            <Tiptap
+              name="content"
+              content={content}
+              className="prose dark:prose-invert prose-lg max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
+              onChange={(_name, html) => {
+                setContent(html);
+              }}
+            />
+          </div>
+          <div id="editor-help" className="sr-only">
+            리치 텍스트 에디터입니다. 위의 도구모음 버튼을 사용하여 텍스트를 서식화할 수 있습니다.
+          </div>
         </CardContent>
       </Card>
 
@@ -248,13 +258,15 @@ export default function PostEditor({
         <CardContent className="pt-6">
           <div className="space-y-6">
             {/* Primary actions with metadata */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4" role="region" aria-label="글 작업">
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="주요 작업">
                 <Button
                   disabled={isLoading}
                   onClick={() => handleSavePost("save")}
                   size="sm"
                   className="gap-2"
+                  aria-label="글을 초안으로 저장"
+                  title="글을 초안으로 저장합니다"
                 >
                   <Save className="h-4 w-4" />
                   저장
