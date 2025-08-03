@@ -325,14 +325,7 @@ export default function PostEditor({
   }, [wordCount]);
 
   // Dynamic min height based on content
-  const editorMinHeight = useMemo(() => {
-    // If there's substantial content, use larger height
-    if (content.length > 500 || title.length > 0) {
-      return 'min-h-[50vh]';
-    }
-    // For empty or minimal content, use smaller height
-    return 'min-h-[30vh]';
-  }, [content.length, title.length]);
+  const editorMinHeight = content.length > 500 || title.length > 0 ? 'min-h-[50vh]' : 'min-h-[30vh]';
 
   const lastSaved = useMemo(() => {
     const now = new Date();
