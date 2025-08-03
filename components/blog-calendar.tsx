@@ -265,11 +265,12 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
       </div>
       <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle>월별 발행 현황</CardTitle>
-              <div className="flex items-center gap-2">
-                {/* Selection Mode Toggle */}
-                <div className="flex items-center gap-1 mr-2">
+            <div className="flex flex-col gap-4">
+              {/* Title and Selection Mode (small screens) */}
+              <div className="flex items-center justify-between">
+                <CardTitle>월별 발행 현황</CardTitle>
+                {/* Selection Mode Toggle - visible on small screens */}
+                <div className="flex items-center gap-1 sm:hidden">
                   <Button
                     variant={selectionMode === 'single' ? 'default' : 'outline'}
                     size="sm"
@@ -291,57 +292,145 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                     <CalendarIcon className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+
+              {/* Small screen controls row */}
+              <div className="flex items-center justify-between sm:hidden">
+                {/* Clear Selection for small screens */}
+                <div>
+                  {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearSelection}
+                      aria-label="날짜 선택 해제"
+                      title="선택된 날짜를 해제합니다"
+                    >
+                      선택 해제
+                    </Button>
+                  )}
+                </div>
                 
-                {/* Clear Selection */}
-                {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
+                {/* Month Navigation for small screens */}
+                <div className="flex items-center gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={clearSelection}
-                    aria-label="날짜 선택 해제"
-                    title="선택된 날짜를 해제합니다"
+                    onClick={goToPreviousMonth}
+                    aria-label="이전 달로 이동"
+                    title="이전 달 (Ctrl+←)"
                   >
-                    선택 해제
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
-                )}
-                
-                {/* Month Navigation */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={goToPreviousMonth}
-                  aria-label="이전 달로 이동"
-                  title="이전 달 (Ctrl+←)"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span 
-                  className="min-w-[120px] text-center font-medium"
-                  role="status"
-                  aria-live="polite"
-                  aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
-                >
-                  {format(currentMonth, "yyyy년 MM월")}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={goToNextMonth}
-                  aria-label="다음 달로 이동"
-                  title="다음 달 (Ctrl+→)"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={goToCurrentMonth} 
-                  disabled={isCurrentMonth}
-                  aria-label="이번 달로 이동"
-                  title="이번 달로 이동 (Home)"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                </Button>
+                  <span 
+                    className="min-w-[100px] text-center font-medium text-sm"
+                    role="status"
+                    aria-live="polite"
+                    aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
+                  >
+                    {format(currentMonth, "yyyy년 MM월")}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={goToNextMonth}
+                    aria-label="다음 달로 이동"
+                    title="다음 달 (Ctrl+→)"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={goToCurrentMonth} 
+                    disabled={isCurrentMonth}
+                    aria-label="이번 달로 이동"
+                    title="이번 달로 이동 (Home)"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* All controls for larger screens - original layout */}
+              <div className="hidden sm:flex sm:items-center sm:justify-between">
+                <div></div> {/* Spacer */}
+                <div className="flex items-center gap-2">
+                  {/* Selection Mode Toggle - visible on larger screens */}
+                  <div className="flex items-center gap-1 mr-2">
+                    <Button
+                      variant={selectionMode === 'single' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => selectionMode !== 'single' && toggleSelectionMode()}
+                      disabled={selectionMode === 'single'}
+                      aria-label="단일 날짜 선택 모드"
+                      title="하나의 날짜만 선택"
+                    >
+                      <MousePointer className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={selectionMode === 'range' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => selectionMode !== 'range' && toggleSelectionMode()}
+                      disabled={selectionMode === 'range'}
+                      aria-label="날짜 범위 선택 모드"
+                      title="날짜 범위 선택"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* Clear Selection */}
+                  {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearSelection}
+                      aria-label="날짜 선택 해제"
+                      title="선택된 날짜를 해제합니다"
+                    >
+                      선택 해제
+                    </Button>
+                  )}
+                  
+                  {/* Month Navigation */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={goToPreviousMonth}
+                    aria-label="이전 달로 이동"
+                    title="이전 달 (Ctrl+←)"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span 
+                    className="min-w-[120px] text-center font-medium"
+                    role="status"
+                    aria-live="polite"
+                    aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
+                  >
+                    {format(currentMonth, "yyyy년 MM월")}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={goToNextMonth}
+                    aria-label="다음 달로 이동"
+                    title="다음 달 (Ctrl+→)"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={goToCurrentMonth} 
+                    disabled={isCurrentMonth}
+                    aria-label="이번 달로 이동"
+                    title="이번 달로 이동 (Home)"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
