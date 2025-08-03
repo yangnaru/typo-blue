@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Edit } from "lucide-react";
 import { notFound } from "next/navigation";
-import PoweredBy from "@/components/PoweredBy";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -186,14 +185,6 @@ export default async function BlogPost(props: { params: Params }) {
 
       <div className="py-4">
         <Separator />
-      </div>
-
-      {/* Post Footer */}
-      <div className="flex items-center justify-between py-6">
-        <PoweredBy />
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>HIT: {targetBlog.visitor_count?.toLocaleString() || 0}</span>
-        </div>
       </div>
     </article>
   );
