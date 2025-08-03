@@ -216,10 +216,6 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
         </div>
       )}
-
-      <div className="py-4">
-        <Separator />
-      </div>
     </div>
   );
 }
