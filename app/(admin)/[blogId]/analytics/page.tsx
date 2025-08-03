@@ -34,6 +34,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { ko } from "date-fns/locale";
 
 type PageProps = Promise<{
   blogId: string;
@@ -234,26 +235,49 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
         </CardHeader>
         <CardContent>
           {visitorTrends.length > 0 ? (
-            <div className="space-y-2">
-              {visitorTrends.slice(-7).map((trend) => (
-                <div
-                  key={trend.date}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm">{trend.date}</span>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium">
-                      {trend.visits} 방문
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {trend.uniqueVisitors} 순방문자
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center">날짜</TableHead>
+                    <TableHead className="text-center">총 방문</TableHead>
+                    <TableHead className="text-center">순방문자</TableHead>
+                    <TableHead className="text-center">방문/순방문자</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visitorTrends.slice(-10).map((trend) => {
+                    const ratio = trend.uniqueVisitors > 0 ? (trend.visits / trend.uniqueVisitors).toFixed(1) : "0";
+                    
+                    return (
+                      <TableRow key={trend.date}>
+                        <TableCell className="text-center font-medium">
+                          {formatInTimeZone(new Date(trend.date), "Asia/Seoul", "MM/dd (E)", { locale: ko })}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">
+                            {formatNumber(trend.visits)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {formatNumber(trend.uniqueVisitors)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {ratio}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                <span>최근 {visitorTrends.slice(-10).length}일 데이터</span>
+                <span>방문/순방문자 비율이 높을수록 재방문이 많음</span>
+              </div>
             </div>
           ) : (
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-center py-8">
               아직 방문자 데이터가 없습니다.
             </p>
           )}
@@ -341,10 +365,10 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
         <CardContent>
           {emailAnalytics.length > 0 ? (
             <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">이메일 발송</CardTitle>
+                    <CardTitle className="text-sm">총 발송</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -352,6 +376,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         emailAnalytics.reduce((sum, day) => sum + day.sent, 0)
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      최근 30일
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -367,6 +394,9 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      업계 평균: 21%
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -382,31 +412,73 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      업계 평균: 2.6%
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">총 참여</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {formatNumber(
+                        emailAnalytics.reduce((sum, day) => sum + day.clicked, 0)
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      총 클릭 수
+                    </p>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">최근 이메일 성과</h4>
-                {emailAnalytics.slice(-7).map((day) => (
-                  <div
-                    key={day.date}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm">{day.date}</span>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm">
-                        {formatNumber(day.sent)} 발송
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {formatPercentage(day.openRate)} 열람
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {formatPercentage(day.clickRate)} 클릭
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold">최근 이메일 성과</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-center">날짜</TableHead>
+                      <TableHead className="text-center">발송</TableHead>
+                      <TableHead className="text-center">열람</TableHead>
+                      <TableHead className="text-center">클릭</TableHead>
+                      <TableHead className="text-center">열람률</TableHead>
+                      <TableHead className="text-center">클릭률</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {emailAnalytics.slice(-10).map((day) => (
+                      <TableRow key={day.date}>
+                        <TableCell className="text-center font-medium">
+                          {formatInTimeZone(new Date(day.date), "Asia/Seoul", "MM/dd (E)", { locale: ko })}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">
+                            {formatNumber(day.sent)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {formatNumber(day.opened)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {formatNumber(day.clicked)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {formatPercentage(day.openRate)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {formatPercentage(day.clickRate)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                
+                {/* Performance indicators */}
+                <div className="flex items-center justify-end text-xs text-muted-foreground pt-2 border-t">
+                  <span>최근 {emailAnalytics.slice(-10).length}일 데이터</span>
+                </div>
               </div>
             </div>
           ) : (
