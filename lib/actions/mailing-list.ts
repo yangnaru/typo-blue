@@ -20,6 +20,14 @@ export async function subscribeToMailingList(
   blogId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const targetBlog = await db.query.blog.findFirst({
+      where: eq(blog.id, blogId),
+    });
+
+    if (!targetBlog) {
+      return { success: false, message: "블로그를 찾을 수 없습니다." };
+    }
+
     const existingSubscription = await db
       .select()
       .from(mailingListSubscription)
@@ -30,31 +38,23 @@ export async function subscribeToMailingList(
         )
       );
 
-    if (existingSubscription.length > 0) {
-      return { success: false, message: "이미 구독하고 있습니다." };
+    // Only insert if not already subscribed, but always return success
+    if (existingSubscription.length === 0) {
+      const unsubscribeToken = generateRandomString(
+        32,
+        alphabet("a-z", "A-Z", "0-9")
+      );
+
+      await db.insert(mailingListSubscription).values({
+        id: randomUUID(),
+        email,
+        blogId,
+        unsubscribeToken,
+      });
     }
 
-    const targetBlog = await db.query.blog.findFirst({
-      where: eq(blog.id, blogId),
-    });
-
-    if (!targetBlog) {
-      return { success: false, message: "블로그를 찾을 수 없습니다." };
-    }
-
-    const unsubscribeToken = generateRandomString(
-      32,
-      alphabet("a-z", "A-Z", "0-9")
-    );
-
-    await db.insert(mailingListSubscription).values({
-      id: randomUUID(),
-      email,
-      blogId,
-      unsubscribeToken,
-    });
-
-    return { success: true, message: "메일링 리스트 구독이 완료되었습니다." };
+    // Always return the same success message regardless of subscription status
+    return { success: true, message: "구독 요청이 처리되었습니다." };
   } catch (error) {
     console.error("Error subscribing to mailing list:", error);
     return { success: false, message: "구독 중 오류가 발생했습니다." };
