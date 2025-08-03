@@ -335,6 +335,74 @@ export async function editBlogInfo(
   };
 }
 
+export async function autosaveDraftPost(
+  blogSlug: string,
+  postId: string | null,
+  title: string,
+  content: string
+) {
+  const { user } = await getCurrentSession();
+  if (!user) {
+    throw new Error("사용자가 없습니다.");
+  }
+
+  const targetBlog = await db.query.blog.findFirst({
+    where: and(eq(blog.slug, blogSlug), eq(blog.userId, user.id)),
+  });
+
+  if (!targetBlog) {
+    throw new Error("블로그를 찾을 수 없습니다.");
+  }
+
+  const uuid = postId;
+
+  let targetPost;
+
+  if (uuid) {
+    // Update existing draft post
+    const existingPost = await db.query.postTable.findFirst({
+      where: eq(postTable.id, uuid),
+    });
+    
+    // Only autosave if post is not published (draft only)
+    if (existingPost?.published) {
+      throw new Error("이미 발행된 글은 자동저장할 수 없습니다.");
+    }
+
+    const [updatedPost] = await db
+      .update(postTable)
+      .set({
+        title,
+        content,
+        updated: new Date(),
+      })
+      .where(eq(postTable.id, uuid))
+      .returning();
+    targetPost = updatedPost;
+  } else {
+    // Create new draft post
+    const insertData = {
+      title,
+      content,
+      published: null, // Always null for autosave (draft only)
+      blogId: targetBlog.id,
+      updated: new Date(),
+      id: crypto.randomUUID(),
+    };
+
+    const [newPost] = await db.insert(postTable).values(insertData).returning();
+    targetPost = newPost;
+  }
+
+  // No ActivityPub or email notifications for autosave
+  // No path revalidation for better performance
+
+  return {
+    success: true,
+    postId: targetPost.id,
+  };
+}
+
 export async function sendPostEmail(blogId: string, postId: string) {
   const uuid = postId;
   await assertCurrentUserHasBlogWithIdAndPostWithId(blogId, uuid);

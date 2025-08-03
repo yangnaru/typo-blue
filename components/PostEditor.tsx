@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Tiptap from "./Tiptap";
 import format from "date-fns/format";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
@@ -9,6 +9,7 @@ import {
   unPublishPost,
   upsertPost,
   sendPostEmail,
+  autosaveDraftPost,
 } from "@/lib/actions/blog";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -47,6 +48,9 @@ import {
   MailCheck,
   ArrowLeft,
   Settings,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 export default function PostEditor({
@@ -75,9 +79,113 @@ export default function PostEditor({
   const [emailSent, setEmailSent] = useState(existingEmailSent);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // Autosave state
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastAutosaved, setLastAutosaved] = useState<Date | null>(null);
+  const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastContentRef = useRef({ title: existingTitle, content: existingContent });
+
+  // Autosave function
+  const performAutosave = useCallback(async () => {
+    // Only autosave if post is not published
+    if (publishedAt !== null) {
+      return;
+    }
+
+    // Don't autosave empty posts
+    if (!title.trim() && !content.trim()) {
+      return;
+    }
+
+    // Check if content actually changed
+    if (lastContentRef.current.title === title && lastContentRef.current.content === content) {
+      return;
+    }
+
+    setAutosaveStatus('saving');
+    
+    try {
+      const res = await autosaveDraftPost(blogId, postId, title, content);
+      
+      if (res.success) {
+        // Update postId if this was a new post
+        if (!postId) {
+          setPostId(res.postId);
+          // Update URL for new posts
+          const editPath = getBlogPostEditPath(blogId, res.postId);
+          router.replace(editPath);
+        }
+        
+        lastContentRef.current = { title, content };
+        setLastAutosaved(new Date());
+        setAutosaveStatus('saved');
+        
+        // Reset to idle after 3 seconds
+        setTimeout(() => setAutosaveStatus('idle'), 3000);
+      } else {
+        setAutosaveStatus('error');
+        setTimeout(() => setAutosaveStatus('idle'), 5000);
+      }
+    } catch (error) {
+      console.error('Autosave failed:', error);
+      setAutosaveStatus('error');
+      setTimeout(() => setAutosaveStatus('idle'), 5000);
+    }
+  }, [blogId, postId, title, content, publishedAt, router]);
+
+  // Debounced autosave effect
+  useEffect(() => {
+    // Clear existing timeout
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    // Only autosave if content changed and post is not published
+    if (publishedAt === null && (title.trim() || content.trim())) {
+      autosaveTimeoutRef.current = setTimeout(() => {
+        performAutosave();
+      }, 2000); // 2 second delay
+    }
+
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [title, content, performAutosave, publishedAt]);
+
+  // Handle browser navigation/close to prevent losing unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only show warning for unpublished drafts with unsaved changes
+      if (publishedAt === null && 
+          (lastContentRef.current.title !== title || lastContentRef.current.content !== content) &&
+          (title.trim() || content.trim())) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for legacy browsers
+        
+        // Try to trigger autosave if possible (may not complete due to browser constraints)
+        performAutosave();
+        
+        return ''; // Modern browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [title, content, publishedAt, performAutosave]);
 
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
+    
+    // Clear autosave timeout when manually saving
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
 
     const publishedAtValue =
       status === "publish"
@@ -100,6 +208,13 @@ export default function PostEditor({
       if (publishedAtValue) {
         setPublishedAt(publishedAtValue);
       }
+
+      // Update last content reference
+      lastContentRef.current = { title, content };
+      
+      // Reset autosave status
+      setAutosaveStatus('idle');
+      setLastAutosaved(new Date());
 
       const now = new Date();
       toast(
@@ -203,6 +318,30 @@ export default function PostEditor({
                 이메일 발송됨
               </Badge>
             )}
+            
+            {/* Autosave status indicator */}
+            {publishedAt === null && (
+              <>
+                {autosaveStatus === 'saving' && (
+                  <Badge variant="outline" className="gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    자동저장 중
+                  </Badge>
+                )}
+                {autosaveStatus === 'saved' && (
+                  <Badge variant="outline" className="gap-1 text-green-600 border-green-200">
+                    <CheckCircle className="h-3 w-3" />
+                    자동저장됨
+                  </Badge>
+                )}
+                {autosaveStatus === 'error' && (
+                  <Badge variant="outline" className="gap-1 text-red-600 border-red-200">
+                    <AlertCircle className="h-3 w-3" />
+                    저장 실패
+                  </Badge>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -210,7 +349,11 @@ export default function PostEditor({
           {postId && (
             <>
               <Clock className="h-4 w-4" />
-              마지막 저장: {lastSaved}
+              {lastAutosaved && publishedAt === null ? (
+                <>자동저장: {formatInTimeZone(lastAutosaved, "Asia/Seoul", "HH:mm")}</>
+              ) : (
+                <>마지막 저장: {lastSaved}</>
+              )}
             </>
           )}
         </div>
