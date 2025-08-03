@@ -87,6 +87,7 @@ export default function PostEditor({
   const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef({ title: existingTitle, content: existingContent });
+  const urlUpdatedRef = useRef(false);
 
   // Autosave function
   const performAutosave = useCallback(async () => {
@@ -120,9 +121,14 @@ export default function PostEditor({
         // Update postId if this was a new post
         if (!postId) {
           setPostId(res.postId);
-          // Update URL for new posts
-          const editPath = getBlogPostEditPath(blogId, res.postId);
-          router.replace(editPath);
+          // Update URL for new posts without navigation (to prevent flicker)
+          if (!urlUpdatedRef.current) {
+            const editPath = getBlogPostEditPath(blogId, res.postId);
+            if (window.location.pathname !== editPath) {
+              window.history.replaceState(null, '', editPath);
+              urlUpdatedRef.current = true;
+            }
+          }
         }
         
         lastContentRef.current = { title, content };
@@ -152,7 +158,7 @@ export default function PostEditor({
         setTimeout(() => setAutosaveStatus('idle'), 300);
       }, 4000);
     }
-  }, [blogId, postId, title, content, publishedAt, router]);
+  }, [blogId, postId, title, content, publishedAt]);
 
   // Show autosave status immediately when saving starts
   useEffect(() => {
