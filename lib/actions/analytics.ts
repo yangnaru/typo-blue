@@ -128,14 +128,14 @@ export async function getAnalyticsOverview(
     .where(eq(emailQueue.blogId, targetBlog.id));
 
   return {
-    totalVisits: visitsResult?.totalVisits || 0,
-    uniqueVisitors: visitsResult?.uniqueVisitors || 0,
-    totalPosts: postsResult?.totalPosts || 0,
-    publishedPosts: postsResult?.publishedPosts || 0,
-    totalSubscribers: subscribersResult?.count || 0,
-    emailsSent: emailResult?.emailsSent || 0,
-    emailsOpened: emailResult?.emailsOpened || 0,
-    emailsClicked: emailResult?.emailsClicked || 0,
+    totalVisits: Number(visitsResult?.totalVisits) || 0,
+    uniqueVisitors: Number(visitsResult?.uniqueVisitors) || 0,
+    totalPosts: Number(postsResult?.totalPosts) || 0,
+    publishedPosts: Number(postsResult?.publishedPosts) || 0,
+    totalSubscribers: Number(subscribersResult?.count) || 0,
+    emailsSent: Number(emailResult?.emailsSent) || 0,
+    emailsOpened: Number(emailResult?.emailsOpened) || 0,
+    emailsClicked: Number(emailResult?.emailsClicked) || 0,
   };
 }
 
@@ -175,7 +175,11 @@ export async function getVisitorTrends(
     .groupBy(sql`DATE(created_at)`)
     .orderBy(sql`DATE(created_at)`);
 
-  return trends;
+  return trends.map(trend => ({
+    date: trend.date,
+    visits: Number(trend.visits) || 0,
+    uniqueVisitors: Number(trend.uniqueVisitors) || 0,
+  }));
 }
 
 export async function getPostPerformance(
@@ -238,11 +242,11 @@ export async function getPostPerformance(
     id: p.id,
     title: p.title || "무제",
     publishedAt: p.publishedAt,
-    visits: p.visits,
-    uniqueVisitors: p.uniqueVisitors,
-    emailsSent: p.emailsSent,
-    emailsOpened: p.emailsOpened,
-    emailsClicked: p.emailsClicked,
+    visits: Number(p.visits) || 0,
+    uniqueVisitors: Number(p.uniqueVisitors) || 0,
+    emailsSent: Number(p.emailsSent) || 0,
+    emailsOpened: Number(p.emailsOpened) || 0,
+    emailsClicked: Number(p.emailsClicked) || 0,
   }));
 }
 
@@ -286,11 +290,11 @@ export async function getEmailAnalytics(
 
   return emailStats.map((stat) => ({
     date: stat.date,
-    sent: stat.sent,
-    opened: stat.opened,
-    clicked: stat.clicked,
-    openRate: stat.sent > 0 ? (stat.opened / stat.sent) * 100 : 0,
-    clickRate: stat.sent > 0 ? (stat.clicked / stat.sent) * 100 : 0,
+    sent: Number(stat.sent) || 0,
+    opened: Number(stat.opened) || 0,
+    clicked: Number(stat.clicked) || 0,
+    openRate: Number(stat.sent) > 0 ? (Number(stat.opened) / Number(stat.sent)) * 100 : 0,
+    clickRate: Number(stat.sent) > 0 ? (Number(stat.clicked) / Number(stat.sent)) * 100 : 0,
   }));
 }
 
@@ -381,11 +385,11 @@ export async function getActivityPubAnalytics(
   return {
     followersCount: followersResult?.count || 0,
     followingCount: followingResult?.count || 0,
-    totalNotifications: notificationsResult?.totalNotifications || 0,
-    unreadNotifications: notificationsResult?.unreadNotifications || 0,
-    mentionsCount: notificationsResult?.mentionsCount || 0,
-    likesCount: notificationsResult?.likesCount || 0,
-    sharesCount: notificationsResult?.sharesCount || 0,
-    repliesCount: notificationsResult?.repliesCount || 0,
+    totalNotifications: Number(notificationsResult?.totalNotifications) || 0,
+    unreadNotifications: Number(notificationsResult?.unreadNotifications) || 0,
+    mentionsCount: Number(notificationsResult?.mentionsCount) || 0,
+    likesCount: Number(notificationsResult?.likesCount) || 0,
+    sharesCount: Number(notificationsResult?.sharesCount) || 0,
+    repliesCount: Number(notificationsResult?.repliesCount) || 0,
   };
 }
