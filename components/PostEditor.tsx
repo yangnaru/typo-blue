@@ -224,7 +224,7 @@ export default function PostEditor({
             placeholder="제목을 입력하세요"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="text-2xl md:text-3xl lg:text-4xl font-bold border-0 px-0 py-3 md:py-4 lg:py-5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
+            className="text-lg md:text-xl lg:text-2xl font-bold border-0 px-0 py-3 md:py-4 lg:py-5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 bg-transparent"
             aria-label="글 제목"
             aria-describedby="title-help"
           />
@@ -241,7 +241,7 @@ export default function PostEditor({
             <Tiptap
               name="content"
               content={content}
-              className="prose dark:prose-invert prose-lg max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
+              className="prose dark:prose-invert max-w-none min-h-[70vh] focus:outline-none border-0 shadow-none p-0 bg-transparent"
               onChange={(_name, html) => {
                 setContent(html);
               }}
