@@ -242,7 +242,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                       published: publicationDates
                     }}
                     modifiersClassNames={{
-                      published: "bg-blue-100 dark:bg-blue-900 font-semibold"
+                      published: "bg-blue-100 dark:bg-blue-900 font-semibold rounded-md"
                     }}
                     className="rounded-md border"
                   />
@@ -266,7 +266,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                       published: publicationDates
                     }}
                     modifiersClassNames={{
-                      published: "bg-blue-100 dark:bg-blue-900 font-semibold"
+                      published: "bg-blue-100 dark:bg-blue-900 font-semibold rounded-md"
                     }}
                     className="rounded-md border"
                   />
