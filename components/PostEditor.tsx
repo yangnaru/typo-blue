@@ -82,8 +82,10 @@ export default function PostEditor({
   
   // Autosave state
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [showAutosaveStatus, setShowAutosaveStatus] = useState(false);
   const [lastAutosaved, setLastAutosaved] = useState<Date | null>(null);
   const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef({ title: existingTitle, content: existingContent });
 
   // Autosave function
@@ -104,6 +106,12 @@ export default function PostEditor({
     }
 
     setAutosaveStatus('saving');
+    setShowAutosaveStatus(true);
+    
+    // Clear any existing fade timeout
+    if (fadeTimeoutRef.current) {
+      clearTimeout(fadeTimeoutRef.current);
+    }
     
     try {
       const res = await autosaveDraftPost(blogId, postId, title, content);
@@ -121,18 +129,37 @@ export default function PostEditor({
         setLastAutosaved(new Date());
         setAutosaveStatus('saved');
         
-        // Reset to idle after 3 seconds
-        setTimeout(() => setAutosaveStatus('idle'), 3000);
+        // Start fade out after 2 seconds
+        fadeTimeoutRef.current = setTimeout(() => {
+          setShowAutosaveStatus(false);
+          // Hide completely after fade animation
+          setTimeout(() => setAutosaveStatus('idle'), 300);
+        }, 2000);
       } else {
         setAutosaveStatus('error');
-        setTimeout(() => setAutosaveStatus('idle'), 5000);
+        // Start fade out after 4 seconds for errors
+        fadeTimeoutRef.current = setTimeout(() => {
+          setShowAutosaveStatus(false);
+          setTimeout(() => setAutosaveStatus('idle'), 300);
+        }, 4000);
       }
     } catch (error) {
       console.error('Autosave failed:', error);
       setAutosaveStatus('error');
-      setTimeout(() => setAutosaveStatus('idle'), 5000);
+      // Start fade out after 4 seconds for errors
+      fadeTimeoutRef.current = setTimeout(() => {
+        setShowAutosaveStatus(false);
+        setTimeout(() => setAutosaveStatus('idle'), 300);
+      }, 4000);
     }
   }, [blogId, postId, title, content, publishedAt, router]);
+
+  // Show autosave status immediately when saving starts
+  useEffect(() => {
+    if (autosaveStatus === 'saving') {
+      setShowAutosaveStatus(true);
+    }
+  }, [autosaveStatus]);
 
   // Debounced autosave effect
   useEffect(() => {
@@ -151,6 +178,9 @@ export default function PostEditor({
     return () => {
       if (autosaveTimeoutRef.current) {
         clearTimeout(autosaveTimeoutRef.current);
+      }
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
       }
     };
   }, [title, content, performAutosave, publishedAt]);
@@ -214,7 +244,13 @@ export default function PostEditor({
       
       // Reset autosave status
       setAutosaveStatus('idle');
+      setShowAutosaveStatus(false);
       setLastAutosaved(new Date());
+      
+      // Clear fade timeout
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
 
       const now = new Date();
       toast(
@@ -320,8 +356,8 @@ export default function PostEditor({
             )}
             
             {/* Autosave status indicator */}
-            {publishedAt === null && (
-              <>
+            {publishedAt === null && autosaveStatus !== 'idle' && (
+              <div className={`transition-opacity duration-300 ${showAutosaveStatus ? 'opacity-100' : 'opacity-0'}`}>
                 {autosaveStatus === 'saving' && (
                   <Badge variant="outline" className="gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -340,7 +376,7 @@ export default function PostEditor({
                     저장 실패
                   </Badge>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
