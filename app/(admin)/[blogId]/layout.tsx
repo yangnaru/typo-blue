@@ -12,6 +12,7 @@ import {
   Type,
   Book,
   Orbit,
+  Calendar,
 } from "lucide-react";
 
 import AdminNavigationSheet from "@/components/admin-navigation-sheet";
@@ -30,6 +31,7 @@ import {
   getBlogNotificationsPath,
   getBlogSettingsPath,
   getBlogSubscribersPath,
+  getBlogCalendarPath,
   getRootPath,
 } from "@/lib/paths";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -117,14 +119,14 @@ export default async function RootLayout({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Link
-                        href={getBlogSubscribersPath(blogId)}
+                        href={getBlogCalendarPath(blogId)}
                         className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
                       >
-                        <Mail className="h-5 w-5" />
-                        <span className="sr-only">구독자</span>
+                        <Calendar className="h-5 w-5" />
+                        <span className="sr-only">발행 캘린더</span>
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right">구독자</TooltipContent>
+                    <TooltipContent side="right">발행 캘린더</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -137,6 +139,18 @@ export default async function RootLayout({
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">분석</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={getBlogSubscribersPath(blogId)}
+                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
+                      >
+                        <Mail className="h-5 w-5" />
+                        <span className="sr-only">구독자</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">구독자</TooltipContent>
                   </Tooltip>
                   {isFederationEnabled && (
                     <Tooltip>

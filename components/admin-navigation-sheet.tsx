@@ -12,6 +12,7 @@ import {
   Settings,
   Type,
   Book,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ import {
   getBlogNotificationsPath,
   getBlogSettingsPath,
   getBlogSubscribersPath,
+  getBlogCalendarPath,
 } from "@/lib/paths";
 
 interface AdminNavigationSheetProps {
@@ -68,12 +70,12 @@ export default function AdminNavigationSheet({
               <Book className="h-5 w-5" />글 목록
             </Link>
             <Link
-              href={getBlogSubscribersPath(blogId)}
+              href={getBlogCalendarPath(blogId)}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               onClick={handleLinkClick}
             >
-              <Mail className="h-5 w-5" />
-              구독자
+              <Calendar className="h-5 w-5" />
+              발행 캘린더
             </Link>
             <Link
               href={getBlogAnalyticsPath(blogId)}
@@ -82,6 +84,14 @@ export default function AdminNavigationSheet({
             >
               <BarChart3 className="h-5 w-5" />
               분석
+            </Link>
+            <Link
+              href={getBlogSubscribersPath(blogId)}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={handleLinkClick}
+            >
+              <Mail className="h-5 w-5" />
+              구독자
             </Link>
             <Link
               href={getBlogFediversePath(blogId)}

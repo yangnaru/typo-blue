@@ -58,6 +58,10 @@ export function getBlogNotificationsPath(slug: string) {
   return `/@${slug}/notifications`;
 }
 
+export function getBlogCalendarPath(slug: string) {
+  return `/@${slug}/calendar`;
+}
+
 export function getAccountChangeEmailPath() {
   return "/account/change-email";
 }
