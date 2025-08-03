@@ -13,7 +13,7 @@ import {
   List, 
   ListOrdered, 
   Link as LinkIcon, 
-  LinkBreak 
+  Unlink 
 } from "lucide-react";
 
 function Tiptap({
@@ -177,7 +177,7 @@ function Tiptap({
           aria-label="링크 제거"
           title="링크 제거"
         >
-          <LinkBreak className="h-4 w-4" />
+          <Unlink className="h-4 w-4" />
         </button>
       </div>
       <EditorContent editor={editor} />
