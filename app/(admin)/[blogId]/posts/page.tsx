@@ -31,6 +31,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { desc, eq, isNull } from "drizzle-orm";
 import { blog, postTable } from "@/drizzle/schema";
+import { convert } from "html-to-text";
 
 type PageProps = Promise<{
   blogId: string;
@@ -64,18 +65,16 @@ export default async function Dashboard(props: { params: PageProps }) {
   }
 
   // Helper function to calculate reading time
-  const calculateReadingTime = (content: string) => {
+  const calculateReadingTime = (wordCount: number) => {
     const wordsPerMinute = 200;
-    const wordCount = content.trim().split(/\s+/).length;
     return Math.ceil(wordCount / wordsPerMinute);
   };
 
   // Helper function to extract excerpt
-  const getExcerpt = (content: string, maxLength = 150) => {
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
-    return cleanContent.length > maxLength 
-      ? cleanContent.substring(0, maxLength) + '...'
-      : cleanContent;
+  const getExcerpt = (plainText: string, maxLength = 150) => {
+    return plainText.length > maxLength 
+      ? plainText.substring(0, maxLength) + '...'
+      : plainText;
   };
 
   return (
@@ -102,8 +101,13 @@ export default async function Dashboard(props: { params: PageProps }) {
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {currentBlog.posts.map((post) => {
           const emailSentAt = post.emailSent;
-          const readingTime = calculateReadingTime(post.content || '');
-          const excerpt = getExcerpt(post.content || '', 120);
+          const plainText = convert(post.content || '', {
+            wordwrap: false,
+            preserveNewlines: false,
+          }).trim();
+          const wordCount = plainText.split(/\s+/).length;
+          const readingTime = calculateReadingTime(wordCount);
+          const excerpt = getExcerpt(plainText, 120);
           const publishDate = post.first_published ?? post.published ?? post.updated;
           
           return (
@@ -170,7 +174,7 @@ export default async function Dashboard(props: { params: PageProps }) {
                     )}
                     <div className="flex items-center gap-1">
                       <FileText className="h-3 w-3" />
-                      {(post.content || '').trim().split(/\s+/).length}단어
+                      {wordCount}단어
                     </div>
                   </div>
                   
