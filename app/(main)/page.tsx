@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, ArrowRight } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { SELF_DESCRIPTION } from "@/lib/const";
+import { convert } from "html-to-text";
 
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -80,42 +81,34 @@ export default async function Home() {
               .filter((post) => {
                 // Filter out posts with empty or whitespace-only content
                 if (!post.content) return false;
-                // Remove all HTML tags and check if there's any non-whitespace text left
-                const plainText = post.content.replace(/<[^>]+>/g, "").trim();
+                const plainText = convert(post.content, {
+                  wordwrap: false,
+                  preserveNewlines: false,
+                }).trim();
                 return plainText.length > 0;
               })
               .map((post) => {
                 let firstSentence = "";
                 let isTruncated = false;
                 if (post.content) {
-                  // Extract the first <p>...</p> block (case-insensitive, dot matches newline)
-                  const match = post.content.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
-                  let firstParagraphText = "";
-                  if (match && match[1]) {
-                    // Remove any HTML tags from the paragraph
-                    firstParagraphText = match[1]
-                      .replace(/<[^>]+>/g, "")
-                      .trim();
-                  } else {
-                    // Fallback: remove all tags and use the plain text
-                    firstParagraphText = post.content
-                      .replace(/<[^>]+>/g, "")
-                      .trim();
-                  }
+                  // Convert HTML to plain text
+                  const plainText = convert(post.content, {
+                    wordwrap: false,
+                    preserveNewlines: false,
+                  }).trim();
+                  
                   // Extract the first sentence or reasonable preview
-                  const sentenceMatch =
-                    firstParagraphText.match(/.*?[.!?](?=\s|$)/);
+                  const sentenceMatch = plainText.match(/.*?[.!?](?=\s|$)/);
                   if (sentenceMatch) {
                     firstSentence = sentenceMatch[0];
-                    isTruncated =
-                      firstSentence.length < firstParagraphText.length;
-                  } else if (firstParagraphText.length <= 100) {
-                    // If paragraph is short, use the whole thing
-                    firstSentence = firstParagraphText;
+                    isTruncated = firstSentence.length < plainText.length;
+                  } else if (plainText.length <= 100) {
+                    // If text is short, use the whole thing
+                    firstSentence = plainText;
                     isTruncated = false;
                   } else {
                     // For longer text, truncate at word/character boundary
-                    firstSentence = firstParagraphText.slice(0, 80);
+                    firstSentence = plainText.slice(0, 80);
                     // Try to break at a space if possible
                     const lastSpace = firstSentence.lastIndexOf(" ");
                     if (lastSpace > 40) {

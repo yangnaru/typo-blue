@@ -51,6 +51,7 @@
     "drizzle-orm": "^0.42.0",
     "eslint": "^9.24.0",
     "eslint-config-next": "^15.4.5",
+    "html-entities": "^2.6.0",
     "html-to-text": "^9.0.5",
     "lucide-react": "^0.407.0",
     "next": "^15.4.5",
