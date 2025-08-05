@@ -82,10 +82,6 @@ export default async function SubscribersPage(props: { params: PageProps }) {
     (sum, s) => sum + Number(s.emailsSent),
     0
   );
-  const totalEmailsDelivered = subscribers.reduce(
-    (sum, s) => sum + Number(s.emailsDelivered),
-    0
-  );
   const totalEmailsOpened = subscribers.reduce(
     (sum, s) => sum + Number(s.emailsOpened),
     0
@@ -105,7 +101,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
       </div>
 
       {/* Overview Statistics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -127,20 +123,6 @@ export default async function SubscribersPage(props: { params: PageProps }) {
               </div>
             </div>
             <div className="text-2xl font-bold mt-1">{totalEmailsSent}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-emerald-500" />
-              <div className="text-sm font-medium text-muted-foreground">
-                전달
-              </div>
-            </div>
-            <div className="text-2xl font-bold mt-1">
-              {totalEmailsDelivered}
-            </div>
           </CardContent>
         </Card>
 
@@ -181,7 +163,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
                     발송
                   </TableHead>
                   <TableHead className="hidden sm:table-cell text-center">
-                    전달
+                    열람
                   </TableHead>
                   <TableHead className="hidden md:table-cell text-center">
                     실패
@@ -215,7 +197,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
                       <div className="flex items-center justify-center gap-1">
                         <CheckCircle className="h-3 w-3 text-green-500" />
                         <span className="text-sm font-medium">
-                          {subscriber.emailsDelivered}
+                          {subscriber.emailsOpened}
                         </span>
                       </div>
                     </TableCell>
