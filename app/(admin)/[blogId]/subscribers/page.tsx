@@ -63,6 +63,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
       created: mailingListSubscription.created,
       emailsSent: sql<number>`COALESCE(COUNT(${emailQueue.id}), 0)`,
       emailsDelivered: sql<number>`COALESCE(SUM(CASE WHEN ${emailQueue.status} = 'completed' THEN 1 ELSE 0 END), 0)`,
+      emailsOpened: sql<number>`COALESCE(SUM(CASE WHEN ${emailQueue.openedAt} IS NOT NULL THEN 1 ELSE 0 END), 0)`,
       emailsFailed: sql<number>`COALESCE(SUM(CASE WHEN ${emailQueue.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
       lastEmailSent: sql<Date | null>`MAX(${emailQueue.sentAt})`,
     })
@@ -85,10 +86,14 @@ export default async function SubscribersPage(props: { params: PageProps }) {
     (sum, s) => sum + Number(s.emailsDelivered),
     0
   );
-  const deliveryRate =
+  const totalEmailsOpened = subscribers.reduce(
+    (sum, s) => sum + Number(s.emailsOpened),
+    0
+  );
+  const openRate =
     totalEmailsSent > 0
-      ? Math.round((totalEmailsDelivered / totalEmailsSent) * 100)
-      : 100;
+      ? Math.round((totalEmailsOpened / totalEmailsSent) * 100)
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -144,10 +149,10 @@ export default async function SubscribersPage(props: { params: PageProps }) {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-orange-500" />
               <div className="text-sm font-medium text-muted-foreground">
-                전달률
+                열람률
               </div>
             </div>
-            <div className="text-2xl font-bold mt-1">{deliveryRate}%</div>
+            <div className="text-2xl font-bold mt-1">{openRate}%</div>
           </CardContent>
         </Card>
       </div>
