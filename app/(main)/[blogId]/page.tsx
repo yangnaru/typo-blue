@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { PenTool } from "lucide-react";
+import { BlogHeader } from "@/components/blog-header";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -130,8 +131,17 @@ export default async function BlogHome(props: { params: Params }) {
   await incrementVisitorCount(targetBlog.id);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <PageViewTracker blogId={targetBlog.id} />
+    <div className="min-h-screen flex flex-col">
+      <BlogHeader 
+        user={sessionUser} 
+        userBlogs={currentUser?.blogs} 
+        blogSlug={targetBlog.slug}
+        blogName={targetBlog.name || undefined}
+        isPostPage={false} 
+      />
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto">
+          <PageViewTracker blogId={targetBlog.id} />
 
       {/* Blog Header */}
       <div className="space-y-4 py-6">
@@ -216,6 +226,8 @@ export default async function BlogHome(props: { params: Params }) {
           </div>
         </div>
       )}
+        </div>
+      </main>
     </div>
   );
 }

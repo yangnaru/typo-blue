@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Edit } from "lucide-react";
 import { notFound } from "next/navigation";
+import { BlogHeader } from "@/components/blog-header";
 
 type MetadataParams = Promise<{
   postId: string;
@@ -102,6 +103,18 @@ export default async function BlogPost(props: { params: Params }) {
 
   const isCurrentUserBlogOwner = targetBlogUser.email === sessionUser?.email;
 
+  // Get user blogs for header
+  let userBlogs;
+  if (sessionUser) {
+    const currentUser = await db.query.user.findFirst({
+      where: eq(user.id, sessionUser.id),
+      with: {
+        blogs: true,
+      },
+    });
+    userBlogs = currentUser?.blogs;
+  }
+
   const uuid = (await props.params).postId;
   // If the postId is not a valid UUID, return a 404 error
   if (
@@ -123,8 +136,17 @@ export default async function BlogPost(props: { params: Params }) {
   await incrementVisitorCount(targetBlog.id);
 
   return (
-    <article className="max-w-4xl mx-auto">
-      <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
+    <div className="min-h-screen flex flex-col">
+      <BlogHeader 
+        user={sessionUser} 
+        userBlogs={userBlogs} 
+        blogSlug={targetBlog.slug}
+        blogName={targetBlog.name || undefined}
+        isPostPage={true} 
+      />
+      <main className="flex-1">
+        <article className="max-w-4xl mx-auto">
+          <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
 
       {/* Post Header */}
       <div className="pt-6 pb-3">
@@ -186,6 +208,8 @@ export default async function BlogPost(props: { params: Params }) {
       <div className="py-4">
         <Separator />
       </div>
-    </article>
+        </article>
+      </main>
+    </div>
   );
 }
