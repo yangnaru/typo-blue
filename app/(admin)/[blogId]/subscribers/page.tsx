@@ -17,7 +17,7 @@ import {
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { eq, sql, count, desc } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { blog, mailingListSubscription, emailQueue } from "@/drizzle/schema";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
@@ -29,7 +29,6 @@ import {
   Users,
   TrendingUp,
   Calendar,
-  Activity,
 } from "lucide-react";
 
 type PageProps = Promise<{
@@ -62,7 +61,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
       id: mailingListSubscription.id,
       email: mailingListSubscription.email,
       created: mailingListSubscription.created,
-      emailsSent: sql<number>`COALESCE(${count(emailQueue.id)}, 0)`,
+      emailsSent: sql<number>`COALESCE(COUNT(${emailQueue.id}), 0)`,
       emailsDelivered: sql<number>`COALESCE(SUM(CASE WHEN ${emailQueue.status} = 'completed' THEN 1 ELSE 0 END), 0)`,
       emailsFailed: sql<number>`COALESCE(SUM(CASE WHEN ${emailQueue.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
       lastEmailSent: sql<Date | null>`MAX(${emailQueue.sentAt})`,
@@ -70,7 +69,7 @@ export default async function SubscribersPage(props: { params: PageProps }) {
     .from(mailingListSubscription)
     .leftJoin(
       emailQueue,
-      eq(emailQueue.subscriberEmail, mailingListSubscription.email)
+      sql`${emailQueue.subscriberEmail} = ${mailingListSubscription.email} AND ${emailQueue.blogId} = ${currentBlog.id}`
     )
     .where(eq(mailingListSubscription.blogId, currentBlog.id))
     .groupBy(mailingListSubscription.id)
