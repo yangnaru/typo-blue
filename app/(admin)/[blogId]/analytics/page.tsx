@@ -247,12 +247,20 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                 </TableHeader>
                 <TableBody>
                   {visitorTrends.slice(-10).map((trend) => {
-                    const ratio = trend.uniqueVisitors > 0 ? (trend.visits / trend.uniqueVisitors).toFixed(1) : "0";
-                    
+                    const ratio =
+                      trend.uniqueVisitors > 0
+                        ? (trend.visits / trend.uniqueVisitors).toFixed(1)
+                        : "0";
+
                     return (
                       <TableRow key={trend.date}>
                         <TableCell className="text-center font-medium">
-                          {formatInTimeZone(new Date(trend.date), "Asia/Seoul", "MM/dd (E)", { locale: ko })}
+                          {formatInTimeZone(
+                            new Date(trend.date),
+                            "Asia/Seoul",
+                            "MM/dd (E)",
+                            { locale: ko }
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline">
@@ -262,15 +270,13 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         <TableCell className="text-center">
                           {formatNumber(trend.uniqueVisitors)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          {ratio}
-                        </TableCell>
+                        <TableCell className="text-center">{ratio}</TableCell>
                       </TableRow>
                     );
                   })}
                 </TableBody>
               </Table>
-              
+
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                 <span>최근 {visitorTrends.slice(-10).length}일 데이터</span>
                 <span>방문/순방문자 비율이 높을수록 재방문이 많음</span>
@@ -376,9 +382,6 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         emailAnalytics.reduce((sum, day) => sum + day.sent, 0)
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      최근 30일
-                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -394,9 +397,6 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      업계 평균: 21%
-                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -412,24 +412,21 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                         ) / Math.max(emailAnalytics.length, 1)
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      업계 평균: 2.6%
-                    </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">총 참여</CardTitle>
+                    <CardTitle className="text-sm">총 클릭 수</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {formatNumber(
-                        emailAnalytics.reduce((sum, day) => sum + day.clicked, 0)
+                        emailAnalytics.reduce(
+                          (sum, day) => sum + day.clicked,
+                          0
+                        )
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      총 클릭 수
-                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -451,7 +448,12 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                     {emailAnalytics.slice(-10).map((day) => (
                       <TableRow key={day.date}>
                         <TableCell className="text-center font-medium">
-                          {formatInTimeZone(new Date(day.date), "Asia/Seoul", "MM/dd (E)", { locale: ko })}
+                          {formatInTimeZone(
+                            new Date(day.date),
+                            "Asia/Seoul",
+                            "MM/dd (E)",
+                            { locale: ko }
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline">
@@ -474,11 +476,6 @@ export default async function AnalyticsPage(props: { params: PageProps }) {
                     ))}
                   </TableBody>
                 </Table>
-                
-                {/* Performance indicators */}
-                <div className="flex items-center justify-end text-xs text-muted-foreground pt-2 border-t">
-                  <span>최근 {emailAnalytics.slice(-10).length}일 데이터</span>
-                </div>
               </div>
             </div>
           ) : (
