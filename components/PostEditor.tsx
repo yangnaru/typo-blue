@@ -335,71 +335,81 @@ export default function PostEditor({
   return (
     <div className="max-w-prose mx-auto space-y-8" role="main" aria-label="블로그 글 편집">
       {/* Header with navigation and status */}
-      <div className="flex items-center justify-between pb-4" role="region" aria-label="글 상태 및 네비게이션">
-        <div className="flex items-center gap-4">
+      <div className="space-y-3 pb-4" role="region" aria-label="글 상태 및 네비게이션">
+        {/* Top row: Navigation and time info */}
+        <div className="flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push(getBlogPostsPath(blogId))}
-            className="gap-2"
+            className="gap-2 shrink-0"
           >
-            <ArrowLeft className="h-4 w-4" />글 목록으로
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">글 목록으로</span>
+            <span className="sm:hidden">목록</span>
           </Button>
-          <div className="flex items-center gap-2">
-            {publishedAt ? (
-              <Badge variant="default" className="gap-1">
-                <Eye className="h-3 w-3" />
-                발행됨
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="gap-1">
-                <Save className="h-3 w-3" />
-                초안
-              </Badge>
-            )}
-            {emailSent && (
-              <Badge variant="outline" className="gap-1">
-                <MailCheck className="h-3 w-3" />
-                이메일 발송됨
-              </Badge>
-            )}
-            
-            {/* Autosave status indicator */}
-            {publishedAt === null && autosaveStatus !== 'idle' && (
-              <div className={`transition-opacity duration-300 ${showAutosaveStatus ? 'opacity-100' : 'opacity-0'}`}>
-                {autosaveStatus === 'saving' && (
-                  <Badge variant="outline" className="gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    자동저장 중
-                  </Badge>
-                )}
-                {autosaveStatus === 'saved' && (
-                  <Badge variant="outline" className="gap-1 text-green-600 border-green-200">
-                    <CheckCircle className="h-3 w-3" />
-                    자동저장됨
-                  </Badge>
-                )}
-                {autosaveStatus === 'error' && (
-                  <Badge variant="outline" className="gap-1 text-red-600 border-red-200">
-                    <AlertCircle className="h-3 w-3" />
-                    저장 실패
-                  </Badge>
-                )}
-              </div>
+
+          <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+            {postId && (
+              <>
+                <Clock className="h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {lastAutosaved && publishedAt === null ? (
+                    <>자동저장: {formatInTimeZone(lastAutosaved, "Asia/Seoul", "HH:mm")}</>
+                  ) : (
+                    <>마지막 저장: {lastSaved}</>
+                  )}
+                </span>
+              </>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {postId && (
-            <>
-              <Clock className="h-4 w-4" />
-              {lastAutosaved && publishedAt === null ? (
-                <>자동저장: {formatInTimeZone(lastAutosaved, "Asia/Seoul", "HH:mm")}</>
-              ) : (
-                <>마지막 저장: {lastSaved}</>
+        {/* Bottom row: Status badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {publishedAt ? (
+            <Badge variant="default" className="gap-1">
+              <Eye className="h-3 w-3" />
+              발행됨
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="gap-1">
+              <Save className="h-3 w-3" />
+              초안
+            </Badge>
+          )}
+          {emailSent && (
+            <Badge variant="outline" className="gap-1">
+              <MailCheck className="h-3 w-3" />
+              이메일 발송됨
+            </Badge>
+          )}
+          
+          {/* Autosave status indicator */}
+          {publishedAt === null && autosaveStatus !== 'idle' && (
+            <div className={`transition-opacity duration-300 ${showAutosaveStatus ? 'opacity-100' : 'opacity-0'}`}>
+              {autosaveStatus === 'saving' && (
+                <Badge variant="outline" className="gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="hidden sm:inline">자동저장 중</span>
+                  <span className="sm:hidden">저장중</span>
+                </Badge>
               )}
-            </>
+              {autosaveStatus === 'saved' && (
+                <Badge variant="outline" className="gap-1 text-green-600 border-green-200">
+                  <CheckCircle className="h-3 w-3" />
+                  <span className="hidden sm:inline">자동저장됨</span>
+                  <span className="sm:hidden">저장됨</span>
+                </Badge>
+              )}
+              {autosaveStatus === 'error' && (
+                <Badge variant="outline" className="gap-1 text-red-600 border-red-200">
+                  <AlertCircle className="h-3 w-3" />
+                  <span className="hidden sm:inline">저장 실패</span>
+                  <span className="sm:hidden">실패</span>
+                </Badge>
+              )}
+            </div>
           )}
         </div>
       </div>
