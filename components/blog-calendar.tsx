@@ -437,7 +437,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Calendar - Left side on small screens and up */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 sm:mx-0 mx-auto">
                 {selectionMode === 'single' ? (
                   <Calendar
                     mode="single"
