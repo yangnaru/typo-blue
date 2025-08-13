@@ -39,9 +39,13 @@ function Tiptap({
       },
     },
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false, // Disable Link from StarterKit to avoid duplicate
+      }),
       Typography,
-      Link,
+      Link.configure({
+        openOnClick: false, // Don't open links while editing
+      }),
       Placeholder.configure({
         placeholder: "내용",
       }),
