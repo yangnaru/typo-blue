@@ -278,7 +278,7 @@ export default function PostEditor({
   }
 
   async function handleDelete() {
-    const res = await deletePost(blogId, existingPostId!);
+    const res = await deletePost(blogId, postId!);
 
     if (res.success) {
       toast.success("삭제되었습니다.");
