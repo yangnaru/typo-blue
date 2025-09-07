@@ -47,8 +47,6 @@ export function setupActorDispatcher() {
       }
     )
     .setKeyPairsDispatcher(async (ctx, identifier) => {
-      const { db } = ctx.data;
-
       // Find actor by treating identifier as blog slug
       const blog = await db.query.blog.findFirst({
         where: eq(blogTable.slug, identifier),
