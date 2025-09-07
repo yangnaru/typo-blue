@@ -55,9 +55,9 @@ export default async function RootLayout({
   params,
   children,
 }: {
-  params: {
+  params: Promise<{
     blogId: string;
-  };
+  }>;
   children: React.ReactNode;
 }) {
   const { user } = await getCurrentSession();
