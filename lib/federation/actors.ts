@@ -15,6 +15,7 @@ import {
   actorTable,
   followingTable,
 } from "@/drizzle/schema";
+import { db } from "../db";
 import { eq, sql } from "drizzle-orm";
 import type { Database, ContextData } from "./core";
 import { toDate, getNodeInfo, formatSemVer } from "./utils";
@@ -95,7 +96,6 @@ export async function persistActor(
   if (actor.id.origin === ctx.canonicalOrigin) {
     return await getPersistedActor(ctx.data.db, actor.id.href);
   }
-  const { db } = ctx.data;
   const instance = await persistInstance(db, actor.id.host);
   let handle: string;
   try {

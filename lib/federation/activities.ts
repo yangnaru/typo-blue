@@ -229,7 +229,6 @@ export async function onUnfollowed(
     outbox: false,
   });
   if (actor == null) return;
-  const { db } = fedCtx.data;
   const rows = await db
     .delete(followingTable)
     .where(
@@ -252,8 +251,6 @@ async function handleMentionOrQuote(
   create: Create,
   object: Note | Article
 ) {
-  const { db } = fedCtx.data;
-
   const actorObject = await create.getActor(fedCtx);
   if (!actorObject) return;
 
@@ -334,7 +331,6 @@ async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
   if (follow.id == null || follow.objectId == null) return;
   const followObject = fedCtx.parseUri(follow.objectId);
   if (followObject?.type !== "actor") return;
-  const { db } = fedCtx.data;
   const followee = await db.query.blog.findFirst({
     with: { actor: true },
     where: (blog, { eq }) => eq(blog.slug, followObject.identifier),
