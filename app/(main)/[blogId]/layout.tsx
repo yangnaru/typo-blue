@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { db } from "@/lib/db";
 import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -14,6 +15,8 @@ export default async function BlogLayout({
   children,
   params,
 }: BlogLayoutProps) {
+  await connection();
+
   const { user } = await getCurrentSession();
 
   let blogs;
@@ -32,7 +35,5 @@ export default async function BlogLayout({
     where: eq(blog.slug, blogId.replace("@", "")),
   });
 
-  return (
-    <>{children}</>
-  );
+  return <>{children}</>;
 }

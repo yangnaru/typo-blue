@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Metadata } from "next";
 import "../../../globals.css";
 import { Inter } from "next/font/google";
@@ -12,6 +13,8 @@ type Params = Promise<{ blogId: string }>;
 export async function generateMetadata(props: {
   params: Params;
 }): Promise<Metadata> {
+  await connection();
+
   const blogId = decodeURIComponent((await props.params).blogId);
   if (!blogId.startsWith("@")) {
     return {

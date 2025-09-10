@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import "../../globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,15 +42,22 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { blog } from "@/drizzle/schema";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
+import { Metadata } from "next";
 import { SELF_DESCRIPTION } from "@/lib/const";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "타이포 블루",
-  description: `${SELF_DESCRIPTION}.`,
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
-};
+export async function generateMetadata(props: {
+  params: Promise<{ blogId: string }>;
+}): Promise<Metadata> {
+  await connection();
+
+  return {
+    title: "타이포 블루",
+    description: `${SELF_DESCRIPTION}.`,
+    metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
+  };
+}
 
 export default async function RootLayout({
   params,
@@ -60,6 +68,8 @@ export default async function RootLayout({
   }>;
   children: React.ReactNode;
 }) {
+  await connection();
+
   const { user } = await getCurrentSession();
   const blogId = decodeURIComponent((await params).blogId).replace("@", "");
 

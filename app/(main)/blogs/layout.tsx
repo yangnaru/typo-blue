@@ -1,9 +1,18 @@
+import { connection } from "next/server";
 import Logo from "@/components/Logo";
 import React from "react";
 
-export default function BlogsLayout({ children }: { children: React.ReactNode }) {
-    return <>
-        <Logo />
-        {children}
+export default async function BlogsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await connection();
+
+  return (
+    <>
+      <Logo />
+      {children}
     </>
+  );
 }

@@ -1,11 +1,13 @@
+import { connection } from "next/server";
 import Logo from "@/components/Logo";
-import Link from "next/link";
 
-export default function AccountLayout({
+export default async function AccountLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await connection();
+
   return (
     <>
       <Logo />
