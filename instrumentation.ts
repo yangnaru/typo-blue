@@ -6,12 +6,17 @@ export async function register() {
     sinks: { console: getConsoleSink() },
     loggers: [
       {
-        category: ["fedify", "federation", "inbox"],
+        category: [],
+        sinks: ["console"],
         lowestLevel: "debug",
       },
       {
         category: ["logtape", "meta"],
         lowestLevel: "warning",
+      },
+      {
+        category: ["fedify", "federation", "inbox"],
+        lowestLevel: "debug",
       },
     ],
   });
