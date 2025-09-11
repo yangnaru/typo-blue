@@ -7,8 +7,11 @@ export async function register() {
     loggers: [
       {
         category: ["fedify", "federation", "inbox"],
-        sinks: ["console"],
         lowestLevel: "debug",
+      },
+      {
+        category: ["logtape", "meta"],
+        lowestLevel: "warning",
       },
     ],
   });
