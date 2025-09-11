@@ -15,7 +15,7 @@
     "@fedify/postgres": "^1.9.0-pr.405.1518",
     "@hookform/resolvers": "^3.10.0",
     "@js-temporal/polyfill": "^0.5.1",
-    "@logtape/logtape": "^1.0.4",
+    "@logtape/logtape": "^1.1.0",
     "@node-rs/argon2": "^1.8.3",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",

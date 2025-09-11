@@ -24,8 +24,8 @@ importers:
         specifier: ^0.5.1
         version: 0.5.1
       '@logtape/logtape':
-        specifier: ^1.0.4
-        version: 1.0.5
+        specifier: ^1.1.0
+        version: 1.1.0
       '@node-rs/argon2':
         specifier: ^1.8.3
         version: 1.8.3
@@ -807,8 +807,8 @@ packages:
     resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
     engines: {node: '>=12'}
 
-  '@logtape/logtape@1.0.5':
-    resolution: {integrity: sha512-RADMSLA9GyIKwYeNNlVhXBZIgTcdy3msWvUD7UglkiRZCFInogVP91V6cS8qStYKYZtXKA/SbLDLKmU9GOuXOA==}
+  '@logtape/logtape@1.1.0':
+    resolution: {integrity: sha512-WJksvFQQxHRm+OgyQWibeudPcJnYUIECxVRBnckPdotiyaF49dRmaaZylyHstO5is1dS3i3o/4XnoBZz8Uophw==}
 
   '@multiformats/base-x@4.0.1':
     resolution: {integrity: sha512-eMk0b9ReBbV23xXU693TAIrLyeO5iTgBZGSJfpqriG8UkYvr/hC9u9pyMlAakDNHWmbhMZCDs6KQO0jzKD8OTw==}
@@ -4272,7 +4272,7 @@ snapshots:
       '@cfworker/json-schema': 4.1.1
       '@hugoalh/http-header-link': 1.0.3
       '@js-temporal/polyfill': 0.5.1
-      '@logtape/logtape': 1.0.5
+      '@logtape/logtape': 1.1.0
       '@multiformats/base-x': 4.0.1
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.37.0
@@ -4300,7 +4300,7 @@ snapshots:
     dependencies:
       '@fedify/fedify': 1.9.0-pr.407.1544(web-streams-polyfill@3.3.3)
       '@js-temporal/polyfill': 0.5.1
-      '@logtape/logtape': 1.0.5
+      '@logtape/logtape': 1.1.0
       postgres: 3.4.7
 
   '@floating-ui/core@1.7.3':
@@ -4454,7 +4454,7 @@ snapshots:
     dependencies:
       jsbi: 4.3.2
 
-  '@logtape/logtape@1.0.5': {}
+  '@logtape/logtape@1.1.0': {}
 
   '@multiformats/base-x@4.0.1': {}
 
