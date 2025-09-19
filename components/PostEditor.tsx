@@ -87,24 +87,52 @@ export default function PostEditor({
   const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastContentRef = useRef({ title: existingTitle, content: existingContent });
-  const urlUpdatedRef = useRef(false);
+
+  // Refs to always access the latest values
+  const currentTitleRef = useRef(existingTitle);
+  const currentContentRef = useRef(existingContent);
+  const currentPostIdRef = useRef(existingPostId);
+  const isAutosavingRef = useRef(false);
+
+  // Update refs whenever values change
+  useEffect(() => {
+    currentTitleRef.current = title;
+    currentContentRef.current = content;
+  }, [title, content]);
+
+  useEffect(() => {
+    currentPostIdRef.current = postId;
+  }, [postId]);
 
   // Autosave function
-  const performAutosave = useCallback(async () => {
+  const performAutosave = async () => {
+    // Get the latest values from refs
+    const currentTitle = currentTitleRef.current;
+    const currentContent = currentContentRef.current;
+    const currentPostId = currentPostIdRef.current;
+
+    // Prevent concurrent autosaves
+    if (isAutosavingRef.current) {
+      return;
+    }
+
     // Only autosave if post is not published
     if (publishedAt !== null) {
       return;
     }
 
     // Don't autosave empty posts
-    if (!title.trim() && !content.trim()) {
+    if (!currentTitle.trim() && !currentContent.trim()) {
       return;
     }
 
     // Check if content actually changed
-    if (lastContentRef.current.title === title && lastContentRef.current.content === content) {
+    if (lastContentRef.current.title === currentTitle && lastContentRef.current.content === currentContent) {
       return;
     }
+
+    // Set autosaving flag
+    isAutosavingRef.current = true;
 
     setAutosaveStatus('saving');
     setShowAutosaveStatus(true);
@@ -115,26 +143,22 @@ export default function PostEditor({
     }
     
     try {
-      const res = await autosaveDraftPost(blogId, postId, title, content);
+      const res = await autosaveDraftPost(blogId, currentPostId, currentTitle, currentContent);
       
       if (res.success) {
         // Update postId if this was a new post
-        if (!postId) {
+        if (!currentPostId) {
           setPostId(res.postId);
-          // Update URL for new posts without navigation (to prevent flicker)
-          if (!urlUpdatedRef.current) {
-            const editPath = getBlogPostEditPath(blogId, res.postId);
-            if (window.location.pathname !== editPath) {
-              window.history.replaceState(null, '', editPath);
-              urlUpdatedRef.current = true;
-            }
-          }
+          // Immediately update the ref to prevent race conditions
+          currentPostIdRef.current = res.postId;
+          // Don't update URL during autosave to prevent Next.js re-render issues
+          // The URL will be updated when user manually saves
         }
-        
-        lastContentRef.current = { title, content };
+
+        lastContentRef.current = { title: currentTitle, content: currentContent };
         setLastAutosaved(new Date());
         setAutosaveStatus('saved');
-        
+
         // Start fade out after 2 seconds
         fadeTimeoutRef.current = setTimeout(() => {
           setShowAutosaveStatus(false);
@@ -157,8 +181,11 @@ export default function PostEditor({
         setShowAutosaveStatus(false);
         setTimeout(() => setAutosaveStatus('idle'), 300);
       }, 4000);
+    } finally {
+      // Always clear the autosaving flag
+      isAutosavingRef.current = false;
     }
-  }, [blogId, postId, title, content, publishedAt]);
+  };
 
   // Show autosave status immediately when saving starts
   useEffect(() => {
@@ -189,7 +216,7 @@ export default function PostEditor({
         clearTimeout(fadeTimeoutRef.current);
       }
     };
-  }, [title, content, performAutosave, publishedAt]);
+  }, [title, content, publishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle browser navigation/close to prevent losing unsaved changes
   useEffect(() => {
@@ -213,7 +240,7 @@ export default function PostEditor({
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [title, content, publishedAt, performAutosave]);
+  }, [title, content, publishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);

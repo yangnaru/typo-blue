@@ -3,7 +3,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { 
   Heading1, 
   Heading2, 
@@ -51,6 +51,9 @@ function Tiptap({
       }),
     ],
   });
+
+  // Removed content sync to prevent data loss during re-renders
+  // The editor maintains its own state and only updates via user input
 
   const setLink = useCallback(() => {
     const previousUrl = editor?.getAttributes("link").href;
