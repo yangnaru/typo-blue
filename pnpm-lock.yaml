@@ -109,11 +109,11 @@ importers:
         specifier: 19.1.9
         version: 19.1.9(@types/react@19.1.13)
       '@upyo/core':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@upyo/mailgun':
-        specifier: ^0.1.1
-        version: 0.1.1(@upyo/core@0.1.1)
+        specifier: ^0.3.0
+        version: 0.3.0(@upyo/core@0.3.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2264,15 +2264,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@upyo/core@0.1.1':
-    resolution: {integrity: sha512-uyI6U9Zk56XgVLV3rWQsdJRE2RzCIHBAmHbFkHB3cNqyW0yNnBj18aQZp9SP0GhfrQ60K+uAAsl6eX81wp8vIw==}
+  '@upyo/core@0.3.0':
+    resolution: {integrity: sha512-S6M+5Ptp+t8ZA9MxgEcLA5qOidrOcYEwD8/W5pFovAUT0fEItiNnux8xIc0V3KXfVHRRjiyO+rEz+GXo3fEzoA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@upyo/mailgun@0.1.1':
-    resolution: {integrity: sha512-n0/OcPoTDrSFPGj+NRVa6EkXz+NyrzOCrr+mSk2WKLXfJe2B8zoNfftW2ZasajZwhpeq+Nw5VcubcrrTV8W38w==}
+  '@upyo/mailgun@0.3.0':
+    resolution: {integrity: sha512-VHgfd5ZFnuKWdn5VOYu0zI4RJO78D8cphDMCqC6RTZG91a+a+lPRjLnjLOx3MSJE3LDVHAlY/7bhH4U18DAUhA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     peerDependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.3.0
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -5932,11 +5932,11 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@upyo/core@0.1.1': {}
+  '@upyo/core@0.3.0': {}
 
-  '@upyo/mailgun@0.1.1(@upyo/core@0.1.1)':
+  '@upyo/mailgun@0.3.0(@upyo/core@0.3.0)':
     dependencies:
-      '@upyo/core': 0.1.1
+      '@upyo/core': 0.3.0
 
   abort-controller@3.0.0:
     dependencies:
