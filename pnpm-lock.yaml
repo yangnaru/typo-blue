@@ -28,8 +28,8 @@ importers:
         specifier: ^0.5.1
         version: 0.5.1
       '@logtape/logtape':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.1.1
+        version: 1.1.1
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.0.2
@@ -74,28 +74,28 @@ importers:
         version: 4.1.13
       '@tiptap/extension-document':
         specifier: ^3
-        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))
+        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))
       '@tiptap/extension-link':
         specifier: ^3
-        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)
+        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)
       '@tiptap/extension-paragraph':
         specifier: ^3
-        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))
+        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))
       '@tiptap/extension-placeholder':
         specifier: ^3
-        version: 3.4.2(@tiptap/extensions@3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.4))
+        version: 3.4.2(@tiptap/extensions@3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2))
       '@tiptap/extension-text':
         specifier: ^3
-        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))
+        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))
       '@tiptap/extension-typography':
         specifier: ^3
-        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))
+        version: 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))
       '@tiptap/pm':
         specifier: ^3
         version: 3.4.2
       '@tiptap/react':
         specifier: ^3
-        version: 3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@tiptap/starter-kit':
         specifier: ^3
         version: 3.4.4
@@ -967,8 +967,8 @@ packages:
     resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
     engines: {node: '>=12'}
 
-  '@logtape/logtape@1.1.0':
-    resolution: {integrity: sha512-WJksvFQQxHRm+OgyQWibeudPcJnYUIECxVRBnckPdotiyaF49dRmaaZylyHstO5is1dS3i3o/4XnoBZz8Uophw==}
+  '@logtape/logtape@1.1.1':
+    resolution: {integrity: sha512-/zpMuB2BZnL3LnBsy6PfFJp/4qP/60U9hE5j6eFwk25wBVtLpd7/bF3B1j7cnMD37R02fFyDyyHEmRSOz6+Qfg==}
 
   '@multiformats/base-x@4.0.1':
     resolution: {integrity: sha512-eMk0b9ReBbV23xXU693TAIrLyeO5iTgBZGSJfpqriG8UkYvr/hC9u9pyMlAakDNHWmbhMZCDs6KQO0jzKD8OTw==}
@@ -4546,7 +4546,7 @@ snapshots:
       '@cfworker/json-schema': 4.1.1
       '@hugoalh/http-header-link': 1.0.3
       '@js-temporal/polyfill': 0.5.1
-      '@logtape/logtape': 1.1.0
+      '@logtape/logtape': 1.1.1
       '@multiformats/base-x': 4.0.1
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.37.0
@@ -4574,7 +4574,7 @@ snapshots:
     dependencies:
       '@fedify/fedify': 1.9.0-pr.407.1544(web-streams-polyfill@3.3.3)
       '@js-temporal/polyfill': 0.5.1
-      '@logtape/logtape': 1.1.0
+      '@logtape/logtape': 1.1.1
       postgres: 3.4.7
 
   '@floating-ui/core@1.7.3':
@@ -4729,7 +4729,7 @@ snapshots:
     dependencies:
       jsbi: 4.3.2
 
-  '@logtape/logtape@1.1.0': {}
+  '@logtape/logtape@1.1.1': {}
 
   '@multiformats/base-x@4.0.1': {}
 
@@ -5493,7 +5493,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-bubble-menu@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)':
+  '@tiptap/extension-bubble-menu@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)':
     dependencies:
       '@floating-ui/dom': 1.7.4
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
@@ -5513,7 +5513,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-document@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))':
+  '@tiptap/extension-document@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
@@ -5525,7 +5525,7 @@ snapshots:
     dependencies:
       '@tiptap/extensions': 3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-floating-menu@3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)':
+  '@tiptap/extension-floating-menu@3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)':
     dependencies:
       '@floating-ui/dom': 1.7.4
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
@@ -5553,7 +5553,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-link@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)':
+  '@tiptap/extension-link@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
       '@tiptap/pm': 3.4.2
@@ -5582,7 +5582,7 @@ snapshots:
     dependencies:
       '@tiptap/extension-list': 3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-paragraph@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))':
+  '@tiptap/extension-paragraph@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
@@ -5590,7 +5590,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-placeholder@3.4.2(@tiptap/extensions@3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.4))':
+  '@tiptap/extension-placeholder@3.4.2(@tiptap/extensions@3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2))':
     dependencies:
       '@tiptap/extensions': 3.4.4(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.4)
 
@@ -5598,7 +5598,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-text@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))':
+  '@tiptap/extension-text@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
@@ -5606,7 +5606,7 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
-  '@tiptap/extension-typography@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))':
+  '@tiptap/extension-typography@3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
 
@@ -5661,7 +5661,7 @@ snapshots:
       prosemirror-transform: 1.10.4
       prosemirror-view: 1.41.0
 
-  '@tiptap/react@3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@tiptap/react@3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)(@types/react-dom@19.1.9(@types/react@19.1.13))(@types/react@19.1.13)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@tiptap/core': 3.4.4(@tiptap/pm@3.4.4)
       '@tiptap/pm': 3.4.2
@@ -5673,8 +5673,8 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       use-sync-external-store: 1.5.0(react@19.1.1)
     optionalDependencies:
-      '@tiptap/extension-bubble-menu': 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)
-      '@tiptap/extension-floating-menu': 3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.4))(@tiptap/pm@3.4.2)
+      '@tiptap/extension-bubble-menu': 3.4.2(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)
+      '@tiptap/extension-floating-menu': 3.4.2(@floating-ui/dom@1.7.4)(@tiptap/core@3.4.4(@tiptap/pm@3.4.2))(@tiptap/pm@3.4.2)
     transitivePeerDependencies:
       - '@floating-ui/dom'
 
