@@ -342,7 +342,13 @@ export default function PostEditor({
 
   // Calculate post statistics
   const wordCount = useMemo(() => {
-    const cleanContent = content.replace(/<[^>]*>/g, "").trim();
+    let cleanContent = content;
+    let prev;
+    do {
+      prev = cleanContent;
+      cleanContent = cleanContent.replace(/<[^>]*>/g, "");
+    } while (cleanContent !== prev);
+    cleanContent = cleanContent.trim();
     return cleanContent.split(/\s+/).filter((word) => word.length > 0).length;
   }, [content]);
 
