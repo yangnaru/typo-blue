@@ -13,7 +13,7 @@
     "@fedify/fedify": "^1.9.0-pr.405.1518",
     "@fedify/next": "^1.9.0-pr.405.1518",
     "@fedify/postgres": "^1.9.0-pr.405.1518",
-    "@hookform/resolvers": "^3.10.0",
+    "@hookform/resolvers": "^5.2.2",
     "@js-temporal/polyfill": "^0.5.1",
     "@logtape/logtape": "^1.1.0",
     "@node-rs/argon2": "^1.8.3",
