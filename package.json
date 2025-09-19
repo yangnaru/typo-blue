@@ -71,7 +71,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^4.1.11",
     "tailwindcss-animate": "^1.0.7",
-    "tsx": "^3.12.7",
+    "tsx": "^4.20.5",
     "typescript": "^5.6.3",
     "x-forwarded-fetch": "^0.2.0",
     "xmlbuilder2": "^3.1.1",
