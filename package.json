@@ -37,7 +37,7 @@
     "@tiptap/extension-placeholder": "^3.6.7",
     "@tiptap/extension-text": "^3.6.7",
     "@tiptap/extension-typography": "^3.6.7",
-    "@tiptap/pm": "^3.6.7",
+    "@tiptap/pm": "^3.7.2",
     "@tiptap/react": "^3.6.7",
     "@tiptap/starter-kit": "^3.6.7",
     "@types/node": "^24.7.2",
