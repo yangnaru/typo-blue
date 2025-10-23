@@ -12,7 +12,7 @@ COPY scripts/ scripts/
 COPY components.json \
      drizzle.config.ts \
      instrumentation.ts \
-     middleware.ts \
+     proxy.ts \
      next.config.js \
      package.json \
      pnpm-lock.yaml \
