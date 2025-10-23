@@ -1,6 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ['@node-rs/argon2']
+    serverExternalPackages: ['@node-rs/argon2'],
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'r2.typo.blue',
+            },
+            {
+                protocol: 'https',
+                hostname: '**.r2.dev',
+            },
+            {
+                protocol: 'https',
+                hostname: '**.r2.cloudflarestorage.com',
+            },
+        ],
+    },
 }
 
 module.exports = nextConfig

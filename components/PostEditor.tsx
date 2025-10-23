@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import Tiptap from "./Tiptap";
+import Tiptap, { TiptapRef } from "./Tiptap";
+import { ImageThumbnail, ImageData } from "./ImageThumbnail";
 import format from "date-fns/format";
 import formatInTimeZone from "date-fns-tz/formatInTimeZone";
 import {
@@ -51,6 +52,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 
 export default function PostEditor({
@@ -79,7 +82,13 @@ export default function PostEditor({
   const [emailSent, setEmailSent] = useState(existingEmailSent);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
+  // Image upload state
+  const [images, setImages] = useState<ImageData[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<TiptapRef>(null);
+
   // Autosave state
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [showAutosaveStatus, setShowAutosaveStatus] = useState(false);
@@ -103,6 +112,111 @@ export default function PostEditor({
   useEffect(() => {
     currentPostIdRef.current = postId;
   }, [postId]);
+
+  // Load images when postId changes
+  useEffect(() => {
+    if (postId) {
+      loadImages();
+    }
+  }, [postId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadImages = async () => {
+    if (!postId) return;
+
+    try {
+      const response = await fetch(`/api/images?postId=${postId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setImages(data);
+      }
+    } catch (error) {
+      console.error("Failed to load images:", error);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+
+    try {
+      let uploadPostId = postId;
+
+      // If there's no postId yet, auto-save the post first
+      if (!uploadPostId) {
+        toast("글을 저장하는 중...");
+
+        // For empty posts, we need to call autosaveDraftPost directly
+        // because performAutosave returns early for empty posts
+        const res = await autosaveDraftPost(blogId, null, title || "", content || "");
+
+        if (res.success && res.postId) {
+          uploadPostId = res.postId;
+          setPostId(res.postId);
+          currentPostIdRef.current = res.postId;
+          lastContentRef.current = { title: title || "", content: content || "" };
+        } else {
+          toast.error("글 저장에 실패했습니다.");
+          setIsUploadingImage(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          return;
+        }
+      }
+
+      const file = files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("postId", uploadPostId);
+
+      const response = await fetch("/api/images/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const newImage = await response.json();
+        setImages((prev) => [...prev, newImage]);
+        toast.success("이미지가 업로드되었습니다.");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "이미지 업로드에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("이미지 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsUploadingImage(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleImageDelete = async (imageId: string) => {
+    try {
+      const response = await fetch(`/api/images/${imageId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setImages((prev) => prev.filter((img) => img.id !== imageId));
+        toast.success("이미지가 삭제되었습니다.");
+      } else {
+        toast.error("이미지 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("Image delete failed:", error);
+      toast.error("이미지 삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    editorRef.current?.insertImage(imageUrl);
+  };
 
   // Autosave function
   const performAutosave = async () => {
@@ -470,6 +584,7 @@ export default function PostEditor({
         <CardContent className="p-6">
           <div role="region" aria-label="글 내용 편집기" aria-describedby="editor-help">
             <Tiptap
+              ref={editorRef}
               name="content"
               content={content}
               className={`prose dark:prose-invert max-w-none ${editorMinHeight} focus:outline-none border-0 shadow-none p-0 bg-transparent transition-all duration-300`}
@@ -480,6 +595,71 @@ export default function PostEditor({
           </div>
           <div id="editor-help" className="sr-only">
             리치 텍스트 에디터입니다. 위의 도구모음 버튼을 사용하여 텍스트를 서식화할 수 있습니다.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Image upload section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ImageIcon className="h-4 w-4" />
+            이미지
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="image-upload"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="gap-2"
+              >
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    업로드 중...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    이미지 업로드
+                  </>
+                )}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                클릭하여 이미지를 삽입하세요
+              </span>
+            </div>
+
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {images.map((image) => (
+                  <ImageThumbnail
+                    key={image.id}
+                    image={image}
+                    onDelete={handleImageDelete}
+                    onClick={() => handleImageClick(image.url)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {images.length === 0 && !isUploadingImage && postId && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                업로드된 이미지가 없습니다
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

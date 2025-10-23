@@ -418,3 +418,48 @@ export const notificationTable = pgTable(
     ),
   ]
 );
+
+export const imageTable = pgTable(
+  "image",
+  {
+    id: uuid()
+      .primaryKey()
+      .notNull()
+      .default(sql`gen_random_uuid()`),
+    width: integer().notNull(),
+    height: integer().notNull(),
+    filename: text().notNull(),
+    key: text().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("image_created_at_idx").on(table.createdAt),
+  ]
+);
+
+export const postImageTable = pgTable(
+  "post_image",
+  {
+    id: uuid()
+      .primaryKey()
+      .notNull()
+      .default(sql`gen_random_uuid()`),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => postTable.id, { onDelete: "cascade" }),
+    imageId: uuid("image_id")
+      .notNull()
+      .references(() => imageTable.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .default(currentTimestamp),
+  },
+  (table) => [
+    index("post_image_post_id_idx").on(table.postId),
+    index("post_image_image_id_idx").on(table.imageId),
+    unique("post_image_post_id_image_id_unique").on(table.postId, table.imageId),
+  ]
+);

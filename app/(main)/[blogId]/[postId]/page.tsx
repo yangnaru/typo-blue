@@ -137,77 +137,87 @@ export default async function BlogPost(props: { params: Params }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <BlogHeader 
-        user={sessionUser} 
-        userBlogs={userBlogs} 
+      <BlogHeader
+        user={sessionUser}
+        userBlogs={userBlogs}
         blogSlug={targetBlog.slug}
         blogName={targetBlog.name || undefined}
-        isPostPage={true} 
+        isPostPage={true}
       />
       <main className="flex-1">
         <article className="max-w-4xl mx-auto">
           <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
 
-      {/* Post Header */}
-      <div className="pt-6 pb-3">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-3 flex-1">
-              <h1 className="text-4xl font-bold tracking-tight break-keep leading-tight">
-                {targetPost.title === "" ? "무제" : targetPost.title}
-              </h1>
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">
-                    {formatInTimeZone(
-                      targetPost.first_published ??
-                        targetPost.published ??
-                        targetPost.updated,
-                      "Asia/Seoul",
-                      "yyyy-MM-dd HH:mm"
+          {/* Post Header */}
+          <div className="pt-6 pb-3">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-3 flex-1">
+                  <h1 className="text-4xl font-bold tracking-tight break-keep leading-tight">
+                    {targetPost.title === "" ? "무제" : targetPost.title}
+                  </h1>
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm">
+                        {formatInTimeZone(
+                          targetPost.first_published ??
+                            targetPost.published ??
+                            targetPost.updated,
+                          "Asia/Seoul",
+                          "yyyy-MM-dd HH:mm"
+                        )}
+                      </span>
+                    </div>
+                    {!targetPost.published && (
+                      <Badge variant="secondary" className="text-xs">
+                        초안
+                      </Badge>
                     )}
-                  </span>
+                  </div>
                 </div>
-                {!targetPost.published && (
-                  <Badge variant="secondary" className="text-xs">
-                    초안
-                  </Badge>
+                {isCurrentUserBlogOwner && (
+                  <Button asChild>
+                    <Link
+                      href={getBlogPostEditPath(
+                        slug,
+                        (await props.params).postId
+                      )}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      수정
+                    </Link>
+                  </Button>
                 )}
               </div>
             </div>
-            {isCurrentUserBlogOwner && (
-              <Button asChild>
-                <Link
-                  href={getBlogPostEditPath(slug, (await props.params).postId)}
-                  className="flex items-center gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  수정
-                </Link>
-              </Button>
-            )}
           </div>
-        </div>
-      </div>
 
-      <div className="py-4">
-        <Separator />
-      </div>
+          <div className="py-4">
+            <Separator />
+          </div>
 
-      {/* Post Content */}
-      <div className="py-6">
-        <div
-          className="prose dark:prose-invert max-w-none break-keep prose-headings:scroll-mt-24 prose-pre:bg-muted prose-pre:border"
-          dangerouslySetInnerHTML={{
-            __html: sanitize(targetPost.content ?? ""),
-          }}
-        />
-      </div>
+          {/* Post Content */}
+          <div className="py-6">
+            <div
+              className="prose dark:prose-invert max-w-none break-keep prose-headings:scroll-mt-24 prose-pre:bg-muted prose-pre:border"
+              dangerouslySetInnerHTML={{
+                __html: sanitize(targetPost.content ?? "", {
+                  allowedTags: sanitize.defaults.allowedTags.concat(["img"]),
+                  allowedAttributes: {
+                    ...sanitize.defaults.allowedAttributes,
+                    img: ["src", "alt", "title", "width", "height", "loading"],
+                  },
+                  allowedSchemes: ["https"],
+                }),
+              }}
+            />
+          </div>
 
-      <div className="py-4">
-        <Separator />
-      </div>
+          <div className="py-4">
+            <Separator />
+          </div>
         </article>
       </main>
     </div>

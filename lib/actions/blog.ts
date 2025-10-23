@@ -3,9 +3,10 @@
 import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
-import { blog, postTable } from "@/drizzle/schema";
+import { blog, postTable, imageTable, postImageTable } from "@/drizzle/schema";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
+import { deleteFromR2 } from "../r2";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -170,6 +171,35 @@ export async function deletePost(blogSlug: string, postId: string) {
     throw new Error("블로그를 찾을 수 없습니다.");
   }
 
+  // First, get all images associated with this post through the junction table
+  const imageResults = await db
+    .select({
+      id: imageTable.id,
+      key: imageTable.key,
+    })
+    .from(postImageTable)
+    .innerJoin(imageTable, eq(postImageTable.imageId, imageTable.id))
+    .where(eq(postImageTable.postId, uuid));
+
+  // Delete images from R2 and database
+  for (const image of imageResults) {
+    try {
+      await deleteFromR2(image.key);
+    } catch (error) {
+      console.error(`Failed to delete image from R2: ${image.key}`, error);
+      // Continue with other images even if one fails
+    }
+  }
+
+  // Delete all image records from database (junction records will cascade delete)
+  if (imageResults.length > 0) {
+    const imageIds = imageResults.map((img) => img.id);
+    await db.delete(imageTable).where(
+      sql`${imageTable.id} = ANY(${imageIds})`
+    );
+  }
+
+  // Now delete the post
   await db
     .update(postTable)
     .set({

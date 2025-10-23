@@ -1,32 +1,37 @@
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
+import Image from "@tiptap/extension-image";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect } from "react";
-import { 
-  Heading1, 
-  Heading2, 
-  Heading3, 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  Link as LinkIcon, 
-  Unlink 
+import { useCallback, useEffect, useImperativeHandle, forwardRef } from "react";
+import {
+  Heading1,
+  Heading2,
+  Heading3,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  Unlink
 } from "lucide-react";
 
-function Tiptap({
-  name,
-  content,
-  className,
-  onChange,
-}: {
+export interface TiptapRef {
+  insertImage: (url: string, alt?: string) => void;
+}
+
+const Tiptap = forwardRef<TiptapRef, {
   name: string;
   content: string;
   className: string;
   onChange: (name: string, content: string) => void;
-}) {
+}>(({
+  name,
+  content,
+  className,
+  onChange,
+}, ref) => {
   const editor = useEditor({
     immediatelyRender: false,
     content: content,
@@ -46,6 +51,10 @@ function Tiptap({
       Link.configure({
         openOnClick: false, // Don't open links while editing
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: false,
+      }),
       Placeholder.configure({
         placeholder: "내용",
       }),
@@ -54,6 +63,13 @@ function Tiptap({
 
   // Removed content sync to prevent data loss during re-renders
   // The editor maintains its own state and only updates via user input
+
+  // Expose insertImage method via ref
+  useImperativeHandle(ref, () => ({
+    insertImage: (url: string, alt?: string) => {
+      editor?.chain().focus().setImage({ src: url, alt }).run();
+    },
+  }), [editor]);
 
   const setLink = useCallback(() => {
     const previousUrl = editor?.getAttributes("link").href;
@@ -190,6 +206,8 @@ function Tiptap({
       <EditorContent editor={editor} />
     </div>
   );
-}
+});
+
+Tiptap.displayName = "Tiptap";
 
 export default Tiptap;

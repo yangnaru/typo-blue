@@ -169,6 +169,13 @@
       "when": 1754209816827,
       "tag": "0023_equal_ravenous",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1761206633780,
+      "tag": "0024_eminent_karen_page",
+      "breakpoints": true
     }
   ]
 }
