@@ -1,0 +1,29 @@
+services:
+  typo-blue:
+    env_file: ".env"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: typo-blue
+    ports:
+      - "23000:3000"
+    networks:
+      - typo-blue-network
+    restart: always
+
+  typo-blue-email-worker:
+    env_file: ".env"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: typo-blue-email-worker
+    ports:
+      - "23000:3000"
+    networks:
+      - typo-blue-network
+    restart: always
+    command: ["pnpm", "run", "email-worker"]
+
+networks:
+  typo-blue-network:
+    driver: bridge
