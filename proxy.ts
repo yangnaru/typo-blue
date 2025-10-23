@@ -16,7 +16,6 @@ export default fedifyWith(federation)();
 // "Accept" header matching the federation accept regex.
 // More details: https://nextjs.org/docs/app/api-reference/file-conventions/middleware#config-object-optional
 export const config = {
-  runtime: "nodejs",
   matcher: [
     {
       source: "/:path*",
@@ -40,5 +39,5 @@ export const config = {
     },
     { source: "/.well-known/nodeinfo" },
     { source: "/.well-known/x-nodeinfo2" },
-  ],
+  ]
 };
