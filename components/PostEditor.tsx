@@ -166,27 +166,53 @@ export default function PostEditor({
         }
       }
 
-      const file = files[0];
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("postId", uploadPostId);
+      // Upload all files
+      const fileArray = Array.from(files);
+      const uploadPromises = fileArray.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("postId", uploadPostId);
 
-      const response = await fetch("/api/images/upload", {
-        method: "POST",
-        body: formData,
+        const response = await fetch("/api/images/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          return { success: true, image: await response.json() };
+        } else {
+          const error = await response.json();
+          return { success: false, error: error.error || "업로드 실패" };
+        }
       });
 
-      if (response.ok) {
-        const newImage = await response.json();
-        setImages((prev) => [...prev, newImage]);
+      const results = await Promise.all(uploadPromises);
 
-        // Automatically insert the image into the editor
-        editorRef.current?.insertImage(newImage.url, newImage.filename);
+      // Process results
+      const successfulUploads = results.filter(r => r.success);
+      const failedUploads = results.filter(r => !r.success);
 
-        toast.success("이미지가 업로드되었습니다.");
+      // Add all successful images to state at once
+      const newImages = successfulUploads
+        .filter((result) => result.success && result.image)
+        .map((result) => result.image!);
+
+      if (newImages.length > 0) {
+        setImages((prev) => [...prev, ...newImages]);
+
+        // Automatically insert each image into the editor
+        newImages.forEach((image) => {
+          editorRef.current?.insertImage(image.url, image.filename);
+        });
+      }
+
+      // Show appropriate toast messages
+      if (successfulUploads.length > 0 && failedUploads.length === 0) {
+        toast.success(`이미지 ${successfulUploads.length}개가 업로드되었습니다.`);
+      } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
+        toast.warning(`${successfulUploads.length}개 업로드 성공, ${failedUploads.length}개 실패`);
       } else {
-        const error = await response.json();
-        toast.error(error.error || "이미지 업로드에 실패했습니다.");
+        toast.error("이미지 업로드에 실패했습니다.");
       }
     } catch (error) {
       console.error("Image upload failed:", error);
@@ -621,6 +647,7 @@ export default function PostEditor({
                 onChange={handleImageUpload}
                 className="hidden"
                 id="image-upload"
+                multiple
               />
               <Button
                 variant="outline"
@@ -642,7 +669,7 @@ export default function PostEditor({
                 )}
               </Button>
               <span className="text-sm text-muted-foreground">
-                클릭하여 이미지를 삽입하세요
+                여러 이미지를 선택할 수 있습니다
               </span>
             </div>
 
