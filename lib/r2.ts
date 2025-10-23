@@ -1,22 +1,6 @@
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 
-if (!process.env.R2_ENDPOINT_URL) {
-  throw new Error("R2_ENDPOINT_URL is not set");
-}
-if (!process.env.R2_ACCESS_KEY_ID) {
-  throw new Error("R2_ACCESS_KEY_ID is not set");
-}
-if (!process.env.R2_SECRET_ACCESS_KEY) {
-  throw new Error("R2_SECRET_ACCESS_KEY is not set");
-}
-if (!process.env.R2_BUCKET_NAME) {
-  throw new Error("R2_BUCKET_NAME is not set");
-}
-if (!process.env.NEXT_PUBLIC_R2_PUBLIC_URL) {
-  throw new Error("NEXT_PUBLIC_R2_PUBLIC_URL is not set");
-}
-
 const R2_ENDPOINT_URL = process.env.R2_ENDPOINT_URL;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
@@ -25,17 +9,14 @@ const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
 
 const r2Client = new S3Client({
   region: "auto",
-  endpoint: R2_ENDPOINT_URL,
+  endpoint: R2_ENDPOINT_URL!,
   credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
+    accessKeyId: R2_ACCESS_KEY_ID!,
+    secretAccessKey: R2_SECRET_ACCESS_KEY!,
   },
 });
 
-export async function uploadToR2(
-  file: File,
-  key: string
-): Promise<string> {
+export async function uploadToR2(file: File, key: string): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const upload = new Upload({
