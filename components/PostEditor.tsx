@@ -179,6 +179,10 @@ export default function PostEditor({
       if (response.ok) {
         const newImage = await response.json();
         setImages((prev) => [...prev, newImage]);
+
+        // Automatically insert the image into the editor
+        editorRef.current?.insertImage(newImage.url, newImage.filename);
+
         toast.success("이미지가 업로드되었습니다.");
       } else {
         const error = await response.json();
