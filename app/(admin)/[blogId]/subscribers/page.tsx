@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { formatInTimeZone } from "date-fns-tz";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq, sql, desc } from "drizzle-orm";

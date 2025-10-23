@@ -33,7 +33,7 @@ import {
   Bell,
   MessageCircle,
 } from "lucide-react";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { formatInTimeZone } from "date-fns-tz";
 import { ko } from "date-fns/locale";
 
 type PageProps = Promise<{

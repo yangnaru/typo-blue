@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Tiptap, { TiptapRef } from "./Tiptap";
 import { ImageThumbnail, ImageData } from "./ImageThumbnail";
-import format from "date-fns/format";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import {
   deletePost,
   unPublishPost,

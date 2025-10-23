@@ -18,7 +18,7 @@ import {
   getBlogPostPath,
   getBlogPostsPath,
 } from "@/lib/paths";
-import format from "date-fns/format";
+import { format } from "date-fns";
 import Link from "next/link";
 
 export default async function AccountHome() {

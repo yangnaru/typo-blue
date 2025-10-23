@@ -1,4 +1,5 @@
 import { configure, getConsoleSink } from "@logtape/logtape";
+import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
   await configure({
@@ -21,3 +22,5 @@ export async function register() {
     ],
   });
 }
+
+export const onRequestError = Sentry.captureRequestError;

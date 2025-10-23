@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { formatInTimeZone } from "date-fns-tz";
 import { getBlogPostPath, getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";

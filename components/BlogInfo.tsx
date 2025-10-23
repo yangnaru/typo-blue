@@ -1,6 +1,6 @@
 "use client";
 
-import format from "date-fns/format";
+import { format } from "date-fns";
 import Link from "next/link";
 import { getBlogPostsPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import formatInTimeZone from "date-fns-tz/formatInTimeZone";
+import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import {
   getBlogNewPostPath,
