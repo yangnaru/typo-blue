@@ -17,8 +17,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: typo-blue-email-worker
-    ports:
-      - "23000:3000"
     networks:
       - typo-blue-network
     restart: always
