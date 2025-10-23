@@ -430,6 +430,7 @@ export const imageTable = pgTable(
     height: integer().notNull(),
     filename: text().notNull(),
     key: text().notNull(),
+    status: text().notNull().default("pending"), // 'pending' | 'completed'
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .default(currentTimestamp),

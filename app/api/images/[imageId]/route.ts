@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { imageTable } from "@/drizzle/schema";
+import { imageTable, postImageTable, postTable, blog } from "@/drizzle/schema";
 import { deleteFromR2 } from "@/lib/r2";
+import { getCurrentSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function DELETE(
@@ -9,19 +10,42 @@ export async function DELETE(
   { params }: { params: Promise<{ imageId: string }> }
 ) {
   try {
+    // Check authentication
+    const { user } = await getCurrentSession();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { imageId } = await params;
 
-    // Get image metadata first
-    const [image] = await db
-      .select()
+    // Get image metadata and check authorization
+    // Join through post_image -> post -> blog to verify ownership
+    const result = await db
+      .select({
+        image: imageTable,
+        blogUserId: blog.userId,
+      })
       .from(imageTable)
+      .innerJoin(postImageTable, eq(imageTable.id, postImageTable.imageId))
+      .innerJoin(postTable, eq(postImageTable.postId, postTable.id))
+      .innerJoin(blog, eq(postTable.blogId, blog.id))
       .where(eq(imageTable.id, imageId))
       .limit(1);
 
-    if (!image) {
+    if (result.length === 0) {
       return NextResponse.json(
         { error: "Image not found" },
         { status: 404 }
+      );
+    }
+
+    const { image, blogUserId } = result[0];
+
+    // Check if user owns the blog
+    if (blogUserId !== user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete this image" },
+        { status: 403 }
       );
     }
 

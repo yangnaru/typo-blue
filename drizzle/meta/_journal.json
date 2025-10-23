@@ -176,6 +176,13 @@
       "when": 1761206633780,
       "tag": "0024_eminent_karen_page",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1761210474722,
+      "tag": "0025_ordinary_juggernaut",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 
 const R2_ENDPOINT_URL = process.env.R2_ENDPOINT_URL;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -46,4 +47,24 @@ export async function deleteFromR2(key: string): Promise<void> {
 
 export function getPublicUrl(key: string): string {
   return `${R2_PUBLIC_URL}/${key}`;
+}
+
+export async function generatePresignedUploadUrl(
+  key: string,
+  contentType: string
+): Promise<{ url: string; fields: Record<string, string> }> {
+  const { url, fields } = await createPresignedPost(r2Client, {
+    Bucket: R2_BUCKET_NAME!,
+    Key: key,
+    Conditions: [
+      ["content-length-range", 0, 10485760], // 10 MB max
+      ["starts-with", "$Content-Type", contentType.split("/")[0]], // Allow image/*
+    ],
+    Fields: {
+      "Content-Type": contentType,
+    },
+    Expires: 3600, // 1 hour
+  });
+
+  return { url, fields };
 }

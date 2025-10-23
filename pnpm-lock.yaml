@@ -18,6 +18,9 @@ importers:
       '@aws-sdk/lib-storage':
         specifier: ^3.914.0
         version: 3.914.0(@aws-sdk/client-s3@3.914.0)
+      '@aws-sdk/s3-presigned-post':
+        specifier: ^3.914.0
+        version: 3.914.0
       '@fedify/fedify':
         specifier: ^1.9.0
         version: 1.9.0(web-streams-polyfill@3.3.3)
@@ -195,9 +198,6 @@ importers:
       sanitize-html:
         specifier: ^2.17.0
         version: 2.17.0
-      sharp:
-        specifier: ^0.34.4
-        version: 0.34.4
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -374,6 +374,10 @@ packages:
     resolution: {integrity: sha512-KlmHhRbn1qdwXUdsdrJ7S/MAkkC1jLpQ11n+XvxUUUCGAJd1gjC7AjxPZUM7ieQ2zcb8bfEzIU7al+Q3ZT0u7Q==}
     engines: {node: '>=18.0.0'}
 
+  '@aws-sdk/s3-presigned-post@3.914.0':
+    resolution: {integrity: sha512-C2IAsrnAtZycs69sOK/NPZmVEqvGbUeVxV3Arqg6fRWbC0fvijaxbHeBix7fA57gp8R2Q22aqfJo8fFbkdLQZA==}
+    engines: {node: '>=18.0.0'}
+
   '@aws-sdk/signature-v4-multi-region@3.914.0':
     resolution: {integrity: sha512-EOQ/ObGwaRXfK54GnxVRdHFiUvCZ4IJYAHMoQWfF9ZrV/4g0B4eBgJAal+DRO5g1sye32EtaGwFiQ6sULJb/Pw==}
     engines: {node: '>=18.0.0'}
@@ -392,6 +396,10 @@ packages:
 
   '@aws-sdk/util-endpoints@3.914.0':
     resolution: {integrity: sha512-POUBUTjD7WQ/BVoUGluukCIkIDO12IPdwRAvUgFshfbaUdyXFuBllM/6DmdyeR3rJhXnBqe3Uy5e2eXbz/MBTw==}
+    engines: {node: '>=18.0.0'}
+
+  '@aws-sdk/util-format-url@3.914.0':
+    resolution: {integrity: sha512-QpdkoQjvPaYyzZwgk41vFyHQM5s0DsrsbQ8IoPUggQt4HaJUvmL1ShwMcSldbgdzwiRMqXUK8q7jrqUvkYkY6w==}
     engines: {node: '>=18.0.0'}
 
   '@aws-sdk/util-locate-window@3.893.0':
@@ -5811,6 +5819,20 @@ snapshots:
       '@smithy/types': 4.8.0
       tslib: 2.8.1
 
+  '@aws-sdk/s3-presigned-post@3.914.0':
+    dependencies:
+      '@aws-sdk/client-s3': 3.914.0
+      '@aws-sdk/types': 3.914.0
+      '@aws-sdk/util-format-url': 3.914.0
+      '@smithy/middleware-endpoint': 4.3.5
+      '@smithy/signature-v4': 5.3.3
+      '@smithy/types': 4.8.0
+      '@smithy/util-hex-encoding': 4.2.0
+      '@smithy/util-utf8': 4.2.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - aws-crt
+
   '@aws-sdk/signature-v4-multi-region@3.914.0':
     dependencies:
       '@aws-sdk/middleware-sdk-s3': 3.914.0
@@ -5847,6 +5869,13 @@ snapshots:
       '@smithy/types': 4.8.0
       '@smithy/url-parser': 4.2.3
       '@smithy/util-endpoints': 3.2.3
+      tslib: 2.8.1
+
+  '@aws-sdk/util-format-url@3.914.0':
+    dependencies:
+      '@aws-sdk/types': 3.914.0
+      '@smithy/querystring-builder': 4.2.3
+      '@smithy/types': 4.8.0
       tslib: 2.8.1
 
   '@aws-sdk/util-locate-window@3.893.0':
@@ -6288,7 +6317,8 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.0.0': {}
+  '@img/colour@1.0.0':
+    optional: true
 
   '@img/sharp-darwin-arm64@0.34.4':
     optionalDependencies:
@@ -10667,6 +10697,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.34.4
       '@img/sharp-win32-ia32': 0.34.4
       '@img/sharp-win32-x64': 0.34.4
+    optional: true
 
   shebang-command@2.0.0:
     dependencies:

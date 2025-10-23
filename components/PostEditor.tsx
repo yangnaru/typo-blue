@@ -166,23 +166,81 @@ export default function PostEditor({
         }
       }
 
-      // Upload all files
+      // Upload all files using presigned URLs
       const fileArray = Array.from(files);
       const uploadPromises = fileArray.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("postId", uploadPostId);
+        try {
+          // Step 1: Extract image metadata client-side
+          const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              resolve({ width: img.width, height: img.height });
+              URL.revokeObjectURL(img.src);
+            };
+            img.onerror = () => {
+              reject(new Error("Failed to load image"));
+              URL.revokeObjectURL(img.src);
+            };
+            img.src = URL.createObjectURL(file);
+          });
 
-        const response = await fetch("/api/images/upload", {
-          method: "POST",
-          body: formData,
-        });
+          // Step 2: Request presigned upload URL
+          const uploadUrlResponse = await fetch("/api/images/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              postId: uploadPostId,
+              filename: file.name,
+              width: dimensions.width,
+              height: dimensions.height,
+              contentType: file.type,
+              size: file.size,
+            }),
+          });
 
-        if (response.ok) {
-          return { success: true, image: await response.json() };
-        } else {
-          const error = await response.json();
-          return { success: false, error: error.error || "업로드 실패" };
+          if (!uploadUrlResponse.ok) {
+            const error = await uploadUrlResponse.json();
+            return { success: false, error: error.error || "업로드 URL 생성 실패" };
+          }
+
+          const { presignedUrl, fields, imageId } = await uploadUrlResponse.json();
+
+          // Step 3: Upload directly to R2 using presigned POST
+          const formData = new FormData();
+          Object.entries(fields).forEach(([key, value]) => {
+            formData.append(key, value as string);
+          });
+          formData.append("file", file);
+
+          const uploadResponse = await fetch(presignedUrl, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            return { success: false, error: "R2 업로드 실패" };
+          }
+
+          // Step 4: Confirm upload completion
+          const confirmResponse = await fetch("/api/images/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              imageId,
+              postId: uploadPostId,
+            }),
+          });
+
+          if (!confirmResponse.ok) {
+            const error = await confirmResponse.json();
+            return { success: false, error: error.error || "업로드 확인 실패" };
+          }
+
+          const image = await confirmResponse.json();
+          return { success: true, image };
+        } catch (error) {
+          console.error("Image upload error:", error);
+          return { success: false, error: "업로드 중 오류 발생" };
         }
       });
 
