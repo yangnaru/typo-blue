@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, ArrowRight } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
-import { SELF_DESCRIPTION } from "@/lib/const";
 import { convert } from "html-to-text";
 
 export default async function Home() {
@@ -45,12 +44,12 @@ export default async function Home() {
       <Logo />
       <div className="text-center space-y-6 py-8">
         <div className="max-w-xl mx-auto space-y-4">
-          <p className="text-lg text-muted-foreground">{SELF_DESCRIPTION}</p>
-
+          <p className="text-lg text-muted-foreground">
+            타이포 블루는 새로운 블로깅 플랫폼입니다
+          </p>
           <div className="text-sm text-muted-foreground space-y-2">
             <ul className="list-disc list-inside space-y-1">
-              <li>텍스트로만 게시물을 쓸 수 있습니다</li>
-              <li>사진 등의 첨부 파일은 올릴 수 없습니다</li>
+              <li>텍스트와 이미지 등을 포함한 게시물을 쓸 수 있습니다</li>
               <li>독자들이 이메일로 새 글을 구독할 수 있습니다</li>
               <li>연합우주로 글을 발행할 수 있습니다</li>
             </ul>
@@ -96,7 +95,7 @@ export default async function Home() {
                     wordwrap: false,
                     preserveNewlines: false,
                   }).trim();
-                  
+
                   // Extract the first sentence or reasonable preview
                   const sentenceMatch = plainText.match(/.*?[.!?](?=\s|$)/);
                   if (sentenceMatch) {
