@@ -90,12 +90,11 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Generate presigned POST URL
-    const { url, fields } = await generatePresignedUploadUrl(key, contentType);
+    // Generate presigned PUT URL
+    const { url } = await generatePresignedUploadUrl(key, contentType);
 
     return NextResponse.json({
       presignedUrl: url,
-      fields,
       imageId: image.id,
       key,
       publicUrl: getPublicUrl(key),

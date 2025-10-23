@@ -203,18 +203,15 @@ export default function PostEditor({
             return { success: false, error: error.error || "업로드 URL 생성 실패" };
           }
 
-          const { presignedUrl, fields, imageId } = await uploadUrlResponse.json();
+          const { presignedUrl, imageId } = await uploadUrlResponse.json();
 
-          // Step 3: Upload directly to R2 using presigned POST
-          const formData = new FormData();
-          Object.entries(fields).forEach(([key, value]) => {
-            formData.append(key, value as string);
-          });
-          formData.append("file", file);
-
+          // Step 3: Upload directly to R2 using presigned PUT
           const uploadResponse = await fetch(presignedUrl, {
-            method: "POST",
-            body: formData,
+            method: "PUT",
+            headers: {
+              "Content-Type": file.type,
+            },
+            body: file,
           });
 
           if (!uploadResponse.ok) {

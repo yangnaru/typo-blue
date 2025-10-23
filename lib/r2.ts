@@ -1,6 +1,6 @@
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const R2_ENDPOINT_URL = process.env.R2_ENDPOINT_URL;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -52,19 +52,16 @@ export function getPublicUrl(key: string): string {
 export async function generatePresignedUploadUrl(
   key: string,
   contentType: string
-): Promise<{ url: string; fields: Record<string, string> }> {
-  const { url, fields } = await createPresignedPost(r2Client, {
+): Promise<{ url: string }> {
+  const command = new PutObjectCommand({
     Bucket: R2_BUCKET_NAME!,
     Key: key,
-    Conditions: [
-      ["content-length-range", 0, 10485760], // 10 MB max
-      ["starts-with", "$Content-Type", contentType.split("/")[0]], // Allow image/*
-    ],
-    Fields: {
-      "Content-Type": contentType,
-    },
-    Expires: 3600, // 1 hour
+    ContentType: contentType,
   });
 
-  return { url, fields };
+  const url = await getSignedUrl(r2Client, command, {
+    expiresIn: 3600, // 1 hour
+  });
+
+  return { url };
 }
