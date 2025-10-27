@@ -54,7 +54,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.6",
+    "drizzle-orm": "^0.44.7",
     "eslint": "^9.38.0",
     "eslint-config-next": "16.0.0",
     "html-entities": "^2.6.0",
