@@ -24,9 +24,6 @@ importers:
       '@fedify/fedify':
         specifier: ^1.9.0
         version: 1.9.0(web-streams-polyfill@3.3.3)
-      '@fedify/next':
-        specifier: ^1.9.0
-        version: 1.9.0(@fedify/fedify@1.9.0(web-streams-polyfill@3.3.3))(next@16.0.0(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
       '@fedify/postgres':
         specifier: ^1.9.0
         version: 1.9.0(@fedify/fedify@1.9.0(web-streams-polyfill@3.3.3))(postgres@3.4.7)
@@ -866,12 +863,6 @@ packages:
   '@fedify/fedify@1.9.0':
     resolution: {integrity: sha512-9UQp2cZjYGUT6Ns+SaKgNY/6NXg5KP+kGmLpMTF8jEJQVp8fkPvpbF/unRULR9bdoejyiwVmqxFvaiSbo1k0Vw==}
     engines: {bun: '>=1.1.0', deno: '>=2.0.0', node: '>=22.0.0'}
-
-  '@fedify/next@1.9.0':
-    resolution: {integrity: sha512-58++5xooKRB/gEJRGRNgfZl5AjBubm10fJgrDO+bYYgQdCrjr+x2FlagS59Tbw5TmRSvTyumciGy5xwA2M3PMw==}
-    peerDependencies:
-      '@fedify/fedify': ^1.9.0
-      next: ^15.4.6
 
   '@fedify/postgres@1.9.0':
     resolution: {integrity: sha512-vp3gUUgcN8EB7B3FFuIUwrqnFKdGDC2CCTlfgSsv2+FaGfuV6E3g5H4l+O7KCIoQelsXGiQX+jNnTlgtgueijQ==}
@@ -6253,11 +6244,6 @@ snapshots:
       urlpattern-polyfill: 10.1.0
     transitivePeerDependencies:
       - web-streams-polyfill
-
-  '@fedify/next@1.9.0(@fedify/fedify@1.9.0(web-streams-polyfill@3.3.3))(next@16.0.0(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))':
-    dependencies:
-      '@fedify/fedify': 1.9.0(web-streams-polyfill@3.3.3)
-      next: 16.0.0(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
 
   '@fedify/postgres@1.9.0(@fedify/fedify@1.9.0(web-streams-polyfill@3.3.3))(postgres@3.4.7)':
     dependencies:

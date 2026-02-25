@@ -14,7 +14,6 @@
     "@aws-sdk/lib-storage": "^3.914.0",
     "@aws-sdk/s3-request-presigner": "^3.914.0",
     "@fedify/fedify": "^1.9.0",
-    "@fedify/next": "^1.9.0",
     "@fedify/postgres": "^1.9.0",
     "@hookform/resolvers": "^5.2.2",
     "@js-temporal/polyfill": "^0.5.1",
