@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import ImpersonateButton from "./impersonate-button";
 import AdminToggleButton from "./admin-toggle-button";
+import Stat from "./stat";
 import Link from "next/link";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -69,7 +70,7 @@ export default async function AdminRootPage({
       (SELECT COUNT(*)::int FROM post WHERE published IS NOT NULL AND deleted IS NULL) AS total_posts,
       (SELECT COUNT(*)::int FROM post WHERE first_published >= NOW() - INTERVAL '7 days' AND deleted IS NULL) AS posts_last_7_days,
       (SELECT COUNT(*)::int FROM mailing_list_subscription) AS total_subscribers,
-      (SELECT COALESCE(SUM(followers_count), 0)::int FROM actor) AS total_followers
+      (SELECT COALESCE(SUM(followers_count), 0)::int FROM actor WHERE blog_id IS NOT NULL) AS total_followers
   `);
   const metrics = metricsResult.rows[0];
 
@@ -139,6 +140,7 @@ export default async function AdminRootPage({
 
   return (
     <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">대시보드</h1>
       <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <Stat label="사용자" value={metrics.total_users} />
         <Stat label="블로그" value={metrics.total_blogs} />
@@ -197,17 +199,6 @@ export default async function AdminRootPage({
           ))}
         </TableBody>
       </Table>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border p-4">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold">
-        {value.toLocaleString("ko-KR")}
-      </div>
     </div>
   );
 }
