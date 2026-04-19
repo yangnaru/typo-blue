@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import AdminNavigationSheet from "@/components/admin-navigation-sheet";
+import MasqueradeBanner from "@/components/masquerade-banner";
 import {
   Tooltip,
   TooltipContent,
@@ -106,6 +107,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
+            <MasqueradeBanner />
             <div className="flex min-h-screen w-full flex-col bg-muted/40">
               <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-background sm:flex">
                 <div className="flex flex-col items-center gap-3 px-3 py-4">

@@ -68,6 +68,11 @@ export async function invalidateSession(sessionId: string): Promise<void> {
   await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
 }
 
+export async function invalidateSessionByToken(token: string): Promise<void> {
+  const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+  await invalidateSession(sessionId);
+}
+
 export async function setSessionTokenCookie(
   token: string,
   expires: Date

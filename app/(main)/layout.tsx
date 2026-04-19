@@ -3,6 +3,7 @@ import "../globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import MasqueradeBanner from "@/components/masquerade-banner";
 import { SELF_DESCRIPTION } from "@/lib/const";
 import { Metadata } from "next";
 
@@ -36,6 +37,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <MasqueradeBanner />
           <div className="mx-auto max-w-prose p-2">
             <main>{children}</main>
           </div>
