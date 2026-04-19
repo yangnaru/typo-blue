@@ -13,8 +13,20 @@ if ! git pull; then
     exit 1
 fi
 
-echo "==> Building and deploying with Docker Compose..."
-if ! docker compose up -d --build --remove-orphans; then
+echo "==> Building Docker images..."
+if ! docker compose build; then
+    echo "ERROR: docker compose build failed"
+    exit 1
+fi
+
+echo "==> Running database migrations..."
+if ! docker compose run --rm typo-blue pnpm drizzle-kit migrate; then
+    echo "ERROR: database migration failed"
+    exit 1
+fi
+
+echo "==> Deploying with Docker Compose..."
+if ! docker compose up -d --remove-orphans; then
     echo "ERROR: docker compose failed"
     exit 1
 fi
