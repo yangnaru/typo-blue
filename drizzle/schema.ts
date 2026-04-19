@@ -106,6 +106,7 @@ export const user = pgTable(
       .notNull(),
     updated: timestamp({ withTimezone: true }).notNull(),
     passwordHash: text("password_hash"),
+    isAdmin: boolean("is_admin").default(false).notNull(),
   },
   (table) => {
     return {

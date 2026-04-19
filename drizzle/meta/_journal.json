@@ -183,6 +183,13 @@
       "when": 1761210474722,
       "tag": "0025_ordinary_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1776575693074,
+      "tag": "0026_short_lethal_legion",
+      "breakpoints": true
     }
   ]
 }

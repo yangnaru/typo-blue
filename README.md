@@ -99,9 +99,6 @@
    # 애플리케이션
    NEXT_PUBLIC_URL="http://localhost:3000"
    SESSION_COOKIE_DOMAIN="localhost"
-   
-   # 관리자
-   ADMIN_USER_ID="admin-user-uuid"
    ```
 
 4. **데이터베이스 설정**
@@ -361,7 +358,6 @@ npm start
 | `NEXT_PUBLIC_URL` | 애플리케이션 공개 URL | 예 |
 | `NEXT_PUBLIC_DOMAIN` | ActivityPub 연합을 위한 공개 도메인 | 예 |
 | `SESSION_COOKIE_DOMAIN` | 세션용 쿠키 도메인 | 예 |
-| `ADMIN_USER_ID` | 관리자 사용자 ID | 선택 |
 
 ## 스크립트
 
