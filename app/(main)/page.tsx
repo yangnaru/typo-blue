@@ -82,6 +82,10 @@ export default async function Home() {
                 const plainText = convert(post.content, {
                   wordwrap: false,
                   preserveNewlines: false,
+                  selectors: [
+                    { selector: "img", format: "skip" },
+                    { selector: "a", options: { ignoreHref: true } },
+                  ],
                 }).trim();
                 return plainText.length > 0;
               })
@@ -93,6 +97,10 @@ export default async function Home() {
                   const plainText = convert(post.content, {
                     wordwrap: false,
                     preserveNewlines: false,
+                    selectors: [
+                      { selector: "img", format: "skip" },
+                      { selector: "a", options: { ignoreHref: true } },
+                    ],
                   }).trim();
 
                   // Extract the first sentence or reasonable preview
