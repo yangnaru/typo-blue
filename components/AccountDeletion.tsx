@@ -42,13 +42,15 @@ export default function AccountDeletion() {
     setStep("verifying");
     
     try {
-      await deleteAccount(challengeId, code);
+      if (!(await deleteAccount(challengeId, code))) {
+        toast.error("인증 코드가 일치하지 않거나 만료되었습니다.");
+        setStep("email_sent");
+        return;
+      }
       toast.success("계정이 성공적으로 삭제되었습니다.");
       router.push("/");
-    } catch (error) {
-      toast.error(
-        (error instanceof Error && error.message) || "계정 삭제에 실패했습니다."
-      );
+    } catch {
+      toast.error("계정 삭제에 실패했습니다.");
       setStep("email_sent");
     } finally {
       setIsLoading(false);

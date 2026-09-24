@@ -25,6 +25,14 @@ export async function impersonateUser(userId: string) {
     throw new Error("Unauthorized");
   }
 
+  const [target] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, userId));
+  if (!target) {
+    throw new Error("User not found");
+  }
+
   const cookieStore = await cookies();
   const existingToken = cookieStore.get("session")?.value;
   if (existingToken && currentSession) {
@@ -78,7 +86,9 @@ export async function exitImpersonation() {
   }
 }
 
-export async function toggleUserAdmin(userId: string) {
+// Takes the value to set rather than flipping it, so a double click doesn't
+// undo itself
+export async function setUserAdmin(userId: string, isAdmin: boolean) {
   const { user: current } = await getCurrentSession();
   if (!current?.isAdmin) {
     throw new Error("Unauthorized");
@@ -86,16 +96,30 @@ export async function toggleUserAdmin(userId: string) {
   if (current.id === userId) {
     throw new Error("Cannot change own admin status");
   }
-  const [target] = await db
-    .select({ isAdmin: user.isAdmin })
-    .from(user)
-    .where(eq(user.id, userId));
-  if (!target) {
+  const updated = await db
+    .update(user)
+    .set({ isAdmin, updated: new Date() })
+    .where(eq(user.id, userId))
+    .returning({ id: user.id });
+  if (updated.length === 0) {
     throw new Error("User not found");
   }
-  await db
-    .update(user)
-    .set({ isAdmin: !target.isAdmin, updated: new Date() })
-    .where(eq(user.id, userId));
   revalidatePath("/admin");
+}
+
+// Ends the admin's own session too when signing out while impersonating
+export async function clearAdminSession() {
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+  if (!adminToken) return;
+
+  await invalidateSessionByToken(adminToken);
+  cookieStore.set(ADMIN_SESSION_COOKIE, "", {
+    domain: process.env.SESSION_COOKIE_DOMAIN,
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: "/",
+  });
 }

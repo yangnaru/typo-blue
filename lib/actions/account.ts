@@ -13,6 +13,7 @@ import {
   setSessionTokenCookie,
 } from "../auth";
 import { redirect } from "next/navigation";
+import { clearAdminSession } from "./admin";
 import { hash, verify } from "@node-rs/argon2";
 import { getAccountPath, getRootPath } from "../paths";
 import { db } from "../db";
@@ -110,10 +111,10 @@ export async function setPassword(
     return { message: "로그인이 필요합니다." };
   }
 
-  const password = formData.get("password") as string;
-  const passwordConfirm = formData.get("password_confirm") as string;
+  const password = formData.get("password");
+  const passwordConfirm = formData.get("password_confirm");
 
-  if (password.length < 8) {
+  if (typeof password !== "string" || password.length < 8) {
     return { message: "비밀번호는 8자 이상이어야 합니다." };
   }
 
@@ -318,14 +319,11 @@ export async function verifyEmailVerificationCode(
 
 export async function logout() {
   const { session } = await getCurrentSession();
-  if (!session) {
-    return {
-      error: "Unauthorized",
-    };
+  if (session) {
+    await invalidateSession(session.id);
   }
-
-  await invalidateSession(session.id);
   await deleteSessionTokenCookie();
+  await clearAdminSession();
 
   return redirect(getRootPath());
 }
@@ -389,12 +387,9 @@ export async function deleteAccount(
     "delete-account"
   );
 
-  if (!challenge) {
-    throw new Error("인증 코드가 일치하지 않거나 만료되었습니다.");
-  }
-
-  if (challenge.email !== user.email) {
-    throw new Error("인증 코드가 현재 계정과 일치하지 않습니다.");
+  // Returned rather than thrown: Next hides thrown messages in production
+  if (!challenge || challenge.email !== user.email) {
+    return false;
   }
 
   // Delete account and all related data in a transaction
