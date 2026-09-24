@@ -1,17 +1,8 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { assertAdmin } from "@/lib/server-util";
 import { db } from "@/lib/db";
 import { emailQueue } from "@/drizzle/schema";
 import { desc, sql } from "drizzle-orm";
-import Stat from "../stat";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default async function EmailQueuePage() {
   await assertAdmin();
@@ -41,52 +32,42 @@ export default async function EmailQueuePage() {
     .limit(20);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">이메일 큐</h1>
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Stat label="대기 중" value={byStatus.pending ?? 0} />
-        <Stat label="처리 중" value={byStatus.processing ?? 0} />
-        <Stat label="완료" value={byStatus.completed ?? 0} />
-        <Stat label="실패" value={byStatus.failed ?? 0} />
+    <div className="space-y-8">
+      <section className="space-y-2">
+        <h3 className="text-xl">이메일 큐</h3>
+        <p>
+          대기 {byStatus.pending ?? 0} · 처리 중 {byStatus.processing ?? 0} ·
+          완료 {byStatus.completed ?? 0} ·{" "}
+          <span className={byStatus.failed ? "text-red-500" : undefined}>
+            실패 {byStatus.failed ?? 0}
+          </span>
+        </p>
       </section>
 
-      <section>
-        <Table>
-          <TableCaption>최근 실패 20건</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>수신자</TableHead>
-              <TableHead>종류</TableHead>
-              <TableHead>재시도</TableHead>
-              <TableHead>오류</TableHead>
-              <TableHead>생성일</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {recentFailures.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground">
-                  실패한 항목이 없습니다.
-                </TableCell>
-              </TableRow>
-            )}
+      <section className="space-y-2">
+        <h3 className="text-lg">최근 실패 20건</h3>
+        {recentFailures.length === 0 ? (
+          <p className="text-neutral-500">실패한 항목이 없습니다.</p>
+        ) : (
+          <ul className="space-y-3">
             {recentFailures.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.subscriberEmail}</TableCell>
-                <TableCell>{row.type}</TableCell>
-                <TableCell>
-                  {row.retryCount} / {row.maxRetries}
-                </TableCell>
-                <TableCell className="max-w-md truncate">
-                  {row.errorMessage ?? "-"}
-                </TableCell>
-                <TableCell>
-                  {new Date(row.createdAt).toLocaleString("ko-KR")}
-                </TableCell>
-              </TableRow>
+              <li key={row.id} className="break-all">
+                <span className="font-bold tabular-nums">
+                  {formatInTimeZone(row.createdAt, "Asia/Seoul", "yyyy-MM-dd HH:mm")}
+                </span>{" "}
+                {row.subscriberEmail}
+                <p className="text-neutral-500 text-sm">
+                  {row.type} · 재시도 {row.retryCount}/{row.maxRetries}
+                </p>
+                {row.errorMessage && (
+                  <p className="text-red-500 text-sm line-clamp-2">
+                    {row.errorMessage}
+                  </p>
+                )}
+              </li>
             ))}
-          </TableBody>
-        </Table>
+          </ul>
+        )}
       </section>
     </div>
   );

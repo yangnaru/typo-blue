@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { assertAdmin } from "@/lib/server-util";
 import { getCurrentSession } from "@/lib/auth";
 import AdminToggleButton from "../admin-toggle-button";
@@ -5,15 +6,6 @@ import ImpersonateButton from "../impersonate-button";
 import { db } from "@/lib/db";
 import { blog, session, user } from "@/drizzle/schema";
 import { desc, eq, sql } from "drizzle-orm";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default async function UsersPage() {
   await assertAdmin();
@@ -36,47 +28,36 @@ export default async function UsersPage() {
     .orderBy(desc(user.created));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">사용자</h1>
-      <Table>
-        <TableCaption>가입순</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>이메일</TableHead>
-            <TableHead>블로그</TableHead>
-            <TableHead>가입일</TableHead>
-            <TableHead>최근 로그인</TableHead>
-            <TableHead>관리자</TableHead>
-            <TableHead>흉내내기</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((u) => (
-            <TableRow key={u.id}>
-              <TableCell>{u.email}</TableCell>
-              <TableCell>{u.blogSlug ?? "-"}</TableCell>
-              <TableCell>
-                {new Date(u.created).toLocaleDateString("ko-KR")}
-              </TableCell>
-              <TableCell>
-                {u.lastLogin
-                  ? new Date(u.lastLogin).toLocaleDateString("ko-KR")
-                  : "-"}
-              </TableCell>
-              <TableCell>
-                <AdminToggleButton
-                  userId={u.id}
-                  isAdmin={u.isAdmin}
-                  disabled={u.id === currentUser?.id}
-                />
-              </TableCell>
-              <TableCell>
-                <ImpersonateButton userId={u.id} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-4">
+      <h3 className="text-xl">사용자</h3>
+      <p className="text-neutral-500">가입한 순서대로 {users.length}명</p>
+      <ul className="space-y-4">
+        {users.map((u) => (
+          <li key={u.id} className="space-y-1 break-all">
+            <p>
+              <span className="font-bold tabular-nums">
+                {formatInTimeZone(u.created, "Asia/Seoul", "yyyy-MM-dd")}
+              </span>{" "}
+              {u.email}
+              {u.isAdmin && <span className="text-blue-500"> · 관리자</span>}
+            </p>
+            <p className="text-neutral-500 text-sm">
+              블로그 {u.blogSlug ? `@${u.blogSlug}` : "없음"} · 최근 로그인{" "}
+              {u.lastLogin
+                ? formatInTimeZone(new Date(u.lastLogin), "Asia/Seoul", "yyyy-MM-dd")
+                : "-"}
+            </p>
+            <div className="flex flex-row gap-2 text-sm">
+              <AdminToggleButton
+                userId={u.id}
+                isAdmin={u.isAdmin}
+                disabled={u.id === currentUser?.id}
+              />
+              <ImpersonateButton userId={u.id} />
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

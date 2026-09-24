@@ -4,7 +4,8 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import MasqueradeBanner from "@/components/masquerade-banner";
-import AdminSidebar from "./admin-sidebar";
+import Logo from "@/components/Logo";
+import PlainNav from "@/components/plain-nav";
 import { SELF_DESCRIPTION } from "@/lib/const";
 import { Metadata } from "next";
 
@@ -37,11 +38,23 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <MasqueradeBanner />
-          <div className="flex min-h-screen">
-            <AdminSidebar />
-            <main className="flex-1 overflow-x-auto p-6 md:p-8">
-              <div className="mx-auto max-w-6xl">{children}</div>
-            </main>
+          <div className="mx-auto max-w-prose p-2">
+            <Logo />
+            <div className="my-4 space-y-2">
+              <h2 className="text-2xl font-bold">관리자</h2>
+              <PlainNav
+                links={[
+                  { href: "/admin", label: "대시보드" },
+                  { href: "/admin/users", label: "사용자", matchPrefix: true },
+                  {
+                    href: "/admin/email-queue",
+                    label: "이메일 큐",
+                    matchPrefix: true,
+                  },
+                ]}
+              />
+            </div>
+            <main>{children}</main>
           </div>
           <Toaster />
         </ThemeProvider>

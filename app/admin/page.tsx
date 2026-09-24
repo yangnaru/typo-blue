@@ -1,17 +1,8 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { assertAdmin } from "@/lib/server-util";
 import { getCurrentSession } from "@/lib/auth";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import ImpersonateButton from "./impersonate-button";
 import AdminToggleButton from "./admin-toggle-button";
-import Stat from "./stat";
 import Link from "next/link";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -23,7 +14,7 @@ import {
   session,
   user,
 } from "@/drizzle/schema";
-import { getBlogPostPath } from "@/lib/paths";
+import { getBlogHomePath, getBlogPostPath } from "@/lib/paths";
 
 const SORT_COLUMNS = {
   posts: "post_count",
@@ -130,7 +121,7 @@ export default async function AdminRootPage({
     return (
       <Link
         href={`/admin?sort=${key}&dir=${nextDir}`}
-        className="hover:underline"
+        className={sort === key ? "font-bold" : "text-blue-500"}
       >
         {label}
         {arrow}
@@ -138,67 +129,75 @@ export default async function AdminRootPage({
     );
   };
 
+  const formatCount = (value: number) => value.toLocaleString("ko-KR");
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">대시보드</h1>
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <Stat label="사용자" value={metrics.total_users} />
-        <Stat label="블로그" value={metrics.total_blogs} />
-        <Stat label="발행된 글" value={metrics.total_posts} />
-        <Stat label="최근 7일 글" value={metrics.posts_last_7_days} />
-        <Stat label="이메일 구독자" value={metrics.total_subscribers} />
-        <Stat label="연합 팔로워" value={metrics.total_followers} />
+    <div className="space-y-8">
+      <section className="space-y-2">
+        <h3 className="text-xl">대시보드</h3>
+        <ul>
+          <li>
+            사용자 {formatCount(metrics.total_users)}명 · 블로그{" "}
+            {formatCount(metrics.total_blogs)}개
+          </li>
+          <li>
+            발행된 글 {formatCount(metrics.total_posts)}개{" "}
+            <span className="text-neutral-500">
+              (최근 7일 {formatCount(metrics.posts_last_7_days)}개)
+            </span>
+          </li>
+          <li>
+            이메일 구독자 {formatCount(metrics.total_subscribers)}명 · 연합
+            팔로워 {formatCount(metrics.total_followers)}명
+          </li>
+        </ul>
       </section>
 
-      <Table>
-        <TableCaption>블로그 목록</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>이메일</TableHead>
-            <TableHead>최근 글</TableHead>
-            <TableHead>{sortLink("posts", "글 수")}</TableHead>
-            <TableHead>{sortLink("activity", "최근 활동")}</TableHead>
-            <TableHead>{sortLink("followers", "연합 팔로워")}</TableHead>
-            <TableHead>{sortLink("subscribers", "구독자")}</TableHead>
-            <TableHead>관리자</TableHead>
-            <TableHead>흉내내기</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <section className="space-y-2">
+        <h3 className="text-lg">블로그 목록</h3>
+        <p className="flex flex-row flex-wrap gap-x-3 text-sm">
+          <span className="text-neutral-500">정렬:</span>
+          {sortLink("activity", "최근 활동")}
+          {sortLink("posts", "글 수")}
+          {sortLink("followers", "연합 팔로워")}
+          {sortLink("subscribers", "구독자")}
+        </p>
+        <ul className="space-y-4">
           {blogs.map((b) => (
-            <TableRow key={b.id}>
-              <TableCell>{b.slug}</TableCell>
-              <TableCell>{b.userEmail}</TableCell>
-              <TableCell>
+            <li key={b.id} className="space-y-1 break-all">
+              <p>
+                <Link href={getBlogHomePath(b.slug)} className="font-bold">
+                  @{b.slug}
+                </Link>{" "}
+                <span className="text-neutral-500">{b.userEmail}</span>
+              </p>
+              <p className="text-neutral-500 text-sm">
+                글 {b.postCount}개 · 최근 활동{" "}
+                {formatInTimeZone(new Date(b.lastActivity), "Asia/Seoul", "yyyy-MM-dd")} · 연합
+                팔로워 {b.fediverseFollowers} · 구독자 {b.subscribers}
+              </p>
+              <p className="text-sm">
+                <span className="text-neutral-500">최근 글: </span>
                 {b.latestPostId ? (
                   <Link href={getBlogPostPath(b.slug, b.latestPostId)}>
                     {b.latestPostTitle || "무제"}
                   </Link>
                 ) : (
-                  "글 없음"
+                  <span className="text-neutral-500">글 없음</span>
                 )}
-              </TableCell>
-              <TableCell>{b.postCount}</TableCell>
-              <TableCell>
-                {new Date(b.lastActivity).toLocaleDateString("ko-KR")}
-              </TableCell>
-              <TableCell>{b.fediverseFollowers}</TableCell>
-              <TableCell>{b.subscribers}</TableCell>
-              <TableCell>
+              </p>
+              <div className="flex flex-row gap-2 text-sm">
                 <AdminToggleButton
                   userId={b.userId}
                   isAdmin={b.userIsAdmin}
                   disabled={b.userId === currentUser?.id}
                 />
-              </TableCell>
-              <TableCell>
                 <ImpersonateButton userId={b.userId} />
-              </TableCell>
-            </TableRow>
+              </div>
+            </li>
           ))}
-        </TableBody>
-      </Table>
+        </ul>
+      </section>
     </div>
   );
 }

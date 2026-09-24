@@ -1,7 +1,4 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import PlainNav from "@/components/plain-nav";
 import {
   getBlogAnalyticsPath,
   getBlogCalendarPath,
@@ -23,8 +20,6 @@ export default function OwnerNav({
   isFederationEnabled: boolean;
   unreadNotificationCount: number;
 }) {
-  const pathname = usePathname();
-
   const links = [
     { href: getBlogPostsPath(slug), label: "글 목록" },
     { href: getBlogNewPostPath(slug), label: "새 글 쓰기" },
@@ -47,23 +42,11 @@ export default function OwnerNav({
   ];
 
   return (
-    <nav className="flex flex-row flex-wrap gap-x-3 gap-y-1 break-keep">
-      {links.map(({ href, label }) => {
-        const isCurrent = decodeURIComponent(pathname) === href;
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={isCurrent ? "page" : undefined}
-            className={isCurrent ? "font-bold" : "text-blue-500"}
-          >
-            {label}
-          </Link>
-        );
-      })}
-      <Link href={getBlogHomePath(slug)} className="text-neutral-500">
-        블로그 보기
-      </Link>
-    </nav>
+    <PlainNav
+      links={[
+        ...links,
+        { href: getBlogHomePath(slug), label: "블로그 보기", secondary: true },
+      ]}
+    />
   );
 }

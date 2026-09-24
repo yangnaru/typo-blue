@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { toggleUserAdmin } from "@/lib/actions/admin";
 
 export default function AdminToggleButton({
@@ -13,13 +13,12 @@ export default function AdminToggleButton({
   disabled?: boolean;
 }) {
   return (
-    <Button
+    <PlainButton
       onClick={() => toggleUserAdmin(userId)}
       disabled={disabled}
       variant={isAdmin ? "destructive" : "default"}
-      size="sm"
     >
       {isAdmin ? "관리자 해제" : "관리자 지정"}
-    </Button>
+    </PlainButton>
   );
 }
