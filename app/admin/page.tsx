@@ -93,6 +93,7 @@ export default async function AdminRootPage({
       subscribers: sql<number>`(
         SELECT COUNT(*)::int FROM ${mailingListSubscription}
         WHERE ${mailingListSubscription.blogId} = ${blog.id}
+          AND ${mailingListSubscription.confirmedAt} IS NOT NULL
       )`.as("subscribers"),
       latestPostId: sql<string | null>`(
         SELECT id FROM ${postTable}

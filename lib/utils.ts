@@ -20,3 +20,12 @@ export function escapeHtml(text: string) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+// Emails are stored and compared in this form
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
+}

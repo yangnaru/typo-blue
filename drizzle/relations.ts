@@ -6,6 +6,7 @@ import {
   session,
   actorTable,
   notificationTable,
+  mailingListSubscription,
 } from "./schema";
 
 export const actorRelations = relations(actorTable, ({ one }) => ({
@@ -52,6 +53,16 @@ export const notificationRelations = relations(
     post: one(postTable, {
       fields: [notificationTable.postId],
       references: [postTable.id],
+    }),
+  })
+);
+
+export const mailingListSubscriptionRelations = relations(
+  mailingListSubscription,
+  ({ one }) => ({
+    blog: one(blog, {
+      fields: [mailingListSubscription.blogId],
+      references: [blog.id],
     }),
   })
 );

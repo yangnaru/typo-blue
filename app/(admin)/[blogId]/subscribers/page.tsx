@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { eq, sql, desc } from "drizzle-orm";
+import { and, count, eq, isNotNull, isNull, sql, desc } from "drizzle-orm";
 import { blog, mailingListSubscription, emailQueue } from "@/drizzle/schema";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
@@ -47,9 +47,25 @@ export default async function SubscribersPage(props: { params: PageProps }) {
       emailQueue,
       sql`${emailQueue.subscriberEmail} = ${mailingListSubscription.email} AND ${emailQueue.blogId} = ${currentBlog.id}`
     )
-    .where(eq(mailingListSubscription.blogId, currentBlog.id))
+    .where(
+      and(
+        eq(mailingListSubscription.blogId, currentBlog.id),
+        isNotNull(mailingListSubscription.confirmedAt)
+      )
+    )
     .groupBy(mailingListSubscription.id)
     .orderBy(desc(mailingListSubscription.created));
+
+  // Signed up but not confirmed yet; they get no posts until they confirm
+  const [{ pendingSubscribers }] = await db
+    .select({ pendingSubscribers: count() })
+    .from(mailingListSubscription)
+    .where(
+      and(
+        eq(mailingListSubscription.blogId, currentBlog.id),
+        isNull(mailingListSubscription.confirmedAt)
+      )
+    );
 
   // Get overview statistics
   const totalSubscribers = subscribers.length;
@@ -70,8 +86,9 @@ export default async function SubscribersPage(props: { params: PageProps }) {
     <div className="space-y-4">
       <h3 className="text-xl">구독자</h3>
       <p className="text-neutral-500">
-        구독자 {totalSubscribers}명 · 발송 {totalEmailsSent}통 · 열람률{" "}
-        {openRate}%
+        구독자 {totalSubscribers}명
+        {pendingSubscribers > 0 && ` (확인 대기 ${pendingSubscribers}명)`} ·
+        발송 {totalEmailsSent}통 · 열람률 {openRate}%
       </p>
 
       {subscribers.length === 0 ? (

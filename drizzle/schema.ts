@@ -36,7 +36,7 @@ export const emailVerificationChallenge = pgTable(
     code: text().notNull(),
     email: text().notNull(),
     expires: timestamp({ withTimezone: true }).notNull(),
-    // 'sign-in' | 'change-email' | 'delete-account'
+    // 'sign-in' | 'change-email' | 'delete-account' | 'reauthenticate'
     purpose: text().notNull().default("sign-in"),
     attempts: integer().notNull().default(0),
   }
@@ -85,6 +85,9 @@ export const session = pgTable(
     id: text().primaryKey().notNull(),
     userId: uuid("user_id").notNull(),
     expires: timestamp({ withTimezone: true }).notNull(),
+    // When the user last proved who they are in this session, by signing in
+    // or re-verifying; changing the password or email requires it be recent
+    reauthenticatedAt: timestamp("reauthenticated_at", { withTimezone: true }),
   },
   (table) => {
     return {
@@ -167,6 +170,11 @@ export const mailingListSubscription = pgTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     unsubscribeToken: text("unsubscribe_token").notNull(),
+    // Posts go only to confirmed subscriptions
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    confirmationSentAt: timestamp("confirmation_sent_at", {
+      withTimezone: true,
+    }),
   },
   (table) => {
     return {

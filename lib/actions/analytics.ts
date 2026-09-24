@@ -111,7 +111,12 @@ export async function getAnalyticsOverview(
   const [subscribersResult] = await db
     .select({ count: count() })
     .from(mailingListSubscription)
-    .where(eq(mailingListSubscription.blogId, targetBlog.id));
+    .where(
+      and(
+        eq(mailingListSubscription.blogId, targetBlog.id),
+        isNotNull(mailingListSubscription.confirmedAt)
+      )
+    );
 
   // Get email analytics
   const [emailResult] = await db
@@ -135,8 +140,9 @@ export async function getAnalyticsOverview(
   };
 }
 
-// created_at is UTC without a time zone; count days as they are in Seoul
-const seoulDate = sql`DATE(${pageViews.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Seoul')`;
+// created_at has no time zone, and is written in the database's, which is
+// Asia/Seoul, so its date is already the day in Seoul
+const seoulDate = sql`DATE(${pageViews.createdAt})`;
 
 export async function getVisitorTrends(
   blogSlug: string,

@@ -12,6 +12,7 @@ import { createMessage } from "@upyo/core";
 import { htmlToText } from "html-to-text";
 import { EmailJob } from "../queue/email-queue";
 import { escapeHtml } from "../utils";
+import { getOneClickUnsubscribeUrl, getUnsubscribeUrl } from "./subscription";
 
 export async function sendPostNotificationEmail(
   blogId: string,
@@ -41,7 +42,12 @@ export async function sendPostNotificationEmail(
     const subscribers = await db
       .select()
       .from(mailingListSubscription)
-      .where(eq(mailingListSubscription.blogId, blogId));
+      .where(
+        and(
+          eq(mailingListSubscription.blogId, blogId),
+          isNotNull(mailingListSubscription.confirmedAt)
+        )
+      );
 
     if (subscribers.length === 0) {
       return { success: false, message: "구독자가 없습니다." };
@@ -103,7 +109,7 @@ export async function sendPostNotificationEmailToSubscriber(
   const subscription = await db.query.mailingListSubscription.findFirst({
     where: eq(mailingListSubscription.unsubscribeToken, job.unsubscribeToken),
   });
-  if (!subscription) return;
+  if (!subscription?.confirmedAt) return;
 
   const postData = await db.query.postTable.findFirst({
     where: and(
@@ -136,15 +142,14 @@ export async function sendPostNotificationEmailToSubscriber(
   const originalPostUrl = `${process.env.NEXT_PUBLIC_URL}/@${
     postData.blog.slug
   }/${postData.id}`;
-  const originalUnsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
+  // Not through the click tracker, which would count unsubscribing as a
+  // click on the post
+  const unsubscribeUrl = getUnsubscribeUrl(job.unsubscribeToken);
 
   // Create tracking URLs
   const postUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
     job.id
   }&url=${encodeURIComponent(originalPostUrl)}`;
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
-    job.id
-  }&url=${encodeURIComponent(originalUnsubscribeUrl)}`;
 
   const contentText = postData.content ? htmlToText(postData.content) : "";
 
@@ -160,7 +165,7 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 
 ---
 이 메일은 ${blogName} 블로그의 메일링 리스트에 구독하여 발송되었습니다.
-구독해지: ${originalUnsubscribeUrl}
+구독해지: ${unsubscribeUrl}
   `.trim();
 
   const emailContentHtml = `
@@ -275,6 +280,12 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
     content: {
       text: emailContentText,
       html: emailContentHtml,
+    },
+    // One-click unsubscribe in mail clients, which Gmail and Yahoo expect
+    // from bulk senders
+    headers: {
+      "List-Unsubscribe": `<${getOneClickUnsubscribeUrl(job.unsubscribeToken)}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },
   });
 

@@ -197,6 +197,13 @@
       "when": 1790235629855,
       "tag": "0027_challenge_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790237173022,
+      "tag": "0028_subscription_confirmation",
+      "breakpoints": true
     }
   ]
 }
