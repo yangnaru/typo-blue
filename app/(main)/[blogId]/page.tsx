@@ -86,7 +86,8 @@ export default async function BlogHome(props: { params: Params }) {
     with: {
       posts: {
         where: and(isNull(postTable.deleted), isNotNull(postTable.published)),
-        orderBy: desc(postTable.created),
+        // The list shows first publication dates
+        orderBy: desc(postTable.first_published),
       },
       user: true,
     },

@@ -136,7 +136,7 @@ async function HomeWithSession() {
   return (
     <div>
       <div className="flex flex-row items-baseline space-x-2">
-        {user && !userBlog && (
+        {user && userBlog?.[0]?.count === 0 && (
           <PlainButton asChild>
             <Link href="/blogs/new">블로그 만들기</Link>
           </PlainButton>

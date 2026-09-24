@@ -46,7 +46,7 @@ export default async function AdminRootPage({
 
   const params = await searchParams;
   const sort: SortKey =
-    params.sort && params.sort in SORT_COLUMNS
+    params.sort && Object.hasOwn(SORT_COLUMNS, params.sort)
       ? (params.sort as SortKey)
       : "activity";
   const dir: SortDir = params.dir === "asc" ? "asc" : "desc";

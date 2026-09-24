@@ -8,7 +8,10 @@ type Params = Promise<{
 }>;
 
 export async function GET(req: NextRequest, props: { params: Params }) {
-  const handle = (await props.params).blogId;
+  const handle = decodeURIComponent((await props.params).blogId);
+  if (!handle.startsWith("@")) {
+    return new NextResponse(null, { status: 404 });
+  }
   const slug = handle.replace("@", "");
   const targetBlog = await db.query.blog.findFirst({
     where: (blogs, { eq }) => eq(blogs.slug, slug),

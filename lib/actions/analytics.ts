@@ -135,6 +135,9 @@ export async function getAnalyticsOverview(
   };
 }
 
+// created_at is UTC without a time zone; count days as they are in Seoul
+const seoulDate = sql`DATE(${pageViews.createdAt} AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Seoul')`;
+
 export async function getVisitorTrends(
   blogSlug: string,
   days: number = 30
@@ -157,7 +160,7 @@ export async function getVisitorTrends(
 
   const trends = await db
     .select({
-      date: sql<string>`DATE(created_at)`,
+      date: sql<string>`${seoulDate}`,
       visits: count(),
       uniqueVisitors: sql<number>`COUNT(DISTINCT ip_address)`,
     })
@@ -168,8 +171,8 @@ export async function getVisitorTrends(
         gte(pageViews.createdAt, startDate)
       )
     )
-    .groupBy(sql`DATE(created_at)`)
-    .orderBy(sql`DATE(created_at)`);
+    .groupBy(seoulDate)
+    .orderBy(seoulDate);
 
   return trends.map(trend => ({
     date: trend.date,
