@@ -2,9 +2,10 @@ import { connection } from "next/server";
 import { db } from "@/lib/db";
 import { blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { getCurrentSession } from "@/lib/auth";
+import { getBlogHomePath, getRootPath } from "@/lib/paths";
 
 type BlogLayoutProps = {
   children: ReactNode;
@@ -17,15 +18,6 @@ export default async function BlogLayout({
 }: BlogLayoutProps) {
   await connection();
 
-  const { user } = await getCurrentSession();
-
-  let blogs;
-  if (user) {
-    blogs = await db.query.blog.findMany({
-      where: eq(blog.userId, user.id),
-    });
-  }
-
   const blogId = decodeURIComponent((await params).blogId);
   if (!blogId.startsWith("@")) {
     notFound();
@@ -35,5 +27,35 @@ export default async function BlogLayout({
     where: eq(blog.slug, blogId.replace("@", "")),
   });
 
-  return <>{children}</>;
+  return (
+    <>
+      {targetBlog && (
+        <div className="my-8 flex flex-row flex-wrap items-baseline break-keep">
+          <h2 className="text-2xl font-bold mr-2">
+            <Link href={getBlogHomePath(targetBlog.slug)}>
+              {targetBlog.name || `@${targetBlog.slug}`}
+            </Link>
+          </h2>
+          {targetBlog.description && (
+            <p className="text-neutral-500">{targetBlog.description}</p>
+          )}
+        </div>
+      )}
+      {children}
+      <footer className="py-8">
+        <hr className="bg-neutral-500" />
+        <div className="flex flex-row items-center justify-between text-sm font-semibold">
+          <Link href={getRootPath()}>
+            <span className="text-neutral-500">powered by</span> typo{" "}
+            <span className="text-blue-500">blue</span>
+          </Link>
+          {targetBlog && (
+            <p className="text-neutral-500">
+              total {targetBlog.visitor_count}
+            </p>
+          )}
+        </div>
+      </footer>
+    </>
+  );
 }
