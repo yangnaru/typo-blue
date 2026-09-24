@@ -36,6 +36,9 @@ export const emailVerificationChallenge = pgTable(
     code: text().notNull(),
     email: text().notNull(),
     expires: timestamp({ withTimezone: true }).notNull(),
+    // 'sign-in' | 'change-email' | 'delete-account'
+    purpose: text().notNull().default("sign-in"),
+    attempts: integer().notNull().default(0),
   }
 );
 

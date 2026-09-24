@@ -1,0 +1,2 @@
+ALTER TABLE "email_verification_challenge" ADD COLUMN "purpose" text DEFAULT 'sign-in' NOT NULL;--> statement-breakpoint
+ALTER TABLE "email_verification_challenge" ADD COLUMN "attempts" integer DEFAULT 0 NOT NULL;

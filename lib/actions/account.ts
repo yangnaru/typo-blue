@@ -1,6 +1,6 @@
 "use server";
 
-import { TimeSpan, createDate, isWithinExpirationDate } from "oslo";
+import { TimeSpan, createDate } from "oslo";
 import { generateRandomString, alphabet } from "oslo/crypto";
 import { MailgunTransport } from "@upyo/mailgun";
 import { createMessage } from "@upyo/core";
@@ -22,8 +22,83 @@ import {
   blog as blogTable,
   session as sessionTable,
 } from "@/drizzle/schema";
-import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
+import { randomUUID, timingSafeEqual } from "crypto";
+import { and, count, eq, gt, lt, sql } from "drizzle-orm";
+import { isUuid } from "../utils";
+
+type ChallengePurpose = "sign-in" | "change-email" | "delete-account";
+
+// A code is 6 digits, so limit how many guesses it takes and how many codes
+// can be live for an address at once
+const MAX_CHALLENGE_ATTEMPTS = 5;
+const MAX_ACTIVE_CHALLENGES = 3;
+
+async function createChallenge(
+  email: string,
+  purpose: ChallengePurpose,
+  lifetime: TimeSpan
+) {
+  const [{ active }] = await db
+    .select({ active: count() })
+    .from(emailVerificationChallenge)
+    .where(
+      and(
+        eq(emailVerificationChallenge.email, email),
+        gt(emailVerificationChallenge.expires, new Date())
+      )
+    );
+  if (active >= MAX_ACTIVE_CHALLENGES) {
+    throw new Error("잠시 후 다시 시도해 주세요.");
+  }
+
+  const challenge = {
+    id: randomUUID(),
+    email,
+    code: generateRandomString(6, alphabet("0-9")),
+    purpose,
+    expires: createDate(lifetime),
+  };
+  await db.insert(emailVerificationChallenge).values(challenge);
+  return challenge;
+}
+
+// Counts the attempt, and uses the challenge up when the code matches
+async function consumeChallenge(
+  challengeId: string,
+  code: string,
+  purpose: ChallengePurpose
+) {
+  if (!isUuid(challengeId)) return null;
+
+  const [challenge] = await db
+    .update(emailVerificationChallenge)
+    .set({ attempts: sql`${emailVerificationChallenge.attempts} + 1` })
+    .where(
+      and(
+        eq(emailVerificationChallenge.id, challengeId),
+        eq(emailVerificationChallenge.purpose, purpose),
+        gt(emailVerificationChallenge.expires, new Date()),
+        lt(emailVerificationChallenge.attempts, MAX_CHALLENGE_ATTEMPTS)
+      )
+    )
+    .returning();
+  if (!challenge) return null;
+
+  const expected = Buffer.from(challenge.code);
+  const given = Buffer.from(code);
+  if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
+    return null;
+  }
+
+  // Only one request gets to use it
+  const deleted = await db
+    .delete(emailVerificationChallenge)
+    .where(eq(emailVerificationChallenge.id, challengeId))
+    .returning({ id: emailVerificationChallenge.id });
+  if (deleted.length === 0) return null;
+
+  return challenge;
+}
 
 export async function setPassword(
   prevState: { message: string },
@@ -58,16 +133,11 @@ export async function setPassword(
 export async function sendEmailVerificationCode(
   email: string
 ): Promise<string> {
-  const code = generateRandomString(6, alphabet("0-9"));
-
-  const uuid = randomUUID();
-  const challenge = {
-    id: uuid,
+  const challenge = await createChallenge(
     email,
-    code,
-    expires: createDate(new TimeSpan(5, "m")), // 5 minutes
-  };
-  await db.insert(emailVerificationChallenge).values(challenge);
+    "sign-in",
+    new TimeSpan(5, "m")
+  );
 
   const transport = new MailgunTransport({
     apiKey: process.env.MAILGUN_API_KEY!,
@@ -78,7 +148,7 @@ export async function sendEmailVerificationCode(
     from: process.env.EMAIL_FROM!,
     to: email,
     subject: "타이포 블루 로그인 코드",
-    content: { text: code },
+    content: { text: challenge.code },
   });
 
   const receipt = await transport.send(message);
@@ -94,6 +164,11 @@ export async function sendEmailVerificationCode(
 export async function sendEmailVerificationCodeForEmailChange(
   email: string
 ): Promise<string> {
+  const { user: sessionUser } = await getCurrentSession();
+  if (!sessionUser) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
   const user = (
     await db.select().from(userTable).where(eq(userTable.email, email))
   )[0];
@@ -102,16 +177,11 @@ export async function sendEmailVerificationCodeForEmailChange(
     throw new Error("이미 존재하는 이메일 주소입니다.");
   }
 
-  const code = generateRandomString(6, alphabet("0-9"));
-
-  const uuid = randomUUID();
-  const challenge = {
-    id: uuid,
+  const challenge = await createChallenge(
     email,
-    code,
-    expires: createDate(new TimeSpan(5, "m")), // 5 minutes
-  };
-  await db.insert(emailVerificationChallenge).values(challenge);
+    "change-email",
+    new TimeSpan(5, "m")
+  );
 
   const transport = new MailgunTransport({
     apiKey: process.env.MAILGUN_API_KEY!,
@@ -122,7 +192,7 @@ export async function sendEmailVerificationCodeForEmailChange(
     from: process.env.EMAIL_FROM!,
     to: email,
     subject: "타이포 블루 이메일 변경 코드",
-    content: { text: code },
+    content: { text: challenge.code },
   });
 
   const receipt = await transport.send(message);
@@ -145,44 +215,35 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
-  const challenge = (
-    await db
-      .select()
-      .from(emailVerificationChallenge)
-      .where(eq(emailVerificationChallenge.id, challengeId))
-  )[0];
-
+  const challenge = await consumeChallenge(challengeId, code, "change-email");
   if (!challenge) {
     return false;
   }
 
-  if (!isWithinExpirationDate(new Date(challenge.expires))) {
-    return false;
-  }
+  try {
+    return await db.transaction(async (tx) => {
+      const existingUser = (
+        await tx
+          .select()
+          .from(userTable)
+          .where(eq(userTable.email, challenge.email))
+      )[0];
 
-  if (challenge.code !== code) {
-    return false;
-  }
+      if (existingUser) {
+        return false;
+      }
 
-  await db.transaction(async (tx) => {
-    const existingUser = (
       await tx
-        .select()
-        .from(userTable)
-        .where(eq(userTable.email, challenge.email))
-    )[0];
-
-    if (existingUser) {
-      return false;
-    }
-
-    await tx
-      .update(userTable)
-      .set({ email: challenge.email })
-      .where(eq(userTable.id, user.id));
-  });
-
-  return true;
+        .update(userTable)
+        .set({ email: challenge.email })
+        .where(eq(userTable.id, user.id));
+      return true;
+    });
+  } catch (error) {
+    // Taken by someone else in the meantime
+    console.error("Failed to change email:", error);
+    return false;
+  }
 }
 
 export async function verifyPassword(
@@ -219,22 +280,8 @@ export async function verifyEmailVerificationCode(
   challengeId: string,
   code: string
 ) {
-  const challenge = (
-    await db
-      .select()
-      .from(emailVerificationChallenge)
-      .where(eq(emailVerificationChallenge.id, challengeId))
-  )[0];
-
+  const challenge = await consumeChallenge(challengeId, code, "sign-in");
   if (!challenge) {
-    return false;
-  }
-
-  if (!isWithinExpirationDate(new Date(challenge.expires))) {
-    return false;
-  }
-
-  if (challenge.code !== code) {
     return false;
   }
 
@@ -290,16 +337,12 @@ export async function sendAccountDeletionVerificationCode(): Promise<string> {
     throw new Error("로그인이 필요합니다.");
   }
 
-  const code = generateRandomString(6, alphabet("0-9"));
-
-  const uuid = randomUUID();
-  const challenge = {
-    id: uuid,
-    email: user.email,
-    code,
-    expires: createDate(new TimeSpan(10, "m")), // 10 minutes for account deletion
-  };
-  await db.insert(emailVerificationChallenge).values(challenge);
+  const challenge = await createChallenge(
+    user.email,
+    "delete-account",
+    new TimeSpan(10, "m")
+  );
+  const code = challenge.code;
 
   const transport = new MailgunTransport({
     apiKey: process.env.MAILGUN_API_KEY!,
@@ -340,23 +383,14 @@ export async function deleteAccount(
     throw new Error("로그인이 필요합니다.");
   }
 
-  const challenge = (
-    await db
-      .select()
-      .from(emailVerificationChallenge)
-      .where(eq(emailVerificationChallenge.id, challengeId))
-  )[0];
+  const challenge = await consumeChallenge(
+    challengeId,
+    code,
+    "delete-account"
+  );
 
   if (!challenge) {
-    throw new Error("유효하지 않은 인증 코드입니다.");
-  }
-
-  if (!isWithinExpirationDate(new Date(challenge.expires))) {
-    throw new Error("인증 코드가 만료되었습니다.");
-  }
-
-  if (challenge.code !== code) {
-    throw new Error("인증 코드가 일치하지 않습니다.");
+    throw new Error("인증 코드가 일치하지 않거나 만료되었습니다.");
   }
 
   if (challenge.email !== user.email) {
@@ -374,10 +408,6 @@ export async function deleteAccount(
     // Delete the user
     await tx.delete(userTable).where(eq(userTable.id, user.id));
 
-    // Clean up the verification challenge
-    await tx
-      .delete(emailVerificationChallenge)
-      .where(eq(emailVerificationChallenge.id, challengeId));
   });
 
   // Clear the session cookie
