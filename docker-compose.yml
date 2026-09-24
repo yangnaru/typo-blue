@@ -1,33 +1,27 @@
+x-typo-blue: &typo-blue
+  # Built on another machine and loaded here by deploy.sh, and deploy-server.sh
+  # points this tag at it before recreating the containers. There is
+  # deliberately no `build:`: a build here is what used to peg this machine's
+  # CPU on every deploy.
+  image: typo-blue:current
+  # Without a `build:`, a missing image would send compose to Docker Hub for
+  # someone else's `typo-blue`. Fail instead.
+  pull_policy: never
+  env_file: ".env"
+  networks:
+    - typo-blue-network
+  restart: always
+
 services:
   typo-blue:
-    env_file: ".env"
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL}
-        NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
-        NEXT_PUBLIC_R2_PUBLIC_URL: ${NEXT_PUBLIC_R2_PUBLIC_URL}
+    <<: *typo-blue
     container_name: typo-blue
     ports:
       - "23000:3000"
-    networks:
-      - typo-blue-network
-    restart: always
 
   typo-blue-email-worker:
-    env_file: ".env"
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL}
-        NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
-        NEXT_PUBLIC_R2_PUBLIC_URL: ${NEXT_PUBLIC_R2_PUBLIC_URL}
+    <<: *typo-blue
     container_name: typo-blue-email-worker
-    networks:
-      - typo-blue-network
-    restart: always
     command: ["pnpm", "run", "email-worker"]
 
 networks:
