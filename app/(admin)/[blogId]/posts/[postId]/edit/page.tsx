@@ -44,6 +44,7 @@ export default async function EditPost(props: { params: Params }) {
         existingContent={editingPost.content ?? ""}
         existingPostId={(await props.params).postId}
         existingPublishedAt={editingPost.published}
+        existingUpdated={editingPost.updated}
         existingEmailSent={emailSent}
       />
     </div>

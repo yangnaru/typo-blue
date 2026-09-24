@@ -36,6 +36,7 @@ export default function PostEditor({
   existingTitle = "",
   existingContent = "",
   existingPublishedAt = null,
+  existingUpdated = null,
   existingEmailSent = false,
 }: {
   blogId: string;
@@ -43,6 +44,7 @@ export default function PostEditor({
   existingTitle?: string;
   existingContent?: string;
   existingPublishedAt?: Date | null;
+  existingUpdated?: Date | null;
   existingEmailSent?: boolean;
 }) {
   const router = useRouter();
@@ -63,29 +65,111 @@ export default function PostEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<TiptapRef>(null);
 
-  // Autosave state
-  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // Saving
+  const [savedAt, setSavedAt] = useState<Date | null>(existingUpdated);
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "saving" | "saved" | "error" | null
+  >(null);
   const [showAutosaveStatus, setShowAutosaveStatus] = useState(false);
-  const [lastAutosaved, setLastAutosaved] = useState<Date | null>(null);
-  const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastContentRef = useRef({ title: existingTitle, content: existingContent });
-
-  // Refs to always access the latest values
-  const currentTitleRef = useRef(existingTitle);
-  const currentContentRef = useRef(existingContent);
-  const currentPostIdRef = useRef(existingPostId);
-  const isAutosavingRef = useRef(false);
-
-  // Update refs whenever values change
-  useEffect(() => {
-    currentTitleRef.current = title;
-    currentContentRef.current = content;
-  }, [title, content]);
+  // What the server has, and what the editor has, for saves that run later
+  const savedRef = useRef({ title: existingTitle, content: existingContent });
+  const latestRef = useRef({ title, content, publishedAt });
+  const postIdRef = useRef(existingPostId);
+  // Saves run one at a time, so a new post is only ever created once
+  const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
-    currentPostIdRef.current = postId;
-  }, [postId]);
+    latestRef.current = { title, content, publishedAt };
+  }, [title, content, publishedAt]);
+
+  function enqueueSave<T>(task: () => Promise<T>): Promise<T> {
+    const result = saveQueueRef.current.then(task, task);
+    saveQueueRef.current = result.catch(() => {});
+    return result;
+  }
+
+  function markSaved(savedPostId: string, title: string, content: string) {
+    postIdRef.current = savedPostId;
+    setPostId(savedPostId);
+    savedRef.current = { title, content };
+    setSavedAt(new Date());
+  }
+
+  // Images need a post to belong to, so this saves the draft even when empty
+  function ensurePostId() {
+    return enqueueSave(async () => {
+      if (postIdRef.current) return postIdRef.current;
+      const { title, content } = latestRef.current;
+      const res = await autosaveDraftPost(blogId, null, title, content);
+      markSaved(res.postId, title, content);
+      return res.postId;
+    });
+  }
+
+  function autosave() {
+    return enqueueSave(async () => {
+      const { title, content, publishedAt } = latestRef.current;
+      if (publishedAt !== null) return;
+      if (!title.trim() && !content.trim()) return;
+      if (
+        title === savedRef.current.title &&
+        content === savedRef.current.content
+      ) {
+        return;
+      }
+
+      setAutosaveStatus("saving");
+      setShowAutosaveStatus(true);
+      try {
+        const res = await autosaveDraftPost(
+          blogId,
+          postIdRef.current,
+          title,
+          content
+        );
+        markSaved(res.postId, title, content);
+        setAutosaveStatus("saved");
+      } catch (error) {
+        console.error("Autosave failed:", error);
+        setAutosaveStatus("error");
+      }
+    });
+  }
+
+  // Autosave drafts 2 seconds after the last edit
+  useEffect(() => {
+    if (publishedAt !== null) return;
+    const timeout = setTimeout(autosave, 2000);
+    return () => clearTimeout(timeout);
+  }, [title, content, publishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fade the autosave status out a while after it settles
+  useEffect(() => {
+    if (autosaveStatus !== "saved" && autosaveStatus !== "error") return;
+    const timeout = setTimeout(
+      () => setShowAutosaveStatus(false),
+      autosaveStatus === "saved" ? 2000 : 4000
+    );
+    return () => clearTimeout(timeout);
+  }, [autosaveStatus]);
+
+  // Warn before leaving a draft with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const { title, content, publishedAt } = latestRef.current;
+      if (
+        publishedAt === null &&
+        (title.trim() || content.trim()) &&
+        (title !== savedRef.current.title ||
+          content !== savedRef.current.content)
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   // Load images when postId changes
   useEffect(() => {
@@ -110,29 +194,13 @@ export default function PostEditor({
     setIsUploadingImage(true);
 
     try {
-      let uploadPostId = postId;
-
-      // If there's no postId yet, auto-save the post first
-      if (!uploadPostId) {
-        toast("글을 저장하는 중...");
-
-        // For empty posts, we need to call autosaveDraftPost directly
-        // because performAutosave returns early for empty posts
-        const res = await autosaveDraftPost(blogId, null, title || "", content || "");
-
-        if (res.success && res.postId) {
-          uploadPostId = res.postId;
-          setPostId(res.postId);
-          currentPostIdRef.current = res.postId;
-          lastContentRef.current = { title: title || "", content: content || "" };
-        } else {
-          toast.error("글 저장에 실패했습니다.");
-          setIsUploadingImage(false);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-          return;
-        }
+      let uploadPostId: string;
+      try {
+        uploadPostId = await ensurePostId();
+      } catch (error) {
+        console.error("Failed to save the post before uploading:", error);
+        toast.error("글 저장에 실패했습니다.");
+        return;
       }
 
       // Upload all files using presigned URLs
@@ -272,195 +340,41 @@ export default function PostEditor({
     editorRef.current?.insertImage(imageUrl);
   };
 
-  // Autosave function
-  const performAutosave = async () => {
-    // Get the latest values from refs
-    const currentTitle = currentTitleRef.current;
-    const currentContent = currentContentRef.current;
-    const currentPostId = currentPostIdRef.current;
-
-    // Prevent concurrent autosaves
-    if (isAutosavingRef.current) {
-      return;
-    }
-
-    // Only autosave if post is not published
-    if (publishedAt !== null) {
-      return;
-    }
-
-    // Don't autosave empty posts
-    if (!currentTitle.trim() && !currentContent.trim()) {
-      return;
-    }
-
-    // Check if content actually changed
-    if (lastContentRef.current.title === currentTitle && lastContentRef.current.content === currentContent) {
-      return;
-    }
-
-    // Set autosaving flag
-    isAutosavingRef.current = true;
-
-    setAutosaveStatus('saving');
-    setShowAutosaveStatus(true);
-    
-    // Clear any existing fade timeout
-    if (fadeTimeoutRef.current) {
-      clearTimeout(fadeTimeoutRef.current);
-    }
-    
-    try {
-      const res = await autosaveDraftPost(blogId, currentPostId, currentTitle, currentContent);
-      
-      if (res.success) {
-        // Update postId if this was a new post
-        if (!currentPostId) {
-          setPostId(res.postId);
-          // Immediately update the ref to prevent race conditions
-          currentPostIdRef.current = res.postId;
-          // Don't update URL during autosave to prevent Next.js re-render issues
-          // The URL will be updated when user manually saves
-        }
-
-        lastContentRef.current = { title: currentTitle, content: currentContent };
-        setLastAutosaved(new Date());
-        setAutosaveStatus('saved');
-
-        // Start fade out after 2 seconds
-        fadeTimeoutRef.current = setTimeout(() => {
-          setShowAutosaveStatus(false);
-          // Hide completely after fade animation
-          setTimeout(() => setAutosaveStatus('idle'), 300);
-        }, 2000);
-      } else {
-        setAutosaveStatus('error');
-        // Start fade out after 4 seconds for errors
-        fadeTimeoutRef.current = setTimeout(() => {
-          setShowAutosaveStatus(false);
-          setTimeout(() => setAutosaveStatus('idle'), 300);
-        }, 4000);
-      }
-    } catch (error) {
-      console.error('Autosave failed:', error);
-      setAutosaveStatus('error');
-      // Start fade out after 4 seconds for errors
-      fadeTimeoutRef.current = setTimeout(() => {
-        setShowAutosaveStatus(false);
-        setTimeout(() => setAutosaveStatus('idle'), 300);
-      }, 4000);
-    } finally {
-      // Always clear the autosaving flag
-      isAutosavingRef.current = false;
-    }
-  };
-
-  // Debounced autosave effect
-  useEffect(() => {
-    // Clear existing timeout
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
-
-    // Only autosave if content changed and post is not published
-    if (publishedAt === null && (title.trim() || content.trim())) {
-      autosaveTimeoutRef.current = setTimeout(() => {
-        performAutosave();
-      }, 2000); // 2 second delay
-    }
-
-    return () => {
-      if (autosaveTimeoutRef.current) {
-        clearTimeout(autosaveTimeoutRef.current);
-      }
-      if (fadeTimeoutRef.current) {
-        clearTimeout(fadeTimeoutRef.current);
-      }
-    };
-  }, [title, content, publishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Handle browser navigation/close to prevent losing unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Only show warning for unpublished drafts with unsaved changes
-      if (publishedAt === null && 
-          (lastContentRef.current.title !== title || lastContentRef.current.content !== content) &&
-          (title.trim() || content.trim())) {
-        e.preventDefault();
-        e.returnValue = ''; // Required for legacy browsers
-        
-        // Try to trigger autosave if possible (may not complete due to browser constraints)
-        performAutosave();
-        
-        return ''; // Modern browsers
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [title, content, publishedAt]); // eslint-disable-line react-hooks/exhaustive-deps
-
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
-    
-    // Clear autosave timeout when manually saving
-    if (autosaveTimeoutRef.current) {
-      clearTimeout(autosaveTimeoutRef.current);
-    }
+    const wasNewPost = !postIdRef.current;
+    const publishedAtValue = status === "publish" ? new Date() : publishedAt;
 
-    const publishedAtValue =
-      status === "publish"
-        ? new Date()
-        : status === "save"
-        ? publishedAt
-        : null;
-    const res = await upsertPost(
-      blogId,
-      publishedAtValue,
-      postId,
-      title,
-      content
-    );
+    try {
+      // After any autosave in flight, so both don't create a post
+      const res = await enqueueSave(async () => {
+        const res = await upsertPost(
+          blogId,
+          publishedAtValue,
+          postIdRef.current,
+          title,
+          content
+        );
+        markSaved(res.postId, title, content);
+        return res;
+      });
 
-    if (res.success) {
-      const wasNewPost = !postId;
-      setPostId(res.postId);
-
-      if (publishedAtValue) {
-        setPublishedAt(publishedAtValue);
-      }
-
-      // Update last content reference
-      lastContentRef.current = { title, content };
-      
-      // Reset autosave status
-      setAutosaveStatus('idle');
+      setPublishedAt(publishedAtValue);
+      setAutosaveStatus(null);
       setShowAutosaveStatus(false);
-      setLastAutosaved(new Date());
-      
-      // Clear fade timeout
-      if (fadeTimeoutRef.current) {
-        clearTimeout(fadeTimeoutRef.current);
-      }
 
-      const now = new Date();
       toast(
-        format(now, "yyyy년 MM월 dd일 HH시 mm분") +
+        format(new Date(), "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
 
-      // If this was a new post, navigate to the edit URL
       if (wasNewPost) {
-        const editPath = getBlogPostEditPath(blogId, res.postId);
-        router.replace(editPath);
+        router.replace(getBlogPostEditPath(blogId, res.postId));
       }
-
-      setIsLoading(false);
-    } else {
+    } catch (error) {
+      console.error("Save failed:", error);
       toast("❗️");
+    } finally {
       setIsLoading(false);
     }
   }
@@ -518,11 +432,6 @@ export default function PostEditor({
     return Math.ceil(wordCount / wordsPerMinute);
   }, [wordCount]);
 
-  const lastSaved = useMemo(() => {
-    const now = new Date();
-    return formatInTimeZone(now, "Asia/Seoul", "HH:mm");
-  }, []);
-
   const statusParts = [
     publishedAt
       ? `발행됨 ${formatInTimeZone(publishedAt, "Asia/Seoul", "yyyy-MM-dd HH:mm")}`
@@ -531,9 +440,8 @@ export default function PostEditor({
     `${wordCount}단어`,
     readingTime > 0 && `${readingTime}분`,
     postId &&
-      (lastAutosaved && publishedAt === null
-        ? `자동저장 ${formatInTimeZone(lastAutosaved, "Asia/Seoul", "HH:mm")}`
-        : `마지막 저장 ${lastSaved}`),
+      savedAt &&
+      `마지막 저장 ${formatInTimeZone(savedAt, "Asia/Seoul", "HH:mm")}`,
   ].filter(Boolean);
 
   return (
@@ -658,7 +566,7 @@ export default function PostEditor({
 
       <p className="text-neutral-500 text-sm">
         {statusParts.join(" · ")}
-        {publishedAt === null && autosaveStatus !== "idle" && (
+        {publishedAt === null && autosaveStatus && (
           <span
             className={`transition-opacity duration-300 ${
               showAutosaveStatus ? "opacity-100" : "opacity-0"
