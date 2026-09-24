@@ -103,18 +103,19 @@ export function setupOutboxDispatcher() {
       if (blogResult.length === 0) return { items: [] };
 
       const posts = await db.query.postTable.findMany({
-        where: (post, { eq, and, isNotNull }) =>
+        where: (post, { eq, and, isNotNull, isNull }) =>
           and(
             eq(post.blogId, blogResult[0].blogId),
             isNotNull(post.published),
-            isNotNull(post.content)
+            isNotNull(post.content),
+            isNull(post.deleted)
           ),
         orderBy: (post, { desc }) => desc(post.published),
         limit: 20,
       });
 
       const articles = await Promise.all(
-        posts.map((post) => getNote(ctx, post, identifier))
+        posts.map((post) => getNote(ctx, post, blogResult[0].blogId))
       );
       if (articles.length === 0) return { items: [] };
 
