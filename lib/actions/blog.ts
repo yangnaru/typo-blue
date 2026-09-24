@@ -102,8 +102,9 @@ export async function deleteBlog(blogId: string) {
   };
 }
 
+// Checks that the post belongs to the blog, and the blog to the current user
 async function assertCurrentUserHasBlogWithIdAndPostWithId(
-  blogId: string,
+  blogSlug: string,
   postId: string
 ) {
   const { user: sessionUser } = await getCurrentSession();
@@ -122,7 +123,10 @@ async function assertCurrentUserHasBlogWithIdAndPostWithId(
     throw new Error("글을 찾을 수 없습니다.");
   }
 
-  if (targetPost.blog.userId !== sessionUser.id) {
+  if (
+    targetPost.blog.slug !== blogSlug ||
+    targetPost.blog.userId !== sessionUser.id
+  ) {
     throw new Error("권한이 없습니다.");
   }
 
@@ -249,7 +253,11 @@ export async function upsertPost(
 
   if (uuid) {
     const existingPost = await db.query.postTable.findFirst({
-      where: and(eq(postTable.id, uuid), eq(postTable.blogId, targetBlog.id)),
+      where: and(
+        eq(postTable.id, uuid),
+        eq(postTable.blogId, targetBlog.id),
+        isNull(postTable.deleted)
+      ),
     });
 
     if (!existingPost) {
@@ -397,7 +405,11 @@ export async function autosaveDraftPost(
   if (uuid) {
     // Update existing draft post
     const existingPost = await db.query.postTable.findFirst({
-      where: and(eq(postTable.id, uuid), eq(postTable.blogId, targetBlog.id)),
+      where: and(
+        eq(postTable.id, uuid),
+        eq(postTable.blogId, targetBlog.id),
+        isNull(postTable.deleted)
+      ),
     });
 
     if (!existingPost) {

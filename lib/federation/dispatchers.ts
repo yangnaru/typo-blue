@@ -7,7 +7,8 @@ import {
   followingTable,
   postTable,
 } from "@/drizzle/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, isNotNull, isNull, sql } from "drizzle-orm";
+import { isUuid } from "../utils";
 import { getNote } from "./utils";
 import { federation, routePrefix } from "./core";
 
@@ -180,8 +181,13 @@ export function setupObjectDispatcher() {
     Note,
     `${routePrefix}/notes/{id}`,
     async (ctx, values) => {
+      if (!isUuid(values.id)) return null;
       const post = await ctx.data.db.query.postTable.findFirst({
-        where: eq(postTable.id, values.id),
+        where: and(
+          eq(postTable.id, values.id),
+          isNotNull(postTable.published),
+          isNull(postTable.deleted)
+        ),
       });
       if (post == null) return null;
       return await getNote(ctx, post, post.blogId);

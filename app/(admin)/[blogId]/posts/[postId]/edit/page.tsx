@@ -17,17 +17,21 @@ export default async function EditPost(props: { params: Params }) {
     redirect(getRootPath());
   }
 
-  const editingPost = await db.query.postTable.findFirst({
-    where: and(eq(postTable.id, uuid), isNull(postTable.deleted)),
-  });
-
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, slug),
   });
 
-  if (targetBlog?.userId !== user.id) {
+  if (!targetBlog || targetBlog.userId !== user.id) {
     redirect(getRootPath());
   }
+
+  const editingPost = await db.query.postTable.findFirst({
+    where: and(
+      eq(postTable.id, uuid),
+      eq(postTable.blogId, targetBlog.id),
+      isNull(postTable.deleted)
+    ),
+  });
 
   if (!editingPost) {
     redirect(getRootPath());

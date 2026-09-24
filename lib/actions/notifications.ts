@@ -10,6 +10,14 @@ import {
 import { eq, and, inArray, isNull, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+// Notifications have no blog column; they belong to a blog through its posts
+function blogPostIds(blogId: string) {
+  return db
+    .select({ id: postTable.id })
+    .from(postTable)
+    .where(eq(postTable.blogId, blogId));
+}
+
 export async function markNotificationAsRead(
   blogSlug: string,
   notificationId: string
@@ -35,7 +43,12 @@ export async function markNotificationAsRead(
       read: new Date(),
       updated: new Date(),
     })
-    .where(and(eq(notificationTable.id, notificationId)));
+    .where(
+      and(
+        eq(notificationTable.id, notificationId),
+        inArray(notificationTable.postId, blogPostIds(targetBlog.id))
+      )
+    );
 
   revalidatePath(`/@${blogSlug}/notifications`);
 
@@ -107,7 +120,12 @@ export async function deleteNotification(
   // Delete the notification
   await db
     .delete(notificationTable)
-    .where(eq(notificationTable.id, notificationId));
+    .where(
+      and(
+        eq(notificationTable.id, notificationId),
+        inArray(notificationTable.postId, blogPostIds(targetBlog.id))
+      )
+    );
 
   revalidatePath(`/@${blogSlug}/notifications`);
 

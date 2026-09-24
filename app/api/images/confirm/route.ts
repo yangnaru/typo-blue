@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { imageTable, postImageTable } from "@/drizzle/schema";
+import { blog, imageTable, postImageTable, postTable } from "@/drizzle/schema";
 import { getPublicUrl } from "@/lib/r2";
 import { getCurrentSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
@@ -20,6 +20,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Missing required fields: imageId, postId" },
         { status: 400 }
+      );
+    }
+
+    // Check authorization: verify user owns the blog that owns this post
+    const postResult = await db
+      .select({ blogUserId: blog.userId })
+      .from(postTable)
+      .innerJoin(blog, eq(postTable.blogId, blog.id))
+      .where(eq(postTable.id, postId))
+      .limit(1);
+
+    if (postResult.length === 0) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (postResult[0].blogUserId !== user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to add images to this post" },
+        { status: 403 }
       );
     }
 

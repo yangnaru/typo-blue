@@ -7,12 +7,14 @@ import { PageViewTracker } from "@/components/PageViewTracker";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 import sanitize from "sanitize-html";
 import { notFound } from "next/navigation";
+import { isUuid } from "@/lib/utils";
 
 type MetadataParams = Promise<{
+  blogId: string;
   postId: string;
 }>;
 
@@ -21,10 +23,15 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const { user } = await getCurrentSession();
 
-  const uuid = (await props.params).postId;
+  const params = await props.params;
+  const uuid = params.postId;
+  if (!isUuid(uuid)) {
+    notFound();
+  }
+  const slug = decodeURIComponent(params.blogId).replace("@", "");
 
   const targetPost = await db.query.postTable.findFirst({
-    where: eq(postTable.id, uuid),
+    where: and(eq(postTable.id, uuid), isNull(postTable.deleted)),
     with: {
       blog: {
         with: {
@@ -35,7 +42,7 @@ export async function generateMetadata(props: {
     },
   });
 
-  if (!targetPost) {
+  if (!targetPost || targetPost.blog.slug !== slug) {
     notFound();
   }
 
@@ -101,16 +108,16 @@ export default async function BlogPost(props: { params: Params }) {
 
   const uuid = (await props.params).postId;
   // If the postId is not a valid UUID, return a 404 error
-  if (
-    !uuid.match(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    )
-  ) {
+  if (!isUuid(uuid)) {
     notFound();
   }
 
   const targetPost = await db.query.postTable.findFirst({
-    where: eq(postTable.id, uuid),
+    where: and(
+      eq(postTable.id, uuid),
+      eq(postTable.blogId, targetBlog.id),
+      isNull(postTable.deleted)
+    ),
   });
 
   if (!targetPost || (!targetPost.published && !isCurrentUserBlogOwner)) {
