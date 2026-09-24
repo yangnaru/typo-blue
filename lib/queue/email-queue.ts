@@ -78,14 +78,17 @@ class EmailQueue {
           )
         )
         .orderBy(emailQueueTable.createdAt)
-        .limit(1);
+        .limit(1)
+        // So that two workers never take the same job
+        .for('update', { skipLocked: true });
 
       if (!job) return null;
 
-      // Mark it as processing
+      // Mark it as processing; scheduledFor becomes when processing started,
+      // which recoverStuckJobs goes by
       await tx
         .update(emailQueueTable)
-        .set({ status: 'processing' })
+        .set({ status: 'processing', scheduledFor: new Date() })
         .where(eq(emailQueueTable.id, job.id));
 
       return job as EmailJob;
@@ -112,7 +115,9 @@ class EmailQueue {
         .set({ 
           status: 'failed',
           processedAt: new Date(),
-          errorMessage: `Exceeded max retries (${job.maxRetries})`
+          errorMessage: `Exceeded max retries (${job.maxRetries})${
+            job.errorMessage ? `: ${job.errorMessage}` : ''
+          }`
         })
         .where(eq(emailQueueTable.id, job.id));
       return;

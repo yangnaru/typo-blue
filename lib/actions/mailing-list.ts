@@ -14,6 +14,7 @@ import { MailgunTransport } from "@upyo/mailgun";
 import { createMessage } from "@upyo/core";
 import { htmlToText } from "html-to-text";
 import { EmailJob } from "../queue/email-queue";
+import { escapeHtml } from "../utils";
 
 export async function subscribeToMailingList(
   email: string,
@@ -110,41 +111,47 @@ export async function sendPostNotificationEmail(
       return { success: false, message: "게시글을 찾을 수 없습니다." };
     }
 
-    if (postData.emailSent) {
-      return { success: false, message: "이미 이메일이 발송되었습니다." };
-    }
-
     const subscribers = await db
       .select()
       .from(mailingListSubscription)
       .where(eq(mailingListSubscription.blogId, blogId));
 
     if (subscribers.length === 0) {
-      return { success: true, message: "구독자가 없습니다." };
+      return { success: false, message: "구독자가 없습니다." };
     }
 
-    // Create email jobs for all subscribers in bulk
-    const now = new Date();
-    const emailJobs = subscribers.map((subscriber) => ({
-      id: crypto.randomUUID(),
-      blogId,
-      postId,
-      subscriberEmail: subscriber.email,
-      unsubscribeToken: subscriber.unsubscribeToken,
-      type: "post-notification" as const,
-      status: "pending" as const,
-      retryCount: 0,
-      maxRetries: 3,
-      createdAt: now,
-      scheduledFor: now,
-    }));
+    const queued = await db.transaction(async (tx) => {
+      // Mark the post as sent only if it wasn't, so that two requests at once
+      // don't both queue the emails
+      const claimed = await tx
+        .update(postTable)
+        .set({ emailSent: new Date() })
+        .where(and(eq(postTable.id, postId), isNull(postTable.emailSent)))
+        .returning({ id: postTable.id });
+      if (claimed.length === 0) return false;
 
-    await db.insert(emailQueueTable).values(emailJobs);
+      const now = new Date();
+      await tx.insert(emailQueueTable).values(
+        subscribers.map((subscriber) => ({
+          id: crypto.randomUUID(),
+          blogId,
+          postId,
+          subscriberEmail: subscriber.email,
+          unsubscribeToken: subscriber.unsubscribeToken,
+          type: "post-notification" as const,
+          status: "pending" as const,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: now,
+          scheduledFor: now,
+        }))
+      );
+      return true;
+    });
 
-    await db
-      .update(postTable)
-      .set({ emailSent: new Date() })
-      .where(eq(postTable.id, postId));
+    if (!queued) {
+      return { success: false, message: "이미 이메일이 발송되었습니다." };
+    }
 
     return {
       success: true,
@@ -162,6 +169,15 @@ export async function sendPostNotificationEmail(
 export async function sendPostNotificationEmailToSubscriber(
   job: EmailJob
 ): Promise<void> {
+  // A retry after the send went through, e.g. when recording it failed
+  if (job.sentAt) return;
+
+  // Unsubscribed since the job was queued
+  const subscription = await db.query.mailingListSubscription.findFirst({
+    where: eq(mailingListSubscription.unsubscribeToken, job.unsubscribeToken),
+  });
+  if (!subscription) return;
+
   const postData = await db.query.postTable.findFirst({
     where: and(
       eq(postTable.id, job.postId),
@@ -188,6 +204,8 @@ export async function sendPostNotificationEmailToSubscriber(
   });
 
   const blogName = postData.blog.name || `@${postData.blog.slug}`;
+  const titleHtml = escapeHtml(postData.title ?? "");
+  const blogNameHtml = escapeHtml(blogName);
   const originalPostUrl = `${process.env.NEXT_PUBLIC_URL}/@${
     postData.blog.slug
   }/${postData.id}`;
@@ -224,7 +242,7 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${postData.title}</title>
+  <title>${titleHtml}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -294,18 +312,15 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
 </head>
 <body>
   <div class="header">
-    <div class="title">${postData.title}</div>
+    <div class="title">${titleHtml}</div>
     <div class="meta">
-      <strong>${blogName}</strong>
+      <strong>${blogNameHtml}</strong>
     </div>
   </div>
   
   <div class="content">
-    ${
-      postData.content
-        ? postData.content.substring(0, 300) +
-          (postData.content.length > 300 ? "..." : "")
-        : ""
+    ${escapeHtml(contentText.substring(0, 300))}${
+      contentText.length > 300 ? "..." : ""
     }
   </div>
   
@@ -314,7 +329,7 @@ ${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
   </div>
   
   <div class="footer">
-    <p>이 메일은 <strong>${blogName}</strong> 블로그의 메일링 리스트에 구독하여 발송되었습니다.</p>
+    <p>이 메일은 <strong>${blogNameHtml}</strong> 블로그의 메일링 리스트에 구독하여 발송되었습니다.</p>
     <p><a href="${unsubscribeUrl}" class="unsubscribe">구독해지</a></p>
   </div>
   
