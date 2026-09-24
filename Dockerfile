@@ -16,13 +16,14 @@ COPY components.json \
      next.config.js \
      package.json \
      pnpm-lock.yaml \
+     pnpm-workspace.yaml \
      postcss.config.js \
      tsconfig.json \
      ./
 
 RUN npm install --global corepack@latest
 RUN corepack enable pnpm
-RUN corepack use pnpm@latest-10
+RUN corepack install
 RUN pnpm install --frozen-lockfile
 
 ARG NEXT_PUBLIC_URL

@@ -6,7 +6,7 @@ import {
   EmojiReact,
   Delete,
   Create,
-} from "@fedify/fedify";
+} from "@fedify/vocab";
 import {
   federation,
   fedifyRequestHandler,

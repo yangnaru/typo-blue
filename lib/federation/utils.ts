@@ -1,9 +1,18 @@
-import { Note, Context, PUBLIC_COLLECTION } from "@fedify/fedify";
-import { Temporal } from "@js-temporal/polyfill";
+import { Context } from "@fedify/fedify";
+import { Note, PUBLIC_COLLECTION } from "@fedify/vocab";
+import { Temporal as TemporalPolyfill } from "@js-temporal/polyfill";
 import { actorTable, blog as blogTable, postTable } from "@/drizzle/schema";
 import type { ContextData } from "./core";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
+
+// Node.js has no native Temporal yet, so build Instants with the polyfill
+// (as Fedify does) and type them as the global Temporal that Fedify expects.
+function toInstant(date: Date): Temporal.Instant {
+  return TemporalPolyfill.Instant.fromEpochMilliseconds(
+    date.getTime()
+  ) as unknown as Temporal.Instant;
+}
 
 export function toDate(dateValue: any): Date | null {
   if (!dateValue) return null;
@@ -37,13 +46,13 @@ export async function getNote(
       }`
     ),
     published: post.published
-      ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
+      ? toInstant(post.published)
       : undefined,
     updated:
       post.published &&
       post.first_published &&
       +post.published > +post.first_published
-        ? Temporal.Instant.fromEpochMilliseconds(post.published.getTime())
+        ? toInstant(post.published)
         : undefined,
   });
   return note;

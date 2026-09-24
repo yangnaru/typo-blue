@@ -12,7 +12,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { federation } from "@/lib/federation";
-import { Delete } from "@fedify/fedify";
+import { Delete } from "@fedify/vocab";
 
 export async function setupActivityPubActorForBlog(blogSlug: string) {
   const { user } = await getCurrentSession();

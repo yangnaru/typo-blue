@@ -1,4 +1,5 @@
-import { Person, Create, Note, Endpoints, importJwk } from "@fedify/fedify";
+import { importJwk } from "@fedify/fedify";
+import { Person, Create, Note, Endpoints } from "@fedify/vocab";
 import { db } from "../db";
 import {
   blog as blogTable,

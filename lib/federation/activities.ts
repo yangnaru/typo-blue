@@ -3,7 +3,6 @@ import {
   Accept,
   Create,
   Update,
-  InboxContext,
   Undo,
   Note,
   Delete,
@@ -14,7 +13,8 @@ import {
   PUBLIC_COLLECTION,
   Person,
   Endpoints,
-} from "@fedify/fedify";
+} from "@fedify/vocab";
+import { InboxContext } from "@fedify/fedify";
 import { db } from "../db";
 import {
   blog as blogTable,

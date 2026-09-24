@@ -1,0 +1,12 @@
+overrides:
+  '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+  'webpack': ^5.104.1
+  '@opentelemetry/core': ^2.8.0
+
+# Keep dependency install scripts disabled, as with pnpm 10's defaults.
+allowBuilds:
+  '@sentry/cli': false
+  'esbuild': false
+  'sharp': false
+  'unrs-resolver': false

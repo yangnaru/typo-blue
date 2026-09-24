@@ -1,6 +1,5 @@
+import { Context, DocumentLoader } from "@fedify/fedify";
 import {
-  Context,
-  DocumentLoader,
   Link,
   isActor,
   Actor,
@@ -8,7 +7,7 @@ import {
   Emoji,
   getActorTypeName,
   getActorHandle,
-} from "@fedify/fedify";
+} from "@fedify/vocab";
 import {
   blog as blogTable,
   instanceTable,
