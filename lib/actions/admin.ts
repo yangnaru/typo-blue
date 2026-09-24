@@ -47,7 +47,11 @@ export async function impersonateUser(userId: string) {
   }
 
   const sessionToken = generateSessionToken();
-  const session = await createSession(sessionToken, userId);
+  // Impersonating isn't proof of being the user, so it can't change their
+  // password or email without verifying
+  const session = await createSession(sessionToken, userId, {
+    reauthenticated: false,
+  });
 
   await setSessionTokenCookie(sessionToken, new Date(session.expires));
 

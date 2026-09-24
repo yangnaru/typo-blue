@@ -2,16 +2,18 @@
 
 import { TimeSpan, createDate } from "oslo";
 import { generateRandomString, alphabet } from "oslo/crypto";
-import { MailgunTransport } from "@upyo/mailgun";
-import { createMessage } from "@upyo/core";
 import {
   createSession,
   deleteSessionTokenCookie,
   generateSessionToken,
   getCurrentSession,
+  invalidateOtherSessions,
   invalidateSession,
+  isRecentlyAuthenticated,
+  markSessionReauthenticated,
   setSessionTokenCookie,
 } from "../auth";
+import { sendMail } from "../email/send";
 import { redirect } from "next/navigation";
 import { clearAdminSession } from "./admin";
 import { hash, verify } from "@node-rs/argon2";
@@ -25,9 +27,13 @@ import {
 } from "@/drizzle/schema";
 import { randomUUID, timingSafeEqual } from "crypto";
 import { and, count, eq, gt, lt, sql } from "drizzle-orm";
-import { isUuid } from "../utils";
+import { isUuid, isValidEmail, normalizeEmail } from "../utils";
 
-type ChallengePurpose = "sign-in" | "change-email" | "delete-account";
+type ChallengePurpose =
+  | "sign-in"
+  | "change-email"
+  | "delete-account"
+  | "reauthenticate";
 
 // A code is 6 digits, so limit how many guesses it takes and how many codes
 // can be live for an address at once
@@ -61,6 +67,12 @@ async function createChallenge(
   };
   await db.insert(emailVerificationChallenge).values(challenge);
   return challenge;
+}
+
+// A hash to verify against when there's no account, made once
+let dummyPasswordHash: Promise<string> | undefined;
+function getDummyPasswordHash() {
+  return (dummyPasswordHash ??= hash(randomUUID()));
 }
 
 // Counts the attempt, and uses the challenge up when the code matches
@@ -101,14 +113,76 @@ async function consumeChallenge(
   return challenge;
 }
 
+// Proves who the user is again in this session, by a code sent to their
+// email, so they can change their password or email
+export async function sendReauthenticationCode(): Promise<string> {
+  const { user } = await getCurrentSession();
+  if (!user) {
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  const challenge = await createChallenge(
+    user.email,
+    "reauthenticate",
+    new TimeSpan(5, "m")
+  );
+
+  await sendMail({
+    to: user.email,
+    subject: "타이포 블루 본인 확인 코드",
+    text: challenge.code,
+  });
+
+  return challenge.id;
+}
+
+export async function reauthenticateWithCode(
+  challengeId: string,
+  code: string
+): Promise<boolean> {
+  const { user, session } = await getCurrentSession();
+  if (!user) {
+    return false;
+  }
+
+  const challenge = await consumeChallenge(challengeId, code, "reauthenticate");
+  if (!challenge || challenge.email !== user.email) {
+    return false;
+  }
+
+  await markSessionReauthenticated(session.id);
+  return true;
+}
+
+export async function reauthenticateWithPassword(
+  password: string
+): Promise<boolean> {
+  const { user, session } = await getCurrentSession();
+  if (!user?.passwordHash) {
+    return false;
+  }
+
+  if (!(await verify(user.passwordHash, password))) {
+    return false;
+  }
+
+  await markSessionReauthenticated(session.id);
+  return true;
+}
+
 export async function setPassword(
   prevState: { message: string },
   formData: FormData
 ) {
-  const { user } = await getCurrentSession();
+  const { user, session } = await getCurrentSession();
 
   if (!user) {
     return { message: "로그인이 필요합니다." };
+  }
+
+  // Or someone with a stolen session could lock the owner out
+  if (!isRecentlyAuthenticated(session)) {
+    return { message: "본인 확인이 필요합니다. 페이지를 새로고침해 주세요." };
   }
 
   const password = formData.get("password");
@@ -127,47 +201,48 @@ export async function setPassword(
     .update(userTable)
     .set({ passwordHash })
     .where(eq(userTable.id, user.id));
+  await invalidateOtherSessions(user.id, session.id);
 
   redirect(getAccountPath());
 }
 
 export async function sendEmailVerificationCode(
-  email: string
+  rawEmail: string
 ): Promise<string> {
+  const email = normalizeEmail(rawEmail);
+  if (!isValidEmail(email)) {
+    throw new Error("올바른 이메일 주소가 아닙니다.");
+  }
+
   const challenge = await createChallenge(
     email,
     "sign-in",
     new TimeSpan(5, "m")
   );
 
-  const transport = new MailgunTransport({
-    apiKey: process.env.MAILGUN_API_KEY!,
-    domain: process.env.MAILGUN_DOMAIN!,
-  });
-
-  const message = createMessage({
-    from: process.env.EMAIL_FROM!,
+  await sendMail({
     to: email,
     subject: "타이포 블루 로그인 코드",
-    content: { text: challenge.code },
+    text: challenge.code,
   });
-
-  const receipt = await transport.send(message);
-  if (receipt.successful) {
-    console.log("Message sent with ID:", receipt.messageId);
-  } else {
-    console.error("Send failed:", receipt.errorMessages.join(", "));
-  }
 
   return challenge.id;
 }
 
 export async function sendEmailVerificationCodeForEmailChange(
-  email: string
+  rawEmail: string
 ): Promise<string> {
-  const { user: sessionUser } = await getCurrentSession();
-  if (!sessionUser) {
+  const { session } = await getCurrentSession();
+  if (!session) {
     throw new Error("로그인이 필요합니다.");
+  }
+  if (!isRecentlyAuthenticated(session)) {
+    throw new Error("본인 확인이 필요합니다.");
+  }
+
+  const email = normalizeEmail(rawEmail);
+  if (!isValidEmail(email)) {
+    throw new Error("올바른 이메일 주소가 아닙니다.");
   }
 
   const user = (
@@ -184,24 +259,11 @@ export async function sendEmailVerificationCodeForEmailChange(
     new TimeSpan(5, "m")
   );
 
-  const transport = new MailgunTransport({
-    apiKey: process.env.MAILGUN_API_KEY!,
-    domain: process.env.MAILGUN_DOMAIN!,
-  });
-
-  const message = createMessage({
-    from: process.env.EMAIL_FROM!,
+  await sendMail({
     to: email,
     subject: "타이포 블루 이메일 변경 코드",
-    content: { text: challenge.code },
+    text: challenge.code,
   });
-
-  const receipt = await transport.send(message);
-  if (receipt.successful) {
-    console.log("Message sent with ID:", receipt.messageId);
-  } else {
-    console.error("Send failed:", receipt.errorMessages.join(", "));
-  }
 
   return challenge.id;
 }
@@ -210,9 +272,9 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
   challengeId: string,
   code: string
 ) {
-  const { user } = await getCurrentSession();
+  const { user, session } = await getCurrentSession();
 
-  if (!user) {
+  if (!user || !isRecentlyAuthenticated(session)) {
     return false;
   }
 
@@ -221,8 +283,9 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     return false;
   }
 
+  let changed: boolean;
   try {
-    return await db.transaction(async (tx) => {
+    changed = await db.transaction(async (tx) => {
       const existingUser = (
         await tx
           .select()
@@ -245,32 +308,50 @@ export async function verifyEmailVerificationCodeAndChangeAccountEmail(
     console.error("Failed to change email:", error);
     return false;
   }
+  if (!changed) {
+    return false;
+  }
+
+  await invalidateOtherSessions(user.id, session.id);
+
+  // So the owner finds out if it wasn't them
+  try {
+    await sendMail({
+      to: user.email,
+      subject: "타이포 블루 이메일 주소가 변경되었습니다",
+      text: `타이포 블루 계정의 이메일 주소가 ${challenge.email}(으)로 변경되었습니다. 직접 변경하지 않으셨다면 ${process.env.EMAIL_FROM}(으)로 알려 주세요.`,
+    });
+  } catch (error) {
+    console.error("Failed to notify the previous email address:", error);
+  }
+
+  return true;
 }
 
 export async function verifyPassword(
-  email: string,
+  rawEmail: string,
   password: string
 ): Promise<boolean> {
+  const email = normalizeEmail(rawEmail);
   const user = (
     await db.select().from(userTable).where(eq(userTable.email, email))
   )[0];
 
-  if (!user) {
-    return false;
-  }
+  // Verify against something even without a user, so the response time
+  // doesn't tell which emails have accounts
+  const passwordVerified = await verify(
+    user?.passwordHash ?? (await getDummyPasswordHash()),
+    password
+  );
 
-  if (!user.passwordHash) {
-    return false;
-  }
-
-  const passwordVerified = await verify(user.passwordHash, password);
-
-  if (!passwordVerified) {
+  if (!user?.passwordHash || !passwordVerified) {
     return false;
   }
 
   const sessionToken = generateSessionToken();
-  const sessionCookie = await createSession(sessionToken, user.id);
+  const sessionCookie = await createSession(sessionToken, user.id, {
+    reauthenticated: true,
+  });
 
   await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
 
@@ -286,33 +367,32 @@ export async function verifyEmailVerificationCode(
     return false;
   }
 
-  const existingUser = (
+  let existingUser = (
     await db
-      .select()
+      .select({ id: userTable.id })
       .from(userTable)
       .where(eq(userTable.email, challenge.email))
   )[0];
 
   if (!existingUser) {
-    // create user
-    const newUser = await db
-      .insert(userTable)
-      .values({
-        id: randomUUID(),
-        email: challenge.email,
-        updated: new Date(),
-      })
-      .returning({ id: userTable.id });
-    const sessionToken = generateSessionToken();
-    const sessionCookie = await createSession(sessionToken, newUser[0].id);
-
-    await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
-  } else {
-    const sessionToken = generateSessionToken();
-    const sessionCookie = await createSession(sessionToken, existingUser.id);
-
-    await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
+    existingUser = (
+      await db
+        .insert(userTable)
+        .values({
+          id: randomUUID(),
+          email: challenge.email,
+          updated: new Date(),
+        })
+        .returning({ id: userTable.id })
+    )[0];
   }
+
+  const sessionToken = generateSessionToken();
+  const sessionCookie = await createSession(sessionToken, existingUser.id, {
+    reauthenticated: true,
+  });
+
+  await setSessionTokenCookie(sessionToken, new Date(sessionCookie.expires));
 
   return true;
 }
@@ -342,29 +422,13 @@ export async function sendAccountDeletionVerificationCode(): Promise<string> {
   );
   const code = challenge.code;
 
-  const transport = new MailgunTransport({
-    apiKey: process.env.MAILGUN_API_KEY!,
-    domain: process.env.MAILGUN_DOMAIN!,
-  });
-
-  const message = createMessage({
-    from: process.env.EMAIL_FROM!,
+  const sent = await sendMail({
     to: user.email,
     subject: "타이포 블루 계정 삭제 인증 코드",
-    content: {
-      text: `계정 삭제 인증 코드: ${code}\n\n이 코드는 10분 후에 만료됩니다. 계정 삭제를 원하지 않으시면 이 메일을 무시하세요.`,
-      html: `<h2>계정 삭제 인증 코드</h2><p><strong>${code}</strong></p><p>이 코드는 10분 후에 만료됩니다.</p><p>계정 삭제를 원하지 않으시면 이 메일을 무시하세요.</p>`,
-    },
+    text: `계정 삭제 인증 코드: ${code}\n\n이 코드는 10분 후에 만료됩니다. 계정 삭제를 원하지 않으시면 이 메일을 무시하세요.`,
+    html: `<h2>계정 삭제 인증 코드</h2><p><strong>${code}</strong></p><p>이 코드는 10분 후에 만료됩니다.</p><p>계정 삭제를 원하지 않으시면 이 메일을 무시하세요.</p>`,
   });
-
-  const receipt = await transport.send(message);
-  if (receipt.successful) {
-    console.log(
-      "Account deletion verification message sent with ID:",
-      receipt.messageId
-    );
-  } else {
-    console.error("Send failed:", receipt.errorMessages.join(", "));
+  if (!sent) {
     throw new Error("이메일 발송에 실패했습니다.");
   }
 

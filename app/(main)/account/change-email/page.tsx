@@ -1,8 +1,8 @@
 import ReauthenticationForm from "@/components/ReauthenticationForm";
 import { getCurrentSession, isRecentlyAuthenticated } from "@/lib/auth";
-import SetPasswordForm from "./form";
+import ChangeEmailForm from "./form";
 
-export default async function SetPasswordPage() {
+export default async function ChangeEmailPage() {
   const { user, session } = await getCurrentSession();
 
   if (!user) {
@@ -18,5 +18,5 @@ export default async function SetPasswordPage() {
     );
   }
 
-  return <SetPasswordForm email={user.email} />;
+  return <ChangeEmailForm />;
 }

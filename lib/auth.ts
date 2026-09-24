@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { user as userTable, session as sessionTable } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import {
   encodeBase32LowerCaseNoPadding,
   encodeHexLowerCase,
@@ -18,15 +18,19 @@ export function generateSessionToken(): string {
   return token;
 }
 
+// reauthenticated: whether the user just proved who they are, by a password
+// or a code sent to their email; not so for an admin impersonating them
 export async function createSession(
   token: string,
-  userId: string
+  userId: string,
+  { reauthenticated }: { reauthenticated: boolean }
 ): Promise<Session> {
   const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
   const session: Session = {
     id: sessionId,
     userId,
     expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    reauthenticatedAt: reauthenticated ? new Date() : null,
   };
   await db.insert(sessionTable).values(session);
   return session;
@@ -66,6 +70,39 @@ export async function validateSessionToken(
 
 export async function invalidateSession(sessionId: string): Promise<void> {
   await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
+}
+
+const REAUTHENTICATION_WINDOW_MS = 1000 * 60 * 10;
+
+// Whether the session proved who its user is recently enough to change the
+// password or email
+export function isRecentlyAuthenticated(session: Session) {
+  return (
+    session.reauthenticatedAt != null &&
+    Date.now() - new Date(session.reauthenticatedAt).getTime() <
+      REAUTHENTICATION_WINDOW_MS
+  );
+}
+
+export async function markSessionReauthenticated(
+  sessionId: string
+): Promise<void> {
+  await db
+    .update(sessionTable)
+    .set({ reauthenticatedAt: new Date() })
+    .where(eq(sessionTable.id, sessionId));
+}
+
+// Signs the user out everywhere but here, after a password or email change
+export async function invalidateOtherSessions(
+  userId: string,
+  keepSessionId: string
+): Promise<void> {
+  await db
+    .delete(sessionTable)
+    .where(
+      and(eq(sessionTable.userId, userId), ne(sessionTable.id, keepSessionId))
+    );
 }
 
 export async function invalidateSessionByToken(token: string): Promise<void> {

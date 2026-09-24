@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { inputClassName, submitClassName } from "@/lib/form-styles";
 
-export default function ChangeEmailPage() {
+export default function ChangeEmailForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [emailInputDisabled, setEmailInputDisabled] = useState(false);
