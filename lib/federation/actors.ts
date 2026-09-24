@@ -7,6 +7,7 @@ import {
   Emoji,
   getActorTypeName,
   getActorHandle,
+  PropertyValue,
 } from "@fedify/vocab";
 import {
   blog as blogTable,
@@ -159,8 +160,8 @@ export async function persistActor(
         : header?.url?.href ?? null,
     fieldHtmls: Object.fromEntries(
       attachments
-        .filter((a: any) => a && a.type === "PropertyValue")
-        .map((p: any) => [p.name || "", p.value || ""])
+        .filter((a) => a instanceof PropertyValue)
+        .map((p) => [p.name?.toString() ?? "", p.value?.toString() ?? ""])
     ),
     emojis,
     tags,
@@ -170,7 +171,7 @@ export async function persistActor(
         : actor.url?.href ?? null,
     followeesCount: followees?.totalItems ?? 0,
     followersCount: followers?.totalItems ?? 0,
-    aliases: actor.aliasIds?.map((a: any) => a.href) ?? [],
+    aliases: actor.aliasIds?.map((a) => a.href) ?? [],
     successorId:
       successorActor == null || !successorActor.aliases.includes(actor.id.href)
         ? null

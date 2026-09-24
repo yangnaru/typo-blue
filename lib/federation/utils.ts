@@ -14,11 +14,13 @@ function toInstant(date: Date): Temporal.Instant {
   ) as unknown as Temporal.Instant;
 }
 
-export function toDate(dateValue: any): Date | null {
+export function toDate(
+  dateValue: Date | string | Temporal.Instant | null | undefined
+): Date | null {
   if (!dateValue) return null;
   if (dateValue instanceof Date) return dateValue;
   if (typeof dateValue === "string") return new Date(dateValue);
-  return null;
+  return new Date(dateValue.epochMilliseconds);
 }
 
 export async function getNote(
@@ -65,7 +67,7 @@ async function getNodeInfo(url: string, options: { parse: string }) {
 
     const nodeInfoLinks = await response.json();
     const nodeInfoUrl = nodeInfoLinks.links?.find(
-      (link: any) =>
+      (link: { rel?: string; href?: string }) =>
         link.rel === "http://nodeinfo.diaspora.software/ns/schema/2.0"
     )?.href;
 

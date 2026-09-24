@@ -371,15 +371,22 @@ async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
   );
 }
 
+// Our post URIs end in the post's UUID.
+function postIdFromUri(uri: URL | null | undefined): string | undefined {
+  return uri?.pathname.split("/").pop() || undefined;
+}
+
 async function onPostShared(
   fedCtx: InboxContext<ContextData>,
   announce: Announce
 ): Promise<void> {
   const object = await announce.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
+  const postId = postIdFromUri(object.id);
+  if (!object.id || !announce.id || !postId) return;
 
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
 
@@ -395,8 +402,8 @@ async function onPostShared(
     id: crypto.randomUUID(),
     type: "announce" as const,
     actorId: actor.id,
-    activityId: announce.id?.href!,
-    objectId: object.id?.href!,
+    activityId: announce.id.href,
+    objectId: object.id.href,
     postId: post.id,
     content: "",
     created: new Date(),
@@ -416,9 +423,11 @@ async function onPostUnshared(
     !isPostObject(await announce.getObject({ ...fedCtx, suppressError: true }))
   )
     return;
+  const postId = postIdFromUri(announce.objectId);
+  if (!postId) return;
 
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, announce.objectId?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
 
@@ -448,18 +457,20 @@ async function onPostLiked(
 ): Promise<void> {
   const object = await like.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
+  const postId = postIdFromUri(object.id);
+  if (!object.id || !like.id || !like.actorId || !postId) return;
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
-  const actor = await getActorByUri(like.actorId?.href!);
+  const [actor] = await getActorByUri(like.actorId.href);
   if (!actor) return;
 
   await db.insert(notificationTable).values({
     type: "like",
-    actorId: actor[0].id,
-    activityId: like.id?.href!,
-    objectId: object.id?.href!,
+    actorId: actor.id,
+    activityId: like.id.href,
+    objectId: object.id.href,
     postId: post.id,
     created: new Date(),
     updated: new Date(),
@@ -475,11 +486,13 @@ async function onPostUnliked(
   if (!(object instanceof Like)) return;
   const postObject = await object.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(postObject)) return;
+  const postId = postIdFromUri(postObject.id);
+  if (!undo.actorId || !postId) return;
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
-  const actor = await getActorByUri(undo.actorId?.href!);
+  const [actor] = await getActorByUri(undo.actorId.href);
   if (!actor) return;
 
   await db
@@ -488,7 +501,7 @@ async function onPostUnliked(
       and(
         eq(notificationTable.type, "like"),
         eq(notificationTable.postId, post.id),
-        eq(notificationTable.actorId, actor[0].id)
+        eq(notificationTable.actorId, actor.id)
       )
     );
 }
@@ -499,18 +512,20 @@ async function onReactedOnPost(
 ): Promise<void> {
   const object = await react.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
+  const postId = postIdFromUri(object.id);
+  if (!object.id || !react.id || !react.actorId || !postId) return;
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, object.id?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
-  const actor = await getActorByUri(react.actorId?.href!);
+  const [actor] = await getActorByUri(react.actorId.href);
   if (!actor) return;
 
   await db.insert(notificationTable).values({
     type: "emoji_react",
-    actorId: actor[0].id,
-    activityId: react.id?.href!,
-    objectId: object.id?.href!,
+    actorId: actor.id,
+    activityId: react.id.href,
+    objectId: object.id.href,
     postId: post.id,
     content: react.content?.toString(),
     created: new Date(),
@@ -533,11 +548,14 @@ async function onReactionUndoneOnPost(
     suppressError: true,
   });
   if (!isPostObject(postObject)) return;
+  const postId = postIdFromUri(postObject.id);
+  const content = reactionObject.content?.toString();
+  if (!undo.actorId || !postId || content == null) return;
   const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postObject.id?.href.split("/").pop()!),
+    where: eq(postTable.id, postId),
   });
   if (!post) return;
-  const actor = await getActorByUri(undo.actorId?.href!);
+  const [actor] = await getActorByUri(undo.actorId.href);
   if (!actor) return;
 
   await db
@@ -546,8 +564,8 @@ async function onReactionUndoneOnPost(
       and(
         eq(notificationTable.type, "emoji_react"),
         eq(notificationTable.postId, post.id),
-        eq(notificationTable.actorId, actor[0].id),
-        eq(notificationTable.content, reactionObject.content?.toString()!)
+        eq(notificationTable.actorId, actor.id),
+        eq(notificationTable.content, content)
       )
     );
 }
@@ -570,11 +588,11 @@ async function onPostDeleted(
     ...fedCtx,
     suppressError: true,
   });
-  if (!object) return;
+  if (!object?.id) return;
 
   await db
     .delete(notificationTable)
-    .where(eq(notificationTable.objectId, object.id?.href!));
+    .where(eq(notificationTable.objectId, object.id.href));
 }
 
 export const activityHandlers = {

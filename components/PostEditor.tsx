@@ -115,24 +115,19 @@ export default function PostEditor({
 
   // Load images when postId changes
   useEffect(() => {
-    if (postId) {
-      loadImages();
-    }
-  }, [postId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadImages = async () => {
     if (!postId) return;
 
-    try {
-      const response = await fetch(`/api/images?postId=${postId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setImages(data);
-      }
-    } catch (error) {
-      console.error("Failed to load images:", error);
-    }
-  };
+    let cancelled = false;
+    fetch(`/api/images?postId=${postId}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data && !cancelled) setImages(data);
+      })
+      .catch((error) => console.error("Failed to load images:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [postId]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -385,13 +380,6 @@ export default function PostEditor({
       isAutosavingRef.current = false;
     }
   };
-
-  // Show autosave status immediately when saving starts
-  useEffect(() => {
-    if (autosaveStatus === 'saving') {
-      setShowAutosaveStatus(true);
-    }
-  }, [autosaveStatus]);
 
   // Debounced autosave effect
   useEffect(() => {

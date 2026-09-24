@@ -1,6 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import { getBlogPostPath } from "@/lib/paths";
+import type { Blog, Post } from "@/lib/db";
 
 export default function PostList({
   name,
@@ -12,8 +13,8 @@ export default function PostList({
   titleClassName,
 }: {
   name: string;
-  blog: any;
-  posts: any[];
+  blog: Pick<Blog, "slug">;
+  posts: Post[];
   showTitle: boolean;
   embed?: boolean;
   showTime?: boolean;

@@ -47,8 +47,10 @@ export default function AccountDeletion() {
       await deleteAccount(challengeId, code);
       toast.success("계정이 성공적으로 삭제되었습니다.");
       router.push("/");
-    } catch (error: any) {
-      toast.error(error.message || "계정 삭제에 실패했습니다.");
+    } catch (error) {
+      toast.error(
+        (error instanceof Error && error.message) || "계정 삭제에 실패했습니다."
+      );
       setStep("email_sent");
     } finally {
       setIsLoading(false);

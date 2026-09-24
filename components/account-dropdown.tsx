@@ -18,13 +18,14 @@ import {
   getBlogPostsPath,
   getBlogNewPostPath,
 } from "@/lib/paths";
+import type { Blog, User as AccountUser } from "@/lib/db";
 
 export default function AccountDropdown({
   user,
   blogs,
 }: {
-  user: any;
-  blogs: any;
+  user: Pick<AccountUser, "email">;
+  blogs: Pick<Blog, "id" | "slug">[];
 }) {
   return (
     <DropdownMenu>
@@ -44,7 +45,7 @@ export default function AccountDropdown({
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {blogs.map((blog: any) => (
+        {blogs.map((blog) => (
           <div key={blog.id}>
             <DropdownMenuItem className="cursor-pointer" asChild>
               <Link

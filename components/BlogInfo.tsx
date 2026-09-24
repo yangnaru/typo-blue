@@ -4,8 +4,9 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { getBlogPostsPath, getBlogHomePath } from "@/lib/paths";
 import { Button } from "./ui/button";
+import type { Blog, Post } from "@/lib/db";
 
-export default function BlogInfo({ blog }: { blog: any }) {
+export default function BlogInfo({ blog }: { blog: Blog & { posts: Post[] } }) {
   return (
     <div className="border rounded-lg p-6 flex flex-row justify-between items-start gap-6">
       <div className="space-y-3 flex-1">

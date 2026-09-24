@@ -84,7 +84,6 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
     const dateObjects = uniqueDates.map(dateStr => new Date(dateStr));
     
     let longestStreak = 1;
-    let currentStreakInData = 1;
     let tempStreak = 1;
 
     // Calculate longest streak in historical data

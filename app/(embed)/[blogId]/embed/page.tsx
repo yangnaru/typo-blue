@@ -1,7 +1,7 @@
 import PostList from "@/components/PostList";
 import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
 import { notFound } from "next/navigation";
 
@@ -27,11 +27,11 @@ export default async function BlogHome(props: { params: Params }) {
 
   const publishedPosts = await db.query.postTable.findMany({
     where: and(
-      eq(postTable.blogId, blog.id),
-      eq(postTable.published, isNotNull(postTable.published))
+      eq(postTable.blogId, targetBlog.id),
+      isNotNull(postTable.published),
+      isNull(postTable.deleted)
     ),
     orderBy: desc(postTable.published),
-    with: { blog: true },
   });
 
   await incrementVisitorCount(targetBlog.id);
@@ -39,7 +39,7 @@ export default async function BlogHome(props: { params: Params }) {
   return (
     <PostList
       name="발행된 글 목록"
-      blog={blog}
+      blog={targetBlog}
       posts={publishedPosts}
       showTitle={false}
       embed={true}

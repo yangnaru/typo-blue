@@ -25,7 +25,10 @@ import {
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 
-export async function setPassword(prevState: any, formData: FormData) {
+export async function setPassword(
+  prevState: { message: string },
+  formData: FormData
+) {
   const { user } = await getCurrentSession();
 
   if (!user) {

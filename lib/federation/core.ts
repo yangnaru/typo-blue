@@ -25,14 +25,14 @@ export const fedifyRequestHandler = integrateFederation((request: Request) => ({
   canonicalOrigin: `https://${process.env.NEXT_PUBLIC_DOMAIN!}`,
 }));
 
-function integrateFederation<TContextData>(
-  contextDataFactory: (request: Request) => TContextData | Promise<TContextData>
+function integrateFederation(
+  contextDataFactory: (request: Request) => ContextData | Promise<ContextData>
 ) {
   return async (request: Request) => {
     const forwardedRequest = await getXForwardedRequest(request);
     const contextData = await contextDataFactory(forwardedRequest);
     return await federation.fetch(forwardedRequest, {
-      contextData: contextData as any,
+      contextData,
       onNotFound: () => {
         return new Response("Not found", { status: 404 });
       },
