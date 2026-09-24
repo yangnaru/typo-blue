@@ -1,5 +1,5 @@
 import { emailQueue, EmailJob } from './email-queue';
-import { sendPostNotificationEmailToSubscriber } from '../actions/mailing-list';
+import { sendPostNotificationEmailToSubscriber } from '../email/post-notification';
 
 class EmailWorker {
   private isRunning = false;

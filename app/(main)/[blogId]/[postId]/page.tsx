@@ -8,7 +8,7 @@ import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { incrementVisitorCount } from "@/lib/actions/blog";
+import { incrementVisitorCount } from "@/lib/tracking";
 import { sanitizePostHtml } from "@/lib/sanitize";
 import { notFound } from "next/navigation";
 import { isUuid } from "@/lib/utils";

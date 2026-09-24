@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { blog, imageTable, postImageTable, postTable } from "@/drizzle/schema";
 import { getPublicUrl } from "@/lib/r2";
 import { getCurrentSession } from "@/lib/auth";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { isUuid } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { imageId, postId } = body;
 
-    if (!imageId || !postId) {
+    if (
+      typeof imageId !== "string" ||
+      typeof postId !== "string" ||
+      !isUuid(imageId) ||
+      !isUuid(postId)
+    ) {
       return NextResponse.json(
         { error: "Missing required fields: imageId, postId" },
         { status: 400 }
@@ -42,41 +48,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if image exists and is in pending status
-    const imageResults = await db
-      .select()
-      .from(imageTable)
-      .where(eq(imageTable.id, imageId))
-      .limit(1);
+    // Mark the image completed and attach it to the post together, and only
+    // if it's still pending, so it can't end up completed but unattached
+    const updatedImage = await db.transaction(async (tx) => {
+      const [image] = await tx
+        .update(imageTable)
+        .set({ status: "completed" })
+        .where(and(eq(imageTable.id, imageId), eq(imageTable.status, "pending")))
+        .returning();
+      if (!image) return null;
 
-    if (imageResults.length === 0) {
-      return NextResponse.json({ error: "Image not found" }, { status: 404 });
-    }
+      await tx
+        .insert(postImageTable)
+        .values({ postId, imageId: image.id })
+        .onConflictDoNothing();
+      return image;
+    });
 
-    const image = imageResults[0];
-
-    if (image.status !== "pending") {
+    if (!updatedImage) {
       return NextResponse.json(
-        { error: "Image has already been confirmed or is not in pending state" },
-        { status: 400 }
+        { error: "Image not found or already confirmed" },
+        { status: 404 }
       );
     }
-
-    // Update image status to completed
-    const [updatedImage] = await db
-      .update(imageTable)
-      .set({ status: "completed" })
-      .where(eq(imageTable.id, imageId))
-      .returning();
-
-    // Create post-image relationship
-    await db
-      .insert(postImageTable)
-      .values({
-        postId,
-        imageId: updatedImage.id,
-      })
-      .onConflictDoNothing(); // In case it was already created
 
     return NextResponse.json({
       id: updatedImage.id,

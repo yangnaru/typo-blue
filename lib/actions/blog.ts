@@ -4,7 +4,7 @@ import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { blog, postTable, imageTable, postImageTable } from "@/drizzle/schema";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
 import { deleteFromR2 } from "../r2";
 
@@ -185,16 +185,27 @@ export async function deletePost(blogSlug: string, postId: string) {
     .innerJoin(imageTable, eq(postImageTable.imageId, imageTable.id))
     .where(eq(postImageTable.postId, uuid));
 
-  // Delete the image records first (junction records cascade), so a failure
-  // here doesn't leave the post pointing at objects already gone from R2
-  if (imageResults.length > 0) {
-    await db.delete(imageTable).where(
-      inArray(
-        imageTable.id,
-        imageResults.map((img) => img.id)
-      )
-    );
-  }
+  // Delete the image records and the post together (junction records
+  // cascade), before touching R2, so a failure leaves everything in place
+  await db.transaction(async (tx) => {
+    if (imageResults.length > 0) {
+      await tx.delete(imageTable).where(
+        inArray(
+          imageTable.id,
+          imageResults.map((img) => img.id)
+        )
+      );
+    }
+
+    await tx
+      .update(postTable)
+      .set({
+        title: null,
+        content: null,
+        deleted: new Date(),
+      })
+      .where(eq(postTable.id, uuid));
+  });
 
   // Then delete from R2; an orphaned object is harmless
   for (const image of imageResults) {
@@ -204,16 +215,6 @@ export async function deletePost(blogSlug: string, postId: string) {
       console.error(`Failed to delete image from R2: ${image.key}`, error);
     }
   }
-
-  // Now delete the post
-  await db
-    .update(postTable)
-    .set({
-      title: null,
-      content: null,
-      deleted: new Date(),
-    })
-    .where(eq(postTable.id, uuid));
 
   try {
     await sendNoteToFollowers(targetBlog.slug, uuid, true);
@@ -475,7 +476,7 @@ export async function sendPostEmail(blogId: string, postId: string) {
   }
 
   try {
-    const { sendPostNotificationEmail } = await import("./mailing-list");
+    const { sendPostNotificationEmail } = await import("../email/post-notification");
 
     return await sendPostNotificationEmail(foundBlog.id, uuid);
   } catch (error) {
@@ -485,13 +486,4 @@ export async function sendPostEmail(blogId: string, postId: string) {
       message: "이메일 발송 예약 중 오류가 발생했습니다.",
     };
   }
-}
-
-export async function incrementVisitorCount(blogId: string) {
-  await db
-    .update(blog)
-    .set({
-      visitor_count: sql`${blog.visitor_count} + 1`,
-    })
-    .where(eq(blog.id, blogId));
 }

@@ -9,7 +9,7 @@ import { blog, postTable } from "@/drizzle/schema";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { Metadata } from "next";
 import Link from "next/link";
-import { incrementVisitorCount } from "@/lib/actions/blog";
+import { incrementVisitorCount } from "@/lib/tracking";
 import { notFound } from "next/navigation";
 import { getActorForBlog } from "@/lib/activitypub";
 

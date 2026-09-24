@@ -1,0 +1,296 @@
+// Called from server code and the email worker only; kept out of
+// "use server" files so they aren't exposed as server actions
+import { db } from "@/lib/db";
+import {
+  mailingListSubscription,
+  postTable,
+  emailQueue as emailQueueTable,
+} from "@/drizzle/schema";
+import { eq, and, isNotNull, isNull } from "drizzle-orm";
+import { MailgunTransport } from "@upyo/mailgun";
+import { createMessage } from "@upyo/core";
+import { htmlToText } from "html-to-text";
+import { EmailJob } from "../queue/email-queue";
+import { escapeHtml } from "../utils";
+
+export async function sendPostNotificationEmail(
+  blogId: string,
+  postId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const postData = await db.query.postTable.findFirst({
+      where: and(
+        eq(postTable.id, postId),
+        eq(postTable.blogId, blogId),
+        isNotNull(postTable.published),
+        isNull(postTable.deleted)
+      ),
+      with: {
+        blog: {
+          with: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!postData) {
+      return { success: false, message: "게시글을 찾을 수 없습니다." };
+    }
+
+    const subscribers = await db
+      .select()
+      .from(mailingListSubscription)
+      .where(eq(mailingListSubscription.blogId, blogId));
+
+    if (subscribers.length === 0) {
+      return { success: false, message: "구독자가 없습니다." };
+    }
+
+    const queued = await db.transaction(async (tx) => {
+      // Mark the post as sent only if it wasn't, so that two requests at once
+      // don't both queue the emails
+      const claimed = await tx
+        .update(postTable)
+        .set({ emailSent: new Date() })
+        .where(and(eq(postTable.id, postId), isNull(postTable.emailSent)))
+        .returning({ id: postTable.id });
+      if (claimed.length === 0) return false;
+
+      const now = new Date();
+      await tx.insert(emailQueueTable).values(
+        subscribers.map((subscriber) => ({
+          id: crypto.randomUUID(),
+          blogId,
+          postId,
+          subscriberEmail: subscriber.email,
+          unsubscribeToken: subscriber.unsubscribeToken,
+          type: "post-notification" as const,
+          status: "pending" as const,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: now,
+          scheduledFor: now,
+        }))
+      );
+      return true;
+    });
+
+    if (!queued) {
+      return { success: false, message: "이미 이메일이 발송되었습니다." };
+    }
+
+    return {
+      success: true,
+      message: `${subscribers.length}개의 이메일 작업이 큐에 추가되었습니다.`,
+    };
+  } catch (error) {
+    console.error("Error queueing post notification emails:", error);
+    return {
+      success: false,
+      message: "이메일 큐 생성 중 오류가 발생했습니다.",
+    };
+  }
+}
+
+export async function sendPostNotificationEmailToSubscriber(
+  job: EmailJob
+): Promise<void> {
+  // A retry after the send went through, e.g. when recording it failed
+  if (job.sentAt) return;
+
+  // Unsubscribed since the job was queued
+  const subscription = await db.query.mailingListSubscription.findFirst({
+    where: eq(mailingListSubscription.unsubscribeToken, job.unsubscribeToken),
+  });
+  if (!subscription) return;
+
+  const postData = await db.query.postTable.findFirst({
+    where: and(
+      eq(postTable.id, job.postId),
+      eq(postTable.blogId, job.blogId),
+      isNotNull(postTable.published),
+      isNull(postTable.deleted)
+    ),
+    with: {
+      blog: {
+        with: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  if (!postData) {
+    throw new Error("게시글을 찾을 수 없습니다.");
+  }
+
+  const transport = new MailgunTransport({
+    apiKey: process.env.MAILGUN_API_KEY!,
+    domain: process.env.MAILGUN_DOMAIN!,
+  });
+
+  const blogName = postData.blog.name || `@${postData.blog.slug}`;
+  const titleHtml = escapeHtml(postData.title ?? "");
+  const blogNameHtml = escapeHtml(blogName);
+  const originalPostUrl = `${process.env.NEXT_PUBLIC_URL}/@${
+    postData.blog.slug
+  }/${postData.id}`;
+  const originalUnsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/unsubscribe?token=${job.unsubscribeToken}`;
+
+  // Create tracking URLs
+  const postUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
+    job.id
+  }&url=${encodeURIComponent(originalPostUrl)}`;
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_URL}/api/email-click?id=${
+    job.id
+  }&url=${encodeURIComponent(originalUnsubscribeUrl)}`;
+
+  const contentText = postData.content ? htmlToText(postData.content) : "";
+
+  const emailContentText = `
+새로운 글이 게시되었습니다.
+
+제목: ${postData.title}
+블로그: ${blogName}
+
+${contentText.substring(0, 200)}${contentText.length > 200 ? "..." : ""}
+
+전체 글 보기: ${originalPostUrl}
+
+---
+이 메일은 ${blogName} 블로그의 메일링 리스트에 구독하여 발송되었습니다.
+구독해지: ${originalUnsubscribeUrl}
+  `.trim();
+
+  const emailContentHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${titleHtml}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+    }
+    .header {
+      border-bottom: 2px solid #e5e5e5;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .content {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+    .cta {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .button:hover {
+      background-color: #2563eb;
+    }
+    .footer {
+      border-top: 1px solid #e5e5e5;
+      padding-top: 20px;
+      margin-top: 40px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+    .unsubscribe {
+      font-size: 12px;
+      color: #666;
+      text-decoration: none;
+    }
+    .unsubscribe:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">${titleHtml}</div>
+    <div class="meta">
+      <strong>${blogNameHtml}</strong>
+    </div>
+  </div>
+  
+  <div class="content">
+    ${escapeHtml(contentText.substring(0, 300))}${
+      contentText.length > 300 ? "..." : ""
+    }
+  </div>
+  
+  <div class="cta">
+    <a href="${postUrl}" class="button">전체 글 보기</a>
+  </div>
+  
+  <div class="footer">
+    <p>이 메일은 <strong>${blogNameHtml}</strong> 블로그의 메일링 리스트에 구독하여 발송되었습니다.</p>
+    <p><a href="${unsubscribeUrl}" class="unsubscribe">구독해지</a></p>
+  </div>
+  
+  <!-- Email open tracking pixel -->
+  <img src="${process.env.NEXT_PUBLIC_URL}/api/email-open?id=${
+    job.id
+  }" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" alt="" />
+</body>
+</html>
+  `.trim();
+
+  const message = createMessage({
+    from: process.env.EMAIL_FROM!,
+    to: job.subscriberEmail,
+    subject: `[${blogName}] ${postData.title}`,
+    content: {
+      text: emailContentText,
+      html: emailContentHtml,
+    },
+  });
+
+  const receipt = await transport.send(message);
+
+  if (!receipt.successful) {
+    throw new Error(
+      `Failed to send email: ${receipt.errorMessages.join(", ")}`
+    );
+  }
+
+  // Update the job with sent timestamp
+  await db
+    .update(emailQueueTable)
+    .set({ sentAt: new Date() })
+    .where(eq(emailQueueTable.id, job.id));
+
+  console.log(`Email sent to ${job.subscriberEmail}, ID: ${receipt.messageId}`);
+}
