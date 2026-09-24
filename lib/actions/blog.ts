@@ -249,9 +249,13 @@ export async function upsertPost(
 
   if (uuid) {
     const existingPost = await db.query.postTable.findFirst({
-      where: eq(postTable.id, uuid),
+      where: and(eq(postTable.id, uuid), eq(postTable.blogId, targetBlog.id)),
     });
-    wasAlreadyPublished = !!existingPost?.published;
+
+    if (!existingPost) {
+      throw new Error("글을 찾을 수 없습니다.");
+    }
+    wasAlreadyPublished = !!existingPost.published;
 
     const updateData: {
       title: string;
@@ -266,14 +270,14 @@ export async function upsertPost(
       updated: new Date(),
     };
 
-    if (published && !existingPost?.first_published) {
+    if (published && !existingPost.first_published) {
       updateData.first_published = published;
     }
 
     const [updatedPost] = await db
       .update(postTable)
       .set(updateData)
-      .where(eq(postTable.id, uuid))
+      .where(eq(postTable.id, existingPost.id))
       .returning();
     targetPost = updatedPost;
   } else {
@@ -393,11 +397,15 @@ export async function autosaveDraftPost(
   if (uuid) {
     // Update existing draft post
     const existingPost = await db.query.postTable.findFirst({
-      where: eq(postTable.id, uuid),
+      where: and(eq(postTable.id, uuid), eq(postTable.blogId, targetBlog.id)),
     });
+
+    if (!existingPost) {
+      throw new Error("글을 찾을 수 없습니다.");
+    }
     
     // Only autosave if post is not published (draft only)
-    if (existingPost?.published) {
+    if (existingPost.published) {
       throw new Error("이미 발행된 글은 자동저장할 수 없습니다.");
     }
 
@@ -408,7 +416,7 @@ export async function autosaveDraftPost(
         content,
         updated: new Date(),
       })
-      .where(eq(postTable.id, uuid))
+      .where(eq(postTable.id, existingPost.id))
       .returning();
     targetPost = updatedPost;
   } else {
