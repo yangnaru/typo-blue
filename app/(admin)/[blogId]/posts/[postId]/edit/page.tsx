@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { getRootPath } from "@/lib/paths";
 import { blog, postTable } from "@/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isUuid } from "@/lib/utils";
 
 type Params = Promise<{ blogId: string; postId: string }>;
 
@@ -15,6 +16,10 @@ export default async function EditPost(props: { params: Params }) {
   const { user } = await getCurrentSession();
   if (!user) {
     redirect(getRootPath());
+  }
+
+  if (!isUuid(uuid)) {
+    notFound();
   }
 
   const targetBlog = await db.query.blog.findFirst({

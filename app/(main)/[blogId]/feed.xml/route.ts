@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { create } from "xmlbuilder2";
+import { sanitizePostHtml } from "@/lib/sanitize";
 
 type Params = Promise<{
   blogId: string;
@@ -13,7 +14,8 @@ export async function GET(req: NextRequest, props: { params: Params }) {
     where: (blogs, { eq }) => eq(blogs.slug, slug),
     with: {
       posts: {
-        where: (posts, { isNotNull }) => isNotNull(posts.published),
+        where: (posts, { and, isNotNull, isNull }) =>
+          and(isNotNull(posts.published), isNull(posts.deleted)),
         orderBy: (posts, { desc }) => [desc(posts.published)],
         limit: 10,
       },
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest, props: { params: Params }) {
     .ele("id")
     .txt(`${url}/@${targetBlog.slug}/feed.xml`)
     .up()
-    .ele("title", { type: "html" })
+    .ele("title", { type: "text" })
     .txt(targetBlog.name || handle)
     .up()
     .ele("subtitle")
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest, props: { params: Params }) {
   for (const post of targetBlog.posts) {
     const entry = root.ele("entry");
     const postSlug = post.id;
-    entry.ele("title", { type: "html" }).txt(post.title || "무제");
+    entry.ele("title", { type: "text" }).txt(post.title || "무제");
     entry.ele("id").txt(`${url}/@${targetBlog.slug}/${postSlug}`);
     entry
       .ele("author")
@@ -80,7 +82,9 @@ export async function GET(req: NextRequest, props: { params: Params }) {
     });
     entry.ele("published").txt((post.first_published || post.published)!.toISOString());
     entry.ele("updated").txt(post.updated!.toISOString());
-    entry.ele("content", { type: "html" }).txt(post.content || "");
+    entry
+      .ele("content", { type: "html" })
+      .txt(sanitizePostHtml(post.content || ""));
   }
 
   return new NextResponse(root.end(), {

@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { blog, postTable, user } from "@/drizzle/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { incrementVisitorCount } from "@/lib/actions/blog";
-import sanitize from "sanitize-html";
+import { sanitizePostHtml } from "@/lib/sanitize";
 import { notFound } from "next/navigation";
 import { isUuid } from "@/lib/utils";
 
@@ -150,14 +150,7 @@ export default async function BlogPost(props: { params: Params }) {
       <div
         className="prose dark:prose-invert break-keep"
         dangerouslySetInnerHTML={{
-          __html: sanitize(targetPost.content ?? "", {
-            allowedTags: sanitize.defaults.allowedTags.concat(["img"]),
-            allowedAttributes: {
-              ...sanitize.defaults.allowedAttributes,
-              img: ["src", "alt", "title", "width", "height", "loading"],
-            },
-            allowedSchemes: ["https"],
-          }),
+          __html: sanitizePostHtml(targetPost.content ?? ""),
         }}
       />
       {isCurrentUserBlogOwner && (
