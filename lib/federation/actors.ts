@@ -53,9 +53,7 @@ export async function persistInstance(
     });
     if (instance != null) return instance;
   }
-  const nodeInfo = await getNodeInfo(`https://${host}/`, {
-    parse: "best-effort",
-  });
+  const nodeInfo = await getNodeInfo(`https://${host}/`);
   const values: NewInstance = {
     host,
     software: nodeInfo?.software?.name ?? null,
@@ -100,7 +98,7 @@ export async function persistActor(
   let handle: string;
   try {
     handle = await getActorHandle(actor, { trimLeadingAt: true });
-  } catch (error) {
+  } catch {
     return undefined;
   }
   const getterOpts = { ...options, suppressError: true };

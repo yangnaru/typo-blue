@@ -15,7 +15,6 @@ import {
   eq,
   and,
   gte,
-  lt,
   sql,
   desc,
   count,
@@ -89,9 +88,6 @@ export async function getAnalyticsOverview(
   if (!targetBlog || sessionUser.id !== targetBlog.userId) {
     redirect(getRootPath());
   }
-
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // Get total and unique visits
   const [visitsResult] = await db

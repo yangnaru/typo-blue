@@ -3,7 +3,6 @@
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
-  actorTable,
   blog,
   notificationTable,
   postTable,

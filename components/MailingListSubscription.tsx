@@ -37,7 +37,7 @@ export default function MailingListSubscription({
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("구독 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);

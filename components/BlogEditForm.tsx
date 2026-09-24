@@ -27,9 +27,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Save, Trash2, Settings, Globe, Lock } from "lucide-react";
+import { Save, Trash2, Settings, Globe } from "lucide-react";
 
 interface Blog {
   slug: string;

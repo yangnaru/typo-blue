@@ -50,7 +50,7 @@ export default function ChangeEmailPage() {
         setButtonText("이메일 변경 코드 인증");
         setButtonDisabled(false);
         setChallengeId(challengeId);
-      } catch (e) {
+      } catch {
         toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
         setButtonDisabled(false);
         setButtonText("이메일 변경 코드 보내기");

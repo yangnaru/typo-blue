@@ -1,7 +1,7 @@
 import { Context } from "@fedify/fedify";
 import { Note, PUBLIC_COLLECTION } from "@fedify/vocab";
 import { Temporal as TemporalPolyfill } from "@js-temporal/polyfill";
-import { actorTable, blog as blogTable, postTable } from "@/drizzle/schema";
+import { actorTable, postTable } from "@/drizzle/schema";
 import type { ContextData } from "./core";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
@@ -60,7 +60,7 @@ export async function getNote(
   return note;
 }
 
-async function getNodeInfo(url: string, options: { parse: string }) {
+async function getNodeInfo(url: string) {
   try {
     const response = await fetch(new URL("/.well-known/nodeinfo", url));
     if (!response.ok) return null;

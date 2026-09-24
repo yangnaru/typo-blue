@@ -1,4 +1,3 @@
-import BlogInfo from "@/components/BlogInfo";
 import AccountDeletion from "@/components/AccountDeletion";
 import { Button } from "@/components/ui/button";
 import {

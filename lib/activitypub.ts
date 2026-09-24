@@ -20,12 +20,9 @@ export async function createActivityPubActor(params: CreateActorParams) {
   const publicKeyPem = JSON.stringify(await exportJwk(keyPair.publicKey));
   const privateKeyPem = JSON.stringify(await exportJwk(keyPair.privateKey));
 
-  const handle = `@${blogSlug}@${domain}`;
   const uri = `https://${domain}${routePrefix}/users/${blogSlug}`;
   const inboxUrl = `https://${domain}${routePrefix}/users/${blogSlug}/inbox`;
-  const outboxUrl = `https://${domain}${routePrefix}/users/${blogSlug}/outbox`;
   const followersUrl = `https://${domain}${routePrefix}/users/${blogSlug}/followers`;
-  const followingUrl = `https://${domain}${routePrefix}/users/${blogSlug}/following`;
   const url = `https://${domain}${routePrefix}/users/${blogSlug}`;
   const featuredUrl = `https://${domain}${routePrefix}/users/${blogSlug}/collections/featured`;
   const sharedInboxUrl = `https://${domain}${routePrefix}/inbox`;

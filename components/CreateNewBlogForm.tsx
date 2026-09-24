@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import BlogSlugInput from "./BlogSlugInput";
 import { createBlog } from "@/lib/actions/blog";
 import { Button } from "./ui/button";
+import { getBlogHomePath } from "@/lib/paths";
 
 export default function CreateNewBlogForm() {
+  const router = useRouter();
   const [form, setForm] = useState({ blogId: "" });
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +19,7 @@ export default function CreateNewBlogForm() {
 
     createBlog(form.blogId).then(async (res) => {
       if (!res.error) {
-        window.location.href = `/@${form.blogId}`;
+        router.push(getBlogHomePath(form.blogId));
       } else {
         setIsLoading(false);
         setStatus(res.error);

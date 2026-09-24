@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { emailQueue as emailQueueTable } from "@/drizzle/schema";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // 1x1 transparent pixel as base64
 const TRACKING_PIXEL = Buffer.from(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Tiptap, { TiptapRef } from "./Tiptap";
 import { ImageThumbnail, ImageData } from "./ImageThumbnail";
 import { format } from "date-fns";
@@ -17,12 +17,10 @@ import { Badge } from "./ui/badge";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
 import { Input } from "./ui/input";
-import { Separator } from "./ui/separator";
 import { getBlogPostsPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -48,7 +46,6 @@ import {
   Mail,
   MailCheck,
   ArrowLeft,
-  Settings,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -520,7 +517,7 @@ export default function PostEditor({
       } else {
         toast(`이메일 발송 실패: ${res.message}`);
       }
-    } catch (error) {
+    } catch {
       toast("이메일 발송 중 오류가 발생했습니다.");
     } finally {
       setIsEmailLoading(false);

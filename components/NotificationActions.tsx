@@ -31,7 +31,7 @@ export function NotificationActions({
       try {
         await markNotificationAsRead(blogSlug, notificationId);
         toast.success("알림을 읽음으로 표시했습니다.");
-      } catch (error) {
+      } catch {
         toast.error("알림 상태 변경에 실패했습니다.");
       }
     });
@@ -42,7 +42,7 @@ export function NotificationActions({
       try {
         await markAllNotificationsAsRead(blogSlug);
         toast.success("모든 알림을 읽음으로 표시했습니다.");
-      } catch (error) {
+      } catch {
         toast.error("알림 상태 변경에 실패했습니다.");
       }
     });
@@ -55,7 +55,7 @@ export function NotificationActions({
       try {
         await deleteNotification(blogSlug, notificationId);
         toast.success("알림을 삭제했습니다.");
-      } catch (error) {
+      } catch {
         toast.error("알림 삭제에 실패했습니다.");
       }
     });

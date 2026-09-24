@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { imageTable, postImageTable, postTable, blog } from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getPublicUrl } from "@/lib/r2";
 import { getCurrentSession } from "@/lib/auth";
 

@@ -20,7 +20,7 @@ export const federation = createFederation<ContextData>({
   queue: new PostgresMessageQueue(pg),
 });
 
-export const fedifyRequestHandler = integrateFederation((request: Request) => ({
+export const fedifyRequestHandler = integrateFederation(() => ({
   db,
   canonicalOrigin: `https://${process.env.NEXT_PUBLIC_DOMAIN!}`,
 }));

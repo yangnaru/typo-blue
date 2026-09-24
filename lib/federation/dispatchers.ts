@@ -92,7 +92,7 @@ export function setupActorDispatcher() {
 export function setupOutboxDispatcher() {
   federation.setOutboxDispatcher(
     `${routePrefix}/users/{identifier}/outbox`,
-    async (ctx, identifier, cursor) => {
+    async (ctx, identifier) => {
       const blogResult = await db
         .select({ blogId: blogTable.id })
         .from(blogTable)
@@ -133,7 +133,7 @@ export function setupOutboxDispatcher() {
 export function setupFollowersDispatcher() {
   federation.setFollowersDispatcher(
     `${routePrefix}/users/{identifier}/followers`,
-    async (ctx, identifier, cursor) => {
+    async (ctx, identifier) => {
       const localActor = await db
         .select({ id: actorTable.id })
         .from(blogTable)
@@ -169,7 +169,7 @@ export function setupFollowersDispatcher() {
 export function setupFollowingDispatcher() {
   federation.setFollowingDispatcher(
     `${routePrefix}/users/{identifier}/following`,
-    async (ctx, identifier, cursor) => {
+    async () => {
       return { items: [] };
     }
   );

@@ -48,9 +48,7 @@ import { SELF_DESCRIPTION } from "@/lib/const";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export async function generateMetadata(props: {
-  params: Promise<{ blogId: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata(): Promise<Metadata> {
   await connection();
 
   return {

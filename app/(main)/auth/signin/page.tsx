@@ -6,11 +6,13 @@ import {
   verifyPassword,
 } from "@/lib/actions/account";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export default function Login() {
+  const router = useRouter();
   const [usingPassword, setUsingPassword] = useState<undefined | boolean>(
     undefined
   );
@@ -35,7 +37,8 @@ export default function Login() {
     if (usingPassword) {
       verifyPassword(email, password).then((verified) => {
         if (verified) {
-          window.location.href = "/";
+          router.push("/");
+          router.refresh();
 
           return;
         } else {
@@ -55,7 +58,7 @@ export default function Login() {
           setButtonText("로그인 코드 인증");
           setLoginButtonDisabled(false);
           setChallengeId(challengeId);
-        } catch (e) {
+        } catch {
           toast("로그인에 실패했습니다. 다시 시도해주세요.");
           setLoginButtonDisabled(false);
           setButtonText("로그인 링크 보내기");
@@ -65,7 +68,8 @@ export default function Login() {
       if (challengeId) {
         verifyEmailVerificationCode(challengeId, code).then((verified) => {
           if (verified) {
-            window.location.href = "/";
+            router.push("/");
+            router.refresh();
 
             return;
           } else {

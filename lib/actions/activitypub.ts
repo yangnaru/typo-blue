@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import {
   blog as blogTable,
   actorTable,
-  postTable,
   followingTable,
 } from "@/drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -87,18 +86,6 @@ export async function disableFederationForBlog(blogSlug: string) {
         error: "No ActivityPub profile found for this blog",
       };
     }
-
-    // Send Delete activities for all published posts
-    const publishedPosts = await db
-      .select()
-      .from(postTable)
-      .where(
-        and(
-          eq(postTable.blogId, blogData.id)
-          // Only posts that are published
-          // Add any additional conditions for what constitutes a "published" post in the fediverse
-        )
-      );
 
     // Send Delete activity for the actor itself
     try {

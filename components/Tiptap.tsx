@@ -4,7 +4,7 @@ import Typography from "@tiptap/extension-typography";
 import Image from "@tiptap/extension-image";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useCallback, useImperativeHandle, forwardRef } from "react";
 import {
   Heading1,
   Heading2,
