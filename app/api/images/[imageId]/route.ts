@@ -49,13 +49,18 @@ export async function DELETE(
       );
     }
 
-    // Delete from R2 first
-    await deleteFromR2(image.key);
-
-    // Then delete from database
+    // Delete from database first, so a failure in R2 doesn't keep the
+    // image in the post composer
     await db
       .delete(imageTable)
       .where(eq(imageTable.id, imageId));
+
+    // Then delete from R2; an orphaned object is harmless
+    try {
+      await deleteFromR2(image.key);
+    } catch (error) {
+      console.error(`Failed to delete image from R2: ${image.key}`, error);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
