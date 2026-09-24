@@ -4,7 +4,7 @@ import { getCurrentSession } from "../auth";
 import { revalidatePath } from "next/cache";
 import { db } from "../db";
 import { blog, postTable, imageTable, postImageTable } from "@/drizzle/schema";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
 import { deleteFromR2 } from "../r2";
 
@@ -181,22 +181,24 @@ export async function deletePost(blogSlug: string, postId: string) {
     .innerJoin(imageTable, eq(postImageTable.imageId, imageTable.id))
     .where(eq(postImageTable.postId, uuid));
 
-  // Delete images from R2 and database
+  // Delete the image records first (junction records cascade), so a failure
+  // here doesn't leave the post pointing at objects already gone from R2
+  if (imageResults.length > 0) {
+    await db.delete(imageTable).where(
+      inArray(
+        imageTable.id,
+        imageResults.map((img) => img.id)
+      )
+    );
+  }
+
+  // Then delete from R2; an orphaned object is harmless
   for (const image of imageResults) {
     try {
       await deleteFromR2(image.key);
     } catch (error) {
       console.error(`Failed to delete image from R2: ${image.key}`, error);
-      // Continue with other images even if one fails
     }
-  }
-
-  // Delete all image records from database (junction records will cascade delete)
-  if (imageResults.length > 0) {
-    const imageIds = imageResults.map((img) => img.id);
-    await db.delete(imageTable).where(
-      sql`${imageTable.id} = ANY(${imageIds})`
-    );
   }
 
   // Now delete the post
