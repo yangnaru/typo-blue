@@ -136,7 +136,6 @@ npm run db:studio
 typo-blue/
 ├── app/                    # Next.js App Router
 │   ├── (admin)/           # 관리자 대시보드 라우트
-│   ├── (embed)/           # 임베드 가능한 콘텐츠
 │   ├── (main)/            # 메인 애플리케이션 라우트
 │   └── admin/             # 슈퍼 관리자 기능
 ├── components/            # React 컴포넌트

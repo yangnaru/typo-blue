@@ -8,7 +8,6 @@ export default function PostList({
   blog,
   posts,
   showTitle,
-  embed = false,
   showTime = true,
   titleClassName,
 }: {
@@ -16,7 +15,6 @@ export default function PostList({
   blog: Pick<Blog, "slug">;
   posts: Post[];
   showTitle: boolean;
-  embed?: boolean;
   showTime?: boolean;
   titleClassName?: string;
 }) {
@@ -34,10 +32,7 @@ export default function PostList({
           {posts.map((post) => {
             return (
               <li key={post.id} className="break-keep">
-                <Link
-                  href={getBlogPostPath(blog.slug, post.id)}
-                  target={embed ? "_blank" : "_self"}
-                >
+                <Link href={getBlogPostPath(blog.slug, post.id)}>
                   <span className="font-bold tabular-nums">
                     {formatInTimeZone(
                       post.published
