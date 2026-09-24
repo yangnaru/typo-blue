@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import ImpersonateButton from "./impersonate-button";
 import AdminToggleButton from "./admin-toggle-button";
 import Link from "next/link";
+import { Pill, PillItem } from "@/components/pill";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -119,13 +120,15 @@ export default async function AdminRootPage({
     const nextDir = sort === key && dir === "desc" ? "asc" : "desc";
     const arrow = sort === key ? (dir === "desc" ? " ↓" : " ↑") : "";
     return (
-      <Link
-        href={`/admin?sort=${key}&dir=${nextDir}`}
-        className={sort === key ? "font-bold" : "text-blue-500"}
-      >
-        {label}
-        {arrow}
-      </Link>
+      <PillItem active={sort === key} asChild>
+        <Link
+          href={`/admin?sort=${key}&dir=${nextDir}`}
+          aria-current={sort === key ? "true" : undefined}
+        >
+          {label}
+          {arrow}
+        </Link>
+      </PillItem>
     );
   };
 
@@ -155,13 +158,15 @@ export default async function AdminRootPage({
 
       <section className="space-y-2">
         <h3 className="text-lg">블로그 목록</h3>
-        <p className="flex flex-row flex-wrap gap-x-3 text-sm">
-          <span className="text-neutral-500">정렬:</span>
-          {sortLink("activity", "최근 활동")}
-          {sortLink("posts", "글 수")}
-          {sortLink("followers", "연합 팔로워")}
-          {sortLink("subscribers", "구독자")}
-        </p>
+        <div className="flex flex-row items-center gap-2 text-sm">
+          <span className="text-neutral-500">정렬</span>
+          <Pill aria-label="정렬">
+            {sortLink("activity", "최근 활동")}
+            {sortLink("posts", "글 수")}
+            {sortLink("followers", "연합 팔로워")}
+            {sortLink("subscribers", "구독자")}
+          </Pill>
+        </div>
         <ul className="space-y-4">
           {blogs.map((b) => (
             <li key={b.id} className="space-y-1 break-all">

@@ -13,6 +13,7 @@ import {
   autosaveDraftPost,
 } from "@/lib/actions/blog";
 import { PlainButton, plainButtonClassName } from "@/components/plain-button";
+import { Pill, PillItem } from "@/components/pill";
 import { getBlogPostsPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -593,37 +594,39 @@ export default function PostEditor({
       </div>
 
       <div className="flex flex-row flex-wrap gap-2 items-baseline">
-        <PlainButton disabled={isLoading} onClick={() => handleSavePost("save")}>
-          저장
-        </PlainButton>
-        {publishedAt === null ? (
-          <PlainButton
-            disabled={isLoading}
-            onClick={() => handleSavePost("publish")}
-          >
-            발행
-          </PlainButton>
-        ) : (
-          <PlainButton
-            onClick={async () => {
-              const res = await unPublishPost(blogId, postId!);
-              if (res.success) {
-                setPublishedAt(null);
-                toast("발행 취소 완료 ✅");
-              }
-            }}
-          >
-            발행 취소
-          </PlainButton>
-        )}
-        {publishedAt !== null && postId !== null && (
-          <PlainButton
-            disabled={isEmailLoading || emailSent}
-            onClick={handleSendEmail}
-          >
-            {emailSent ? "이메일 발송 완료" : "이메일 발송"}
-          </PlainButton>
-        )}
+        <Pill aria-label="글 작업">
+          <PillItem disabled={isLoading} onClick={() => handleSavePost("save")}>
+            저장
+          </PillItem>
+          {publishedAt === null ? (
+            <PillItem
+              disabled={isLoading}
+              onClick={() => handleSavePost("publish")}
+            >
+              발행
+            </PillItem>
+          ) : (
+            <PillItem
+              onClick={async () => {
+                const res = await unPublishPost(blogId, postId!);
+                if (res.success) {
+                  setPublishedAt(null);
+                  toast("발행 취소 완료 ✅");
+                }
+              }}
+            >
+              발행 취소
+            </PillItem>
+          )}
+          {publishedAt !== null && postId !== null && (
+            <PillItem
+              disabled={isEmailLoading || emailSent}
+              onClick={handleSendEmail}
+            >
+              {emailSent ? "이메일 발송 완료" : "이메일 발송"}
+            </PillItem>
+          )}
+        </Pill>
         {postId !== null && (
           <AlertDialog
             open={deleteDialogOpen}

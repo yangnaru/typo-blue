@@ -6,7 +6,8 @@ import { format, isSameDay, isSameMonth, differenceInDays, subDays, isWithinInte
 import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
-import { linkButtonClassName } from "@/lib/form-styles";
+import { Pill, PillItem } from "@/components/pill";
+import { PlainButton } from "@/components/plain-button";
 
 interface BlogPost {
   id: string;
@@ -283,51 +284,46 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
         키보드 단축키: 화살표 키로 날짜 이동, Ctrl+화살표로 월 이동, Home으로 오늘로 이동, PageUp/PageDown으로 월 변경, Escape로 선택 해제
       </div>
 
-      <div className="flex flex-row flex-wrap items-baseline gap-x-3 gap-y-1">
-        <button
-          type="button"
-          className={linkButtonClassName}
-          onClick={goToPreviousMonth}
-          title="이전 달 (Ctrl+←)"
-        >
-          ‹ 이전 달
-        </button>
+      <div className="flex flex-row flex-wrap items-center gap-2">
+        <Pill aria-label="달 이동">
+          <PillItem onClick={goToPreviousMonth} title="이전 달 (Ctrl+←)">
+            ‹ 이전 달
+          </PillItem>
+          <PillItem
+            onClick={goToCurrentMonth}
+            disabled={isCurrentMonth}
+            title="이번 달로 이동 (Home)"
+          >
+            이번 달
+          </PillItem>
+          <PillItem onClick={goToNextMonth} title="다음 달 (Ctrl+→)">
+            다음 달 ›
+          </PillItem>
+        </Pill>
         <span className="font-bold" role="status" aria-live="polite">
           {format(currentMonth, "yyyy년 MM월")}
         </span>
-        <button
-          type="button"
-          className={linkButtonClassName}
-          onClick={goToNextMonth}
-          title="다음 달 (Ctrl+→)"
-        >
-          다음 달 ›
-        </button>
-        <button
-          type="button"
-          className={linkButtonClassName}
-          onClick={goToCurrentMonth}
-          disabled={isCurrentMonth}
-          title="이번 달로 이동 (Home)"
-        >
-          이번 달
-        </button>
-        <span className="text-neutral-500">|</span>
-        <button
-          type="button"
-          className={linkButtonClassName}
-          onClick={toggleSelectionMode}
-        >
-          {selectionMode === "single" ? "기간 선택" : "하루 선택"}
-        </button>
-        {hasSelection && (
-          <button
-            type="button"
-            className={linkButtonClassName}
-            onClick={clearSelection}
+      </div>
+
+      <div className="flex flex-row flex-wrap items-center gap-2">
+        <Pill aria-label="선택 방식">
+          <PillItem
+            active={selectionMode === "single"}
+            aria-pressed={selectionMode === "single"}
+            onClick={() => selectionMode !== "single" && toggleSelectionMode()}
           >
-            선택 해제
-          </button>
+            하루 선택
+          </PillItem>
+          <PillItem
+            active={selectionMode === "range"}
+            aria-pressed={selectionMode === "range"}
+            onClick={() => selectionMode !== "range" && toggleSelectionMode()}
+          >
+            기간 선택
+          </PillItem>
+        </Pill>
+        {hasSelection && (
+          <PlainButton onClick={clearSelection}>선택 해제</PlainButton>
         )}
       </div>
 

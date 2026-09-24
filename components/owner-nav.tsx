@@ -43,10 +43,8 @@ export default function OwnerNav({
 
   return (
     <PlainNav
-      links={[
-        ...links,
-        { href: getBlogHomePath(slug), label: "블로그 보기", secondary: true },
-      ]}
+      label="블로그 관리"
+      links={[...links, { href: getBlogHomePath(slug), label: "블로그 보기" }]}
     />
   );
 }

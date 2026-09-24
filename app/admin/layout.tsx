@@ -43,6 +43,7 @@ export default async function RootLayout({
             <div className="my-4 space-y-2">
               <h2 className="text-2xl font-bold">관리자</h2>
               <PlainNav
+                label="관리자"
                 links={[
                   { href: "/admin", label: "대시보드" },
                   { href: "/admin/users", label: "사용자", matchPrefix: true },

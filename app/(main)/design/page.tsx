@@ -4,6 +4,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import { PlainButton } from "@/components/plain-button";
+import { Pill, PillItem } from "@/components/pill";
 import {
   inputClassName,
   linkButtonClassName,
@@ -80,7 +81,7 @@ export default async function DesignPage() {
           <li>하나의 좁은 단(max-w-prose)에 모든 내용을 담습니다.</li>
           <li>카드, 배지, 그림자, 아이콘 대신 글과 여백으로 구분합니다.</li>
           <li>이동은 파란 글자 링크로, 동작은 파란 테두리 버튼으로 합니다.</li>
-          <li>머리글의 계정·테마 메뉴는 예외로 파란 테두리 버튼을 씁니다.</li>
+          <li>관련된 버튼과 메뉴는 하나의 버튼 묶음으로 붙여 둡니다.</li>
           <li>부가 정보는 회색으로 한 줄에 모아 · 로 나눕니다.</li>
           <li>날짜는 굵은 고정폭 숫자로 목록 맨 앞에 둡니다.</li>
         </ul>
@@ -175,6 +176,36 @@ export default async function DesignPage() {
         <Token>
           PlainButton · border-blue-500 rounded-sm hover:bg-blue-300
         </Token>
+      </Section>
+
+      <Section title="버튼 묶음">
+        <div className="space-y-3">
+          <Pill aria-label="예시 메뉴">
+            <PillItem active asChild>
+              <Link href="/design" aria-current="page">
+                현재 메뉴
+              </Link>
+            </PillItem>
+            <PillItem asChild>
+              <Link href="/design">다른 메뉴</Link>
+            </PillItem>
+            <PillItem asChild>
+              <Link href="/design">또 다른 메뉴</Link>
+            </PillItem>
+          </Pill>
+          <div>
+            <Pill aria-label="예시 작업">
+              <PillItem>저장</PillItem>
+              <PillItem>발행</PillItem>
+              <PillItem disabled>비활성</PillItem>
+            </Pill>
+          </div>
+        </div>
+        <p className="text-neutral-500">
+          메뉴, 머리글, 글 작업, 달력, 정렬처럼 함께 쓰는 버튼을 묶습니다. 선택된
+          칸은 파랗게 채우고, 길어지면 줄을 바꾸지 않고 옆으로 넘깁니다.
+        </p>
+        <Token>Pill · PillItem active · asChild</Token>
       </Section>
 
       <Section title="입력란">
