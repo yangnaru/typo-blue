@@ -15,12 +15,13 @@ export async function createBlog(blogId: string) {
     return { error: "로그인이 필요합니다." };
   }
 
-  const blogs = await db.query.blog.findMany({
+  // One blog per user, which the blog_user_id_key unique index also enforces
+  const existingUserBlog = await db.query.blog.findFirst({
     where: eq(blog.userId, user.id),
   });
 
-  if (blogs.length >= 3) {
-    return { error: "블로그는 최대 3개까지 만들 수 있습니다." };
+  if (existingUserBlog) {
+    return { error: "블로그는 하나만 만들 수 있습니다." };
   }
 
   const regex = /^[0-9a-zA-Z(\_)]+$/;
