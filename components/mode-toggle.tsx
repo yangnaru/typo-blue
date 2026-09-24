@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { linkButtonClassName } from "@/lib/form-styles";
+import { PlainButton } from "@/components/plain-button";
 
 const themes = [
   { value: "system", label: "시스템" },
@@ -28,9 +28,8 @@ export function ModeToggle() {
   const next = themes[(index + 1) % themes.length];
 
   return (
-    <button
+    <PlainButton
       type="button"
-      className={linkButtonClassName}
       onClick={() => setTheme(next.value)}
       aria-label={
         isHydrated
@@ -39,6 +38,6 @@ export function ModeToggle() {
       }
     >
       {isHydrated ? `테마: ${themes[index].label}` : "테마"}
-    </button>
+    </PlainButton>
   );
 }

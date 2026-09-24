@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { logout } from "@/lib/actions/account";
 import { getAccountPath, getBlogHomePath } from "@/lib/paths";
-import { linkButtonClassName } from "@/lib/form-styles";
+import { PlainButton } from "@/components/plain-button";
 import type { Blog } from "@/lib/db";
 
 export default function AccountLinks({
@@ -14,24 +14,18 @@ export default function AccountLinks({
   return (
     <>
       {blogs.map((blog) => (
-        <Link
-          key={blog.id}
-          href={getBlogHomePath(blog.slug)}
-          className="text-blue-500"
-        >
-          {blogs.length === 1 ? "내 블로그" : `@${blog.slug}`}
-        </Link>
+        <PlainButton key={blog.id} asChild>
+          <Link href={getBlogHomePath(blog.slug)}>
+            {blogs.length === 1 ? "내 블로그" : `@${blog.slug}`}
+          </Link>
+        </PlainButton>
       ))}
-      <Link href={getAccountPath()} className="text-blue-500">
-        내 계정
-      </Link>
-      <button
-        type="button"
-        className={linkButtonClassName}
-        onClick={() => logout()}
-      >
+      <PlainButton asChild>
+        <Link href={getAccountPath()}>내 계정</Link>
+      </PlainButton>
+      <PlainButton type="button" onClick={() => logout()}>
         로그아웃
-      </button>
+      </PlainButton>
     </>
   );
 }

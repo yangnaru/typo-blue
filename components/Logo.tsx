@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ModeToggle } from "./mode-toggle";
 import AccountLinks from "./account-links";
+import { PlainButton } from "./plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { getLoginPath } from "@/lib/paths";
 import { db } from "@/lib/db";
@@ -24,13 +25,13 @@ export default async function Logo() {
           typo <span className="text-blue-500">blue</span>
         </Link>
       </h1>
-      <nav className="flex flex-row flex-wrap justify-end gap-x-3 text-sm">
+      <nav className="flex flex-row flex-wrap justify-end gap-2 text-sm">
         {user ? (
           <AccountLinks blogs={blogs ?? []} />
         ) : (
-          <Link href={getLoginPath()} className="text-blue-500">
-            로그인
-          </Link>
+          <PlainButton asChild>
+            <Link href={getLoginPath()}>로그인</Link>
+          </PlainButton>
         )}
         <ModeToggle />
       </nav>
