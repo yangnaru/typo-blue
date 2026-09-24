@@ -11,6 +11,9 @@ x-typo-blue: &typo-blue
   networks:
     - typo-blue-network
   restart: always
+  # Forwards SIGTERM to the app, which as PID 1 would otherwise be exempt from
+  # the default action and sit out the ten seconds until Docker kills it.
+  init: true
 
 services:
   typo-blue:
@@ -22,7 +25,9 @@ services:
   typo-blue-email-worker:
     <<: *typo-blue
     container_name: typo-blue-email-worker
-    command: ["pnpm", "run", "email-worker"]
+    # Not `pnpm run email-worker`, which is pnpm, then the tsx CLI, then node:
+    # three resident processes where one does the work.
+    command: ["node", "--import", "tsx", "scripts/email-worker.ts"]
 
 networks:
   typo-blue-network:

@@ -37,4 +37,6 @@ RUN pnpm run build
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+# node directly rather than `pnpm start`: pnpm stays resident as the parent of
+# whatever it runs, about 65MB for a process that only waits.
+CMD ["node", "node_modules/next/dist/bin/next", "start"]
