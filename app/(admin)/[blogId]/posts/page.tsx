@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import {
@@ -57,9 +57,9 @@ export default async function Dashboard(props: { params: PageProps }) {
       />
       <OwnerPostList name="발행된 글 목록" slug={slug} posts={publishedPosts} />
 
-      <Button asChild>
+      <PlainButton asChild>
         <Link href={getBlogNewPostPath(slug)}>새 글 쓰기</Link>
-      </Button>
+      </PlainButton>
     </div>
   );
 }

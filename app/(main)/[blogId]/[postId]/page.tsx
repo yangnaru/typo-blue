@@ -2,7 +2,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { formatInTimeZone } from "date-fns-tz";
 import { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
 import { db } from "@/lib/db";
@@ -155,9 +155,9 @@ export default async function BlogPost(props: { params: Params }) {
       />
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row space-x-2">
-          <Button asChild>
+          <PlainButton asChild>
             <Link href={getBlogPostEditPath(slug, targetPost.id)}>수정</Link>
-          </Button>
+          </PlainButton>
         </div>
       )}
     </div>

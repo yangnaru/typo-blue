@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { 
   sendAccountDeletionVerificationCode, 
   deleteAccount 
@@ -72,13 +72,13 @@ export default function AccountDeletion() {
           계정을 삭제하면 모든 블로그, 글, 데이터가 영구적으로 삭제됩니다. 
           이 작업은 되돌릴 수 없습니다.
         </p>
-        <Button 
+        <PlainButton 
           variant="destructive" 
           onClick={() => setIsConfirmationOpen(true)}
           className="bg-red-600 hover:bg-red-700"
         >
           계정 삭제하기
-        </Button>
+        </PlainButton>
       </div>
     );
   }
@@ -103,21 +103,19 @@ export default function AccountDeletion() {
             <p>계속하려면 이메일 인증을 완료해야 합니다.</p>
           </div>
           <div className="flex space-x-2">
-            <Button 
+            <PlainButton 
               variant="destructive" 
               onClick={handleInitiateDeletion}
               disabled={isLoading}
-              className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "인증 코드 발송 중..." : "이메일 인증 시작"}
-            </Button>
-            <Button 
-              variant="outline" 
+            </PlainButton>
+            <PlainButton 
               onClick={resetForm}
               disabled={isLoading}
             >
               취소
-            </Button>
+            </PlainButton>
           </div>
         </div>
       )}
@@ -138,21 +136,19 @@ export default function AccountDeletion() {
             autoComplete="off"
           />
           <div className="flex space-x-2">
-            <Button 
+            <PlainButton 
               variant="destructive" 
               onClick={handleVerifyAndDelete}
               disabled={isLoading || code.length !== 6}
-              className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "계정 삭제 중..." : "계정 영구 삭제"}
-            </Button>
-            <Button 
-              variant="outline" 
+            </PlainButton>
+            <PlainButton 
               onClick={resetForm}
               disabled={isLoading}
             >
               취소
-            </Button>
+            </PlainButton>
           </div>
         </div>
       )}

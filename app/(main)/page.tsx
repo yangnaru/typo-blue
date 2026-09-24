@@ -1,5 +1,5 @@
 import Logo from "@/components/Logo";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
@@ -137,9 +137,9 @@ async function HomeWithSession() {
     <div>
       <div className="flex flex-row items-baseline space-x-2">
         {user && !userBlog && (
-          <Button asChild>
+          <PlainButton asChild>
             <Link href="/blogs/new">블로그 만들기</Link>
-          </Button>
+          </PlainButton>
         )}
       </div>
     </div>

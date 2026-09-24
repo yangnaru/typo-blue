@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PlainButton } from "@/components/plain-button";
+import { inputClassName } from "@/lib/form-styles";
 import { subscribeToMailingList } from "@/lib/actions/mailing-list";
 import { toast } from "sonner";
 
@@ -45,24 +45,24 @@ export default function MailingListSubscription({
   };
 
   return (
-    <div className="border rounded-lg p-6 bg-muted/50">
-      <h3 className="text-lg font-semibold mb-2">메일링 리스트 구독</h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        {blogName}에 새로운 글이 게시되면 이메일로 알림을 받아보세요.
+    <div className="space-y-2">
+      <h3 className="text-normal font-bold">메일링 리스트 구독</h3>
+      <p className="text-neutral-500">
+        {blogName}에 새 글이 올라오면 이메일로 받아볼 수 있습니다.
       </p>
-      
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Input
+      <form onSubmit={handleSubmit} className="flex flex-row gap-2">
+        <input
           type="email"
-          placeholder="이메일 주소를 입력하세요"
+          aria-label="이메일 주소"
+          placeholder="이메일 주소"
+          className={`${inputClassName} flex-1 min-w-0`}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1"
           disabled={isLoading}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "구독 중..." : "구독하기"}
-        </Button>
+        <PlainButton type="submit" disabled={isLoading}>
+          {isLoading ? "구독 중..." : "구독"}
+        </PlainButton>
       </form>
     </div>
   );

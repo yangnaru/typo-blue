@@ -107,7 +107,7 @@ const Tiptap = forwardRef<TiptapRef, {
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm transition-colors"
           aria-label="제목 1 적용"
           title="제목 1"
         >
@@ -117,7 +117,7 @@ const Tiptap = forwardRef<TiptapRef, {
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm transition-colors"
           aria-label="제목 2 적용"
           title="제목 2"
         >
@@ -127,7 +127,7 @@ const Tiptap = forwardRef<TiptapRef, {
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm transition-colors"
           aria-label="제목 3 적용"
           title="제목 3"
         >
@@ -135,7 +135,7 @@ const Tiptap = forwardRef<TiptapRef, {
         </button>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+          className={`p-2 hover:bg-accent rounded-sm transition-colors ${
             editor.isActive("bold") 
               ? "text-foreground bg-accent" 
               : "text-muted-foreground hover:text-foreground"
@@ -147,7 +147,7 @@ const Tiptap = forwardRef<TiptapRef, {
         </button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+          className={`p-2 hover:bg-accent rounded-sm transition-colors ${
             editor.isActive("italic") 
               ? "text-foreground bg-accent" 
               : "text-muted-foreground hover:text-foreground"
@@ -159,7 +159,7 @@ const Tiptap = forwardRef<TiptapRef, {
         </button>
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+          className={`p-2 hover:bg-accent rounded-sm transition-colors ${
             editor.isActive("bulletList") 
               ? "text-foreground bg-accent" 
               : "text-muted-foreground hover:text-foreground"
@@ -171,7 +171,7 @@ const Tiptap = forwardRef<TiptapRef, {
         </button>
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+          className={`p-2 hover:bg-accent rounded-sm transition-colors ${
             editor.isActive("orderedList") 
               ? "text-foreground bg-accent" 
               : "text-muted-foreground hover:text-foreground"
@@ -183,7 +183,7 @@ const Tiptap = forwardRef<TiptapRef, {
         </button>
         <button
           onClick={setLink}
-          className={`p-2 hover:bg-accent rounded-md transition-colors ${
+          className={`p-2 hover:bg-accent rounded-sm transition-colors ${
             editor.isActive("link") 
               ? "text-foreground bg-accent" 
               : "text-muted-foreground hover:text-foreground"
@@ -196,7 +196,7 @@ const Tiptap = forwardRef<TiptapRef, {
         <button
           onClick={() => editor.chain().focus().unsetLink().run()}
           disabled={!editor.isActive("link")}
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="링크 제거"
           title="링크 제거"
         >

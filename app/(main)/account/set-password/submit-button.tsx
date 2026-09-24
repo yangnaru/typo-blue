@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { useFormStatus } from "react-dom";
 
 export function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending}>
+    <PlainButton type="submit" disabled={pending}>
       비밀번호 설정
-    </Button>
+    </PlainButton>
   );
 }

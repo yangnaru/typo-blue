@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PlainButton, plainButtonClassName } from "@/components/plain-button";
 import { disableFederationForBlog } from "@/lib/actions/activitypub";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -52,7 +52,7 @@ export function DisableFederationButton({
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">연합우주 비활성화</Button>
+        <PlainButton variant="destructive">연합우주 비활성화</PlainButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -77,7 +77,7 @@ export function DisableFederationButton({
           <AlertDialogAction
             onClick={handleDisableFederation}
             disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className={plainButtonClassName("destructive")}
           >
             {isPending ? "비활성화 중..." : "비활성화"}
           </AlertDialogAction>

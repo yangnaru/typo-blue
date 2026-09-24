@@ -1,5 +1,5 @@
 import AccountDeletion from "@/components/AccountDeletion";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -45,12 +45,12 @@ export default async function AccountHome() {
           </p>
         </div>
         <div className="flex flex-row space-x-2">
-          <Button asChild>
+          <PlainButton asChild>
             <Link href={getAccountChangeEmailPath()}>이메일 변경</Link>
-          </Button>
-          <Button asChild>
+          </PlainButton>
+          <PlainButton asChild>
             <Link href={getAccountSetPasswordPath()}>비밀번호 설정</Link>
-          </Button>
+          </PlainButton>
         </div>
       </div>
 
@@ -78,15 +78,15 @@ export default async function AccountHome() {
                   {blog.posts.filter((post) => !post.published).length}개)
                 </p>
               </div>
-              <Button asChild>
+              <PlainButton asChild>
                 <Link href={getBlogPostsPath(blog.slug)}>블로그 관리</Link>
-              </Button>
+              </PlainButton>
             </div>
           ))
         ) : (
-          <Button asChild>
+          <PlainButton asChild>
             <Link href={getBlogNewPath()}>블로그 만들기</Link>
-          </Button>
+          </PlainButton>
         )}
       </div>
 

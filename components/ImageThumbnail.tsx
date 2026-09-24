@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { plainButtonClassName } from "@/components/plain-button";
 
 export interface ImageData {
   id: string;
@@ -51,7 +52,7 @@ export function ImageThumbnail({
 
   return (
     <>
-      <div className="group relative border rounded-lg overflow-hidden bg-muted hover:bg-accent transition-colors">
+      <div className="group relative border rounded-sm overflow-hidden bg-muted hover:bg-accent transition-colors">
         <button
           onClick={onClick}
           className="w-full h-full flex flex-col items-center gap-2 p-3 cursor-pointer"
@@ -78,7 +79,7 @@ export function ImageThumbnail({
             e.stopPropagation();
             setShowDeleteDialog(true);
           }}
-          className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+          className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
           title="이미지 삭제"
         >
           <X className="h-4 w-4" />
@@ -98,7 +99,7 @@ export function ImageThumbnail({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={plainButtonClassName("destructive")}
             >
               {isDeleting ? (
                 <>

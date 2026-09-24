@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { editBlogInfo, deleteBlog } from "@/lib/actions/blog";
 import { getAccountPath } from "@/lib/paths";
-import { Button } from "./ui/button";
+import { PlainButton, plainButtonClassName } from "@/components/plain-button";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -149,12 +149,12 @@ export default function BlogEditForm({
           <label htmlFor="discoverable">타이포 블루 메인에 새 글 노출</label>
         </div>
         <div className="flex flex-row gap-2">
-          <Button type="submit" onClick={(e) => handleSubmit(e)}>
+          <PlainButton type="submit" onClick={(e) => handleSubmit(e)}>
             저장
-          </Button>
-          <Button type="button" variant="destructive" onClick={handleDelete}>
+          </PlainButton>
+          <PlainButton type="button" variant="destructive" onClick={handleDelete}>
             블로그 삭제
-          </Button>
+          </PlainButton>
         </div>
       </form>
 
@@ -184,7 +184,7 @@ export default function BlogEditForm({
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={confirmationInput !== blog.slug}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className={plainButtonClassName("destructive")}
             >
               삭제
             </AlertDialogAction>

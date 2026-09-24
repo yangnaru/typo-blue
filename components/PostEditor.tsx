@@ -12,7 +12,7 @@ import {
   sendPostEmail,
   autosaveDraftPost,
 } from "@/lib/actions/blog";
-import { Button } from "./ui/button";
+import { PlainButton, plainButtonClassName } from "@/components/plain-button";
 import { getBlogPostsPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -567,13 +567,12 @@ export default function PostEditor({
             id="image-upload"
             multiple
           />
-          <Button
-            variant="outline"
+          <PlainButton
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploadingImage}
           >
             {isUploadingImage ? "업로드 중..." : "이미지 업로드"}
-          </Button>
+          </PlainButton>
           <span className="text-neutral-500 text-sm">
             여러 이미지를 선택할 수 있습니다.
           </span>
@@ -594,19 +593,18 @@ export default function PostEditor({
       </div>
 
       <div className="flex flex-row flex-wrap gap-2 items-baseline">
-        <Button disabled={isLoading} onClick={() => handleSavePost("save")}>
+        <PlainButton disabled={isLoading} onClick={() => handleSavePost("save")}>
           저장
-        </Button>
+        </PlainButton>
         {publishedAt === null ? (
-          <Button
+          <PlainButton
             disabled={isLoading}
             onClick={() => handleSavePost("publish")}
           >
             발행
-          </Button>
+          </PlainButton>
         ) : (
-          <Button
-            variant="outline"
+          <PlainButton
             onClick={async () => {
               const res = await unPublishPost(blogId, postId!);
               if (res.success) {
@@ -616,16 +614,15 @@ export default function PostEditor({
             }}
           >
             발행 취소
-          </Button>
+          </PlainButton>
         )}
         {publishedAt !== null && postId !== null && (
-          <Button
-            variant="outline"
+          <PlainButton
             disabled={isEmailLoading || emailSent}
             onClick={handleSendEmail}
           >
             {emailSent ? "이메일 발송 완료" : "이메일 발송"}
-          </Button>
+          </PlainButton>
         )}
         {postId !== null && (
           <AlertDialog
@@ -633,7 +630,7 @@ export default function PostEditor({
             onOpenChange={setDeleteDialogOpen}
           >
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">삭제</Button>
+              <PlainButton variant="destructive">삭제</PlainButton>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -646,7 +643,7 @@ export default function PostEditor({
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className={plainButtonClassName("destructive")}
                 >
                   삭제
                 </AlertDialogAction>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { setupActivityPubActorForBlog } from "@/lib/actions/activitypub";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -34,11 +34,11 @@ export function ActivityPubSetupButton({ blogSlug }: ActivityPubSetupButtonProps
   };
 
   return (
-    <Button 
+    <PlainButton 
       onClick={handleSetupActivityPub}
       disabled={setting}
     >
       {setting ? "설정 중..." : "ActivityPub 연합 활성화"}
-    </Button>
+    </PlainButton>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BlogSlugInput from "./BlogSlugInput";
 import { createBlog } from "@/lib/actions/blog";
-import { Button } from "./ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { getBlogHomePath } from "@/lib/paths";
 import { inputClassName } from "@/lib/form-styles";
 
@@ -51,9 +51,9 @@ export default function CreateNewBlogForm() {
         </div>
 
         <div className="flex flex-row items-baseline space-x-2">
-          <Button disabled={isLoading} onClick={handleSubmit}>
+          <PlainButton disabled={isLoading} onClick={handleSubmit}>
             만들기
-          </Button>
+          </PlainButton>
           <p>{status}</p>
         </div>
       </form>

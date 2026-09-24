@@ -1,7 +1,7 @@
 import PostList from "@/components/PostList";
 import MailingListSubscription from "@/components/MailingListSubscription";
 import { PageViewTracker } from "@/components/PageViewTracker";
-import { Button } from "@/components/ui/button";
+import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getBlogNewPostPath, getBlogPostsPath } from "@/lib/paths";
@@ -142,12 +142,12 @@ export default async function BlogHome(props: { params: Params }) {
 
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row gap-2">
-          <Button asChild>
+          <PlainButton asChild>
             <Link href={getBlogNewPostPath(targetBlog.slug)}>새 글 작성</Link>
-          </Button>
-          <Button variant="outline" asChild>
+          </PlainButton>
+          <PlainButton asChild>
             <Link href={getBlogPostsPath(targetBlog.slug)}>블로그 관리</Link>
-          </Button>
+          </PlainButton>
         </div>
       )}
     </div>
