@@ -1,6 +1,5 @@
 import PlainNav from "@/components/plain-nav";
 import {
-  getBlogAnalyticsPath,
   getBlogCalendarPath,
   getBlogFediversePath,
   getBlogHomePath,
@@ -24,7 +23,6 @@ export default function OwnerNav({
     { href: getBlogPostsPath(slug), label: "글 목록" },
     { href: getBlogNewPostPath(slug), label: "새 글 쓰기" },
     { href: getBlogCalendarPath(slug), label: "달력" },
-    { href: getBlogAnalyticsPath(slug), label: "분석" },
     { href: getBlogSubscribersPath(slug), label: "구독자" },
     ...(isFederationEnabled
       ? [
