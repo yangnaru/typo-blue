@@ -8,8 +8,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { inputClassName, submitClassName } from "@/lib/form-styles";
 
 export default function Login() {
   const router = useRouter();
@@ -82,67 +81,66 @@ export default function Login() {
 
   return (
     <form className="flex flex-col space-y-2" onSubmit={handleLogin}>
-      <Input
+      <input
         type="email"
         id="username"
         autoComplete="username"
+        className={inputClassName}
         placeholder="이메일 주소"
         disabled={emailInputDisabled}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
       {usingPassword && (
-        <>
-          <Input
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </>
+        <input
+          type="password"
+          id="password"
+          autoComplete="current-password"
+          className={inputClassName}
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       )}
       {challengeId && (
-        <Input
+        <input
           type="text"
           id="pin"
           maxLength={6}
           autoComplete="off"
+          className={inputClassName}
           placeholder="인증 코드 입력"
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
       )}
-      <Button
+      <input
         type="submit"
+        className={submitClassName}
+        value={buttonText}
         disabled={loginButtonDisabled}
-      >
-        {buttonText}
-      </Button>
+      />
       {usingPassword === true && (
-        <Button
+        <input
           type="button"
-          variant="link"
+          className="text-blue-500 cursor-pointer"
+          value="로그인 코드로 로그인"
           onClick={() => {
             setUsingPassword(undefined);
             setButtonText("로그인 코드 보내기");
           }}
-        >
-          로그인 코드로 로그인
-        </Button>
+        />
       )}
       {usingPassword === undefined && (
-        <Button
+        <input
           type="button"
-          variant="link"
+          className="text-blue-500 cursor-pointer"
+          value="비밀번호로 로그인"
           onClick={() => {
             setUsingPassword(true);
             setButtonText("로그인");
           }}
-        >
-          비밀번호로 로그인
-        </Button>
+        />
       )}
     </form>
   );

@@ -6,6 +6,7 @@ import BlogSlugInput from "./BlogSlugInput";
 import { createBlog } from "@/lib/actions/blog";
 import { Button } from "./ui/button";
 import { getBlogHomePath } from "@/lib/paths";
+import { inputClassName } from "@/lib/form-styles";
 
 export default function CreateNewBlogForm() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function CreateNewBlogForm() {
         <BlogSlugInput
           value=""
           handleChange={(e) => setForm({ blogId: e.target.value })}
-          className="p-2 dark:text-white dark:bg-black border dark:border-white border-black rounded-sm"
+          className={inputClassName}
         />
         <div>
           <p className="text-neutral-500">

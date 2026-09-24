@@ -6,10 +6,6 @@ import { blog, postTable } from "@/drizzle/schema";
 import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Calendar, ArrowRight } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { convert } from "html-to-text";
 import { SELF_DESCRIPTION } from "@/lib/const";
@@ -40,153 +36,90 @@ export default async function Home() {
     .orderBy(desc(postTable.first_published))
     .limit(100);
 
+  const recentPosts = latestPublishedPostsFromDiscoverableBlogs
+    .map((post) => ({ ...post, preview: getPreview(post.content) }))
+    .filter((post) => post.preview !== null);
+
   return (
-    <main>
+    <main className="space-y-4">
       <Logo />
-      <div className="text-center space-y-6 py-8">
-        <div className="max-w-xl mx-auto space-y-4">
-          <p className="text-lg text-muted-foreground">{SELF_DESCRIPTION}</p>
-          <div className="text-sm text-muted-foreground space-y-2">
-            <ul className="list-disc list-inside space-y-1">
-              <li>텍스트와 이미지 등을 포함한 게시물을 쓸 수 있습니다</li>
-              <li>독자들이 이메일로 새 글을 구독할 수 있습니다</li>
-              <li>연합우주로 글을 발행할 수 있습니다</li>
-            </ul>
-          </div>
 
-          <p className="text-muted-foreground pt-2">
-            지금 이메일로 가입하고 블로그를 만들어 보세요!
-          </p>
-        </div>
+      <p>{SELF_DESCRIPTION}</p>
 
-        <nav className="space-x-2 flex">
-          <HomeWithSession />
-        </nav>
-      </div>
+      <ul className="list-disc list-inside">
+        <li>텍스트와 이미지 등을 포함한 게시물을 쓸 수 있습니다.</li>
+        <li>독자들이 이메일로 새 글을 구독할 수 있습니다.</li>
+        <li>연합우주로 글을 발행할 수 있습니다.</li>
+      </ul>
 
-      {latestPublishedPostsFromDiscoverableBlogs.length > 0 && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Separator className="flex-1" />
-            <h2 className="text-xl font-semibold text-foreground">
-              최근 새 글
-            </h2>
-            <Separator className="flex-1" />
-          </div>
+      <p>지금 이메일로 가입하고 블로그를 만들어 보세요.</p>
 
-          <div className="space-y-4">
-            {latestPublishedPostsFromDiscoverableBlogs
-              .filter((post) => {
-                // Filter out posts with empty or whitespace-only content
-                if (!post.content) return false;
-                const plainText = convert(post.content, {
-                  wordwrap: false,
-                  preserveNewlines: false,
-                  selectors: [
-                    { selector: "img", format: "skip" },
-                    { selector: "a", options: { ignoreHref: true } },
-                  ],
-                }).trim();
-                return plainText.length > 0;
-              })
-              .map((post) => {
-                let firstSentence = "";
-                let isTruncated = false;
-                if (post.content) {
-                  // Convert HTML to plain text
-                  const plainText = convert(post.content, {
-                    wordwrap: false,
-                    preserveNewlines: false,
-                    selectors: [
-                      { selector: "img", format: "skip" },
-                      { selector: "a", options: { ignoreHref: true } },
-                    ],
-                  }).trim();
+      <nav className="space-x-2 flex">
+        <HomeWithSession />
+      </nav>
 
-                  // Extract the first sentence or reasonable preview
-                  const sentenceMatch = plainText.match(/.*?[.!?](?=\s|$)/);
-                  if (sentenceMatch) {
-                    firstSentence = sentenceMatch[0];
-                    isTruncated = firstSentence.length < plainText.length;
-                  } else if (plainText.length <= 100) {
-                    // If text is short, use the whole thing
-                    firstSentence = plainText;
-                    isTruncated = false;
-                  } else {
-                    // For longer text, truncate at word/character boundary
-                    firstSentence = plainText.slice(0, 80);
-                    // Try to break at a space if possible
-                    const lastSpace = firstSentence.lastIndexOf(" ");
-                    if (lastSpace > 40) {
-                      firstSentence = firstSentence.slice(0, lastSpace);
-                    }
-                    isTruncated = true;
-                  }
-                }
-                return (
-                  <Card
-                    key={post.id}
-                    className="hover:shadow-md transition-shadow duration-200 group"
-                  >
-                    <CardContent className="p-4">
-                      <Link
-                        href={getBlogPostPathWithSlugAndUuid(
-                          post.blog!.slug,
-                          post.id
-                        )}
-                        className="block"
-                      >
-                        <div className="space-y-3">
-                          {/* Post Title */}
-                          <div className="flex items-start justify-between gap-4">
-                            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2 flex-1">
-                              {post.title || "무제"}
-                            </h3>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0 mt-1" />
-                          </div>
+      {recentPosts.length > 0 && (
+        <>
+          <h3 className="text-normal font-bold">최근 새 글</h3>
 
-                          {/* Post Preview */}
-                          {firstSentence && (
-                            <p className="text-muted-foreground text-sm line-clamp-2">
-                              {firstSentence}
-                              {isTruncated ? "..." : ""}
-                            </p>
-                          )}
-
-                          {/* Blog Info and Date */}
-                          <div className="flex items-center justify-between gap-4 pt-2 border-t">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {post.blog?.name || `@${post.blog?.slug}`}
-                              </Badge>
-                              {post.blog?.name && (
-                                <span className="text-xs text-muted-foreground">
-                                  @{post.blog?.slug}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>
-                                {formatInTimeZone(
-                                  post.first_published!,
-                                  "Asia/Seoul",
-                                  "MM-dd"
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-          </div>
-        </div>
+          <ul className="space-y-3">
+            {recentPosts.map((post) => (
+              <li key={post.id} className="break-keep">
+                <Link
+                  href={getBlogPostPathWithSlugAndUuid(
+                    post.blog!.slug,
+                    post.id
+                  )}
+                >
+                  <span className="font-bold tabular-nums">
+                    {formatInTimeZone(
+                      post.first_published!,
+                      "Asia/Seoul",
+                      "yyyy-MM-dd"
+                    )}
+                  </span>{" "}
+                  {post.title || "무제"}{" "}
+                  <span className="text-neutral-500">
+                    {post.blog?.name || `@${post.blog?.slug}`}
+                  </span>
+                </Link>
+                <p className="text-neutral-500 text-sm line-clamp-2">
+                  {post.preview}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
   );
+}
+
+// The first sentence of a post as plain text, or null when it has no text.
+function getPreview(content: string | null): string | null {
+  if (!content) return null;
+  const plainText = convert(content, {
+    wordwrap: false,
+    preserveNewlines: false,
+    selectors: [
+      { selector: "img", format: "skip" },
+      { selector: "a", options: { ignoreHref: true } },
+    ],
+  }).trim();
+  if (plainText.length === 0) return null;
+
+  const sentenceMatch = plainText.match(/.*?[.!?](?=\s|$)/);
+  if (sentenceMatch) {
+    const sentence = sentenceMatch[0];
+    return sentence.length < plainText.length ? `${sentence} ...` : sentence;
+  }
+  // If text is short, use the whole thing
+  if (plainText.length <= 100) return plainText;
+  // For longer text, truncate at a word boundary if possible
+  let truncated = plainText.slice(0, 80);
+  const lastSpace = truncated.lastIndexOf(" ");
+  if (lastSpace > 40) truncated = truncated.slice(0, lastSpace);
+  return `${truncated} ...`;
 }
 
 async function HomeWithSession() {
