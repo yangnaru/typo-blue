@@ -1,54 +1,44 @@
 "use client";
 
-import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+import { linkButtonClassName } from "@/lib/form-styles";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+const themes = [
+  { value: "system", label: "시스템" },
+  { value: "light", label: "밝게" },
+  { value: "dark", label: "어둡게" },
+];
+
+const noopSubscribe = () => () => {};
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  // The saved theme is only known in the browser, so the server and the first
+  // client render show a neutral label.
+  const isHydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  );
+  const index = Math.max(
+    themes.findIndex(({ value }) => value === theme),
+    0
+  );
+  const next = themes[(index + 1) % themes.length];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon"
-          aria-label="테마 변경"
-          title="화면 테마를 변경합니다"
-        >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">테마 토글</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" aria-label="테마 선택">
-        <DropdownMenuItem 
-          onClick={() => setTheme("light")}
-          aria-label="밝은 테마로 변경"
-        >
-          밝게
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("dark")}
-          aria-label="어두운 테마로 변경"
-        >
-          어둡게
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme("system")}
-          aria-label="시스템 테마 따르기"
-        >
-          시스템
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <button
+      type="button"
+      className={linkButtonClassName}
+      onClick={() => setTheme(next.value)}
+      aria-label={
+        isHydrated
+          ? `화면 테마: ${themes[index].label}. 누르면 ${next.label}(으)로 바뀝니다.`
+          : "화면 테마 바꾸기"
+      }
+    >
+      {isHydrated ? `테마: ${themes[index].label}` : "테마"}
+    </button>
   );
 }

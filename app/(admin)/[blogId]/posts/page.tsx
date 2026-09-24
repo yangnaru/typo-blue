@@ -1,12 +1,4 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import {
@@ -16,21 +8,11 @@ import {
   getRootPath,
 } from "@/lib/paths";
 import { redirect } from "next/navigation";
-import {
-  SquareArrowUpRight,
-  Edit3,
-  Clock,
-  Calendar,
-  Mail,
-  MailCheck,
-  FileText,
-  Plus,
-} from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { Post } from "@/lib/db";
 import { desc, eq, isNull } from "drizzle-orm";
 import { blog, postTable } from "@/drizzle/schema";
-import { convert } from "html-to-text";
 
 type PageProps = Promise<{
   blogId: string;
@@ -53,8 +35,6 @@ export default async function Dashboard(props: { params: PageProps }) {
     },
   });
 
-  // Email sent information is now part of the post object
-
   if (!currentBlog) {
     redirect(getRootPath());
   }
@@ -63,149 +43,68 @@ export default async function Dashboard(props: { params: PageProps }) {
     redirect(getRootPath());
   }
 
-  // Helper function to calculate reading time
-  const calculateReadingTime = (wordCount: number) => {
-    const wordsPerMinute = 200;
-    return Math.ceil(wordCount / wordsPerMinute);
-  };
-
-  // Helper function to extract excerpt
-  const getExcerpt = (plainText: string, maxLength = 150) => {
-    return plainText.length > maxLength 
-      ? plainText.substring(0, maxLength) + '...'
-      : plainText;
-  };
+  const draftPosts = currentBlog.posts
+    .filter((post) => !post.published)
+    .sort((a, b) => b.updated.getTime() - a.updated.getTime());
+  const publishedPosts = currentBlog.posts.filter((post) => post.published);
 
   return (
-    <div className="space-y-6">
-      {/* Header with stats and actions */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">글 목록</h1>
-          <p className="text-muted-foreground">
-            총 {currentBlog.posts.length}개의 글 • 
-            발행된 글 {currentBlog.posts.filter(p => p.published).length}개 • 
-            초안 {currentBlog.posts.filter(p => !p.published).length}개
-          </p>
-        </div>
-        <Link href={getBlogNewPostPath(slug)}>
-          <Button size="lg" className="gap-2">
-            <Plus className="h-4 w-4" />
-            새 글 작성
-          </Button>
-        </Link>
-      </div>
+    <div className="space-y-8">
+      <OwnerPostList
+        name="임시 저장된 글 목록"
+        slug={slug}
+        posts={draftPosts}
+      />
+      <OwnerPostList name="발행된 글 목록" slug={slug} posts={publishedPosts} />
 
-      {/* Posts grid */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {currentBlog.posts.map((post) => {
-          const emailSentAt = post.emailSent;
-          const plainText = convert(post.content || '', {
-            wordwrap: false,
-            preserveNewlines: false,
-          }).trim();
-          const wordCount = plainText.split(/\s+/).length;
-          const readingTime = calculateReadingTime(wordCount);
-          const excerpt = getExcerpt(plainText, 120);
-          const publishDate = post.first_published ?? post.published ?? post.updated;
-          
-          return (
-            <Card key={post.id} className="flex flex-col">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg leading-tight truncate">
-                      {post.title === "" ? "무제" : post.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      {post.published ? (
-                        <Badge variant="default" className="text-xs">
-                          발행
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          초안
-                        </Badge>
-                      )}
-                      {emailSentAt && (
-                        <Badge variant="outline" className="text-xs gap-1">
-                          <MailCheck className="h-3 w-3" />
-                          발송됨
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Link href={getBlogPostEditPath(slug, post.id)}>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Edit3 className="h-4 w-4" />
-                        <span className="sr-only">수정</span>
-                      </Button>
-                    </Link>
-                    <Link href={getBlogPostPath(slug, post.id)} target="_blank">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <SquareArrowUpRight className="h-4 w-4" />
-                        <span className="sr-only">보기</span>
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="flex-1 pb-3">
-                {excerpt && (
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                    {excerpt}
-                  </p>
-                )}
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatInTimeZone(publishDate, "Asia/Seoul", "MM/dd HH:mm")}
-                    </div>
-                    {readingTime > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {readingTime}분
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      {wordCount}단어
-                    </div>
-                  </div>
-                  
-                  {emailSentAt && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-lg">
-                      <Mail className="h-3 w-3" />
-                      <span>이메일 발송: {formatInTimeZone(emailSentAt, "Asia/Seoul", "MM/dd HH:mm")}</span>
-                    </div>
+      <Button asChild>
+        <Link href={getBlogNewPostPath(slug)}>새 글 쓰기</Link>
+      </Button>
+    </div>
+  );
+}
+
+function OwnerPostList({
+  name,
+  slug,
+  posts,
+}: {
+  name: string;
+  slug: string;
+  posts: Post[];
+}) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xl">{name}</h3>
+      {posts.length === 0 ? (
+        <p className="text-neutral-500">아직 글이 없습니다.</p>
+      ) : (
+        <ul className="space-y-2">
+          {posts.map((post) => (
+            <li key={post.id} className="break-keep">
+              <Link href={getBlogPostEditPath(slug, post.id)}>
+                <span className="font-bold tabular-nums">
+                  {formatInTimeZone(
+                    post.first_published ?? post.published ?? post.updated,
+                    "Asia/Seoul",
+                    "yyyy-MM-dd HH:mm"
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-      
-      {currentBlog.posts.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <CardTitle className="mb-2">아직 작성한 글이 없습니다</CardTitle>
-            <CardDescription className="mb-4">
-              첫 번째 글을 작성해보세요.
-            </CardDescription>
-            <Link href={getBlogNewPostPath(slug)}>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                새 글 작성
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+                </span>{" "}
+                {post.title === "" ? "무제" : post.title}
+              </Link>
+              <span className="text-neutral-500 text-sm">
+                {post.emailSent && " · 이메일 발송됨"} ·{" "}
+                <Link
+                  href={getBlogPostPath(slug, post.id)}
+                  target="_blank"
+                  className="underline"
+                >
+                  보기
+                </Link>
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

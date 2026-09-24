@@ -56,14 +56,8 @@ export default async function CalendarPage(props: { params: PageProps }) {
   }));
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">발행 캘린더</h1>
-        <p className="text-muted-foreground">
-          발행된 글의 일정을 달력으로 확인하세요.
-        </p>
-      </div>
-      
+    <div className="space-y-4">
+      <h3 className="text-xl">발행 달력</h3>
       <BlogCalendar posts={transformedPosts} blogSlug={slug} />
     </div>
   );

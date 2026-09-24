@@ -2,41 +2,12 @@ import { connection } from "next/server";
 import "../../globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import Link from "next/link";
-import {
-  BarChart3,
-  Bell,
-  ExternalLink,
-  Mail,
-  Settings,
-  Type,
-  Book,
-  Orbit,
-  Calendar,
-} from "lucide-react";
-
-import AdminNavigationSheet from "@/components/admin-navigation-sheet";
+import Logo from "@/components/Logo";
+import OwnerNav from "@/components/owner-nav";
 import MasqueradeBanner from "@/components/masquerade-banner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import AccountDropdown from "@/components/account-dropdown";
 import { notFound, redirect } from "next/navigation";
-import {
-  getBlogAnalyticsPath,
-  getBlogPostsPath,
-  getBlogFediversePath,
-  getBlogHomePath,
-  getBlogNotificationsPath,
-  getBlogSettingsPath,
-  getBlogSubscribersPath,
-  getBlogCalendarPath,
-  getRootPath,
-} from "@/lib/paths";
-import { ModeToggle } from "@/components/mode-toggle";
+import { getBlogHomePath, getRootPath } from "@/lib/paths";
 import { Toaster } from "@/components/ui/sonner";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -104,136 +75,23 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            <MasqueradeBanner />
-            <div className="flex min-h-screen w-full flex-col bg-muted/40">
-              <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-background sm:flex">
-                <div className="flex flex-col items-center gap-3 px-3 py-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Type className="h-5 w-5" />
-                  </div>
-                </div>
-                <nav className="flex flex-col items-center gap-3 px-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogPostsPath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Book className="h-5 w-5" />
-                        <span className="sr-only">글 목록</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">글 목록</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogCalendarPath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Calendar className="h-5 w-5" />
-                        <span className="sr-only">발행 캘린더</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">발행 캘린더</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogAnalyticsPath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <BarChart3 className="h-5 w-5" />
-                        <span className="sr-only">분석</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">분석</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogSubscribersPath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Mail className="h-5 w-5" />
-                        <span className="sr-only">구독자</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">구독자</TooltipContent>
-                  </Tooltip>
-                  {isFederationEnabled && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={getBlogNotificationsPath(blogId)}
-                          className="relative flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                        >
-                          <Bell className="h-5 w-5" />
-                          {unreadNotificationCount > 0 && (
-                            <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full border-2 border-background"></div>
-                          )}
-                          <span className="sr-only">알림</span>
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">알림</TooltipContent>
-                    </Tooltip>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogFediversePath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Orbit className="h-5 w-5" />
-                        <span className="sr-only">연합우주</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">연합우주</TooltipContent>
-                  </Tooltip>
-                </nav>
-                <nav className="mt-auto flex flex-col items-center gap-3 px-3 py-4">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogHomePath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                        <span className="sr-only">블로그로 가기</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">블로그로 가기</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={getBlogSettingsPath(blogId)}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-                      >
-                        <Settings className="h-5 w-5" />
-                        <span className="sr-only">설정</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">설정</TooltipContent>
-                  </Tooltip>
-                </nav>
-              </aside>
-              <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-16">
-                <header className="flex h-14 items-center justify-between border-b px-4 sm:h-auto sm:border-0 sm:px-6">
-                  <AdminNavigationSheet
-                    blogId={blogId}
-                    unreadNotificationCount={unreadNotificationCount}
-                  />
-                  <div className="flex items-center gap-2 ml-auto">
-                    <ModeToggle />
-                    <AccountDropdown user={user} blogs={[currentBlog]} />
-                  </div>
-                </header>
-                <main className="flex-1 p-4 sm:p-6">{children}</main>
-              </div>
+          <MasqueradeBanner />
+          <div className="mx-auto max-w-prose p-2">
+            <Logo />
+            <div className="my-4 space-y-2">
+              <h2 className="text-2xl font-bold break-keep">
+                <Link href={getBlogHomePath(currentBlog.slug)}>
+                  {currentBlog.name || `@${currentBlog.slug}`}
+                </Link>
+              </h2>
+              <OwnerNav
+                slug={currentBlog.slug}
+                isFederationEnabled={isFederationEnabled}
+                unreadNotificationCount={unreadNotificationCount}
+              />
             </div>
-          </TooltipProvider>
+            <main>{children}</main>
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>

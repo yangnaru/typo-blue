@@ -1,14 +1,12 @@
 "use client";
 
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useState, useCallback, useEffect } from "react";
 import { format, isSameDay, isSameMonth, differenceInDays, subDays, isWithinInterval, startOfDay, endOfDay, addDays, addMonths, subMonths } from "date-fns";
-import { ChevronLeft, ChevronRight, Edit3, ExternalLink, Calendar as CalendarIcon, MousePointer } from "lucide-react";
+import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
+import { linkButtonClassName } from "@/lib/form-styles";
 
 interface BlogPost {
   id: string;
@@ -257,375 +255,180 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
 
   const isCurrentMonth = isSameMonth(currentMonth, new Date());
 
+  const hasSelection =
+    (selectionMode === "single" && selectedDate) ||
+    (selectionMode === "range" && selectedRange);
+  const rangeDays = selectedRange?.to
+    ? Math.ceil(differenceInDays(selectedRange.to, selectedRange.from) + 1)
+    : 0;
+  const publishedModifier = {
+    // Months are moved with the links above, so hide the calendar's own.
+    hideNavigation: true,
+    locale: ko,
+    modifiers: { published: publicationDates },
+    modifiersClassNames: {
+      published: "bg-blue-100 dark:bg-blue-900 font-semibold rounded-md",
+    },
+  };
+
   return (
-    <div className="space-y-4" data-calendar-container tabIndex={0} role="application" aria-label="블로그 발행 캘린더">
+    <div
+      className="space-y-4"
+      data-calendar-container
+      tabIndex={0}
+      role="application"
+      aria-label="블로그 발행 캘린더"
+    >
       <div className="sr-only" id="calendar-instructions">
         키보드 단축키: 화살표 키로 날짜 이동, Ctrl+화살표로 월 이동, Home으로 오늘로 이동, PageUp/PageDown으로 월 변경, Escape로 선택 해제
       </div>
-      <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-4">
-              {/* Title and Selection Mode (small screens) */}
-              <div className="flex items-center justify-between">
-                <CardTitle>월별 발행 현황</CardTitle>
-                {/* Selection Mode Toggle - visible on small screens */}
-                <div className="flex items-center gap-1 sm:hidden">
-                  <Button
-                    variant={selectionMode === 'single' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => selectionMode !== 'single' && toggleSelectionMode()}
-                    disabled={selectionMode === 'single'}
-                    aria-label="단일 날짜 선택 모드"
-                    title="하나의 날짜만 선택"
-                  >
-                    <MousePointer className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={selectionMode === 'range' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => selectionMode !== 'range' && toggleSelectionMode()}
-                    disabled={selectionMode === 'range'}
-                    aria-label="날짜 범위 선택 모드"
-                    title="날짜 범위 선택"
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
 
-              {/* Small screen controls row */}
-              <div className="flex items-center justify-between sm:hidden">
-                {/* Clear Selection for small screens */}
-                <div>
-                  {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearSelection}
-                      aria-label="날짜 선택 해제"
-                      title="선택된 날짜를 해제합니다"
-                    >
-                      선택 해제
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Month Navigation for small screens */}
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToPreviousMonth}
-                    aria-label="이전 달로 이동"
-                    title="이전 달 (Ctrl+←)"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span 
-                    className="min-w-[100px] text-center font-medium text-sm"
-                    role="status"
-                    aria-live="polite"
-                    aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
-                  >
-                    {format(currentMonth, "yyyy년 MM월")}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToNextMonth}
-                    aria-label="다음 달로 이동"
-                    title="다음 달 (Ctrl+→)"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToCurrentMonth} 
-                    disabled={isCurrentMonth}
-                    aria-label="이번 달로 이동"
-                    title="이번 달로 이동 (Home)"
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+      <div className="flex flex-row flex-wrap items-baseline gap-x-3 gap-y-1">
+        <button
+          type="button"
+          className={linkButtonClassName}
+          onClick={goToPreviousMonth}
+          title="이전 달 (Ctrl+←)"
+        >
+          ‹ 이전 달
+        </button>
+        <span className="font-bold" role="status" aria-live="polite">
+          {format(currentMonth, "yyyy년 MM월")}
+        </span>
+        <button
+          type="button"
+          className={linkButtonClassName}
+          onClick={goToNextMonth}
+          title="다음 달 (Ctrl+→)"
+        >
+          다음 달 ›
+        </button>
+        <button
+          type="button"
+          className={linkButtonClassName}
+          onClick={goToCurrentMonth}
+          disabled={isCurrentMonth}
+          title="이번 달로 이동 (Home)"
+        >
+          이번 달
+        </button>
+        <span className="text-neutral-500">|</span>
+        <button
+          type="button"
+          className={linkButtonClassName}
+          onClick={toggleSelectionMode}
+        >
+          {selectionMode === "single" ? "기간 선택" : "하루 선택"}
+        </button>
+        {hasSelection && (
+          <button
+            type="button"
+            className={linkButtonClassName}
+            onClick={clearSelection}
+          >
+            선택 해제
+          </button>
+        )}
+      </div>
 
-              {/* All controls for larger screens - original layout */}
-              <div className="hidden sm:flex sm:items-center sm:justify-between">
-                <div></div> {/* Spacer */}
-                <div className="flex items-center gap-2">
-                  {/* Selection Mode Toggle - visible on larger screens */}
-                  <div className="flex items-center gap-1 mr-2">
-                    <Button
-                      variant={selectionMode === 'single' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => selectionMode !== 'single' && toggleSelectionMode()}
-                      disabled={selectionMode === 'single'}
-                      aria-label="단일 날짜 선택 모드"
-                      title="하나의 날짜만 선택"
-                    >
-                      <MousePointer className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={selectionMode === 'range' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => selectionMode !== 'range' && toggleSelectionMode()}
-                      disabled={selectionMode === 'range'}
-                      aria-label="날짜 범위 선택 모드"
-                      title="날짜 범위 선택"
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  {/* Clear Selection */}
-                  {((selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange)) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearSelection}
-                      aria-label="날짜 선택 해제"
-                      title="선택된 날짜를 해제합니다"
-                    >
-                      선택 해제
-                    </Button>
-                  )}
-                  
-                  {/* Month Navigation */}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToPreviousMonth}
-                    aria-label="이전 달로 이동"
-                    title="이전 달 (Ctrl+←)"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span 
-                    className="min-w-[120px] text-center font-medium"
-                    role="status"
-                    aria-live="polite"
-                    aria-label={`현재 ${format(currentMonth, "yyyy년 MM월")}`}
-                  >
-                    {format(currentMonth, "yyyy년 MM월")}
-                  </span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToNextMonth}
-                    aria-label="다음 달로 이동"
-                    title="다음 달 (Ctrl+→)"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={goToCurrentMonth} 
-                    disabled={isCurrentMonth}
-                    aria-label="이번 달로 이동"
-                    title="이번 달로 이동 (Home)"
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-6">
-              {/* Calendar - Left side on small screens and up */}
-              <div className="flex-shrink-0 sm:mx-0 mx-auto">
-                {selectionMode === 'single' ? (
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    month={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                    modifiers={{
-                      published: publicationDates
-                    }}
-                    modifiersClassNames={{
-                      published: "bg-blue-100 dark:bg-blue-900 font-semibold rounded-md"
-                    }}
-                    className="rounded-md border"
-                  />
-                ) : (
-                  <Calendar
-                    mode="range"
-                    selected={selectedRange}
-                    onSelect={(range) => {
-                      if (range?.from) {
-                        setSelectedRange({
-                          from: range.from,
-                          to: range.to
-                        });
-                      } else {
-                        setSelectedRange(undefined);
-                      }
-                    }}
-                    month={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                    modifiers={{
-                      published: publicationDates
-                    }}
-                    modifiersClassNames={{
-                      published: "bg-blue-100 dark:bg-blue-900 font-semibold rounded-md"
-                    }}
-                    className="rounded-md border"
-                  />
-                )}
-                <div className="mt-4 text-sm text-muted-foreground">
-                  이번 달 발행 글: <Badge variant="secondary">{currentMonthPosts.length}개</Badge>
-                </div>
-              </div>
+      {selectionMode === "single" ? (
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+          className="rounded-sm border border-blue-500"
+          {...publishedModifier}
+        />
+      ) : (
+        <Calendar
+          mode="range"
+          selected={selectedRange}
+          onSelect={(range) => {
+            if (range?.from) {
+              setSelectedRange({ from: range.from, to: range.to });
+            } else {
+              setSelectedRange(undefined);
+            }
+          }}
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+          className="rounded-sm border border-blue-500"
+          {...publishedModifier}
+        />
+      )}
 
-              {/* Posts List - Right side on small screens and up, below on mobile */}
-              <div className="flex-1 min-w-0">
-                {selectedPosts.length > 0 ? (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">
-                      {selectionMode === 'single' && selectedDate ? (
-                        <>
-                          {format(selectedDate, "yyyy년 MM월 dd일")} 발행된 글
-                          <Badge variant="secondary" className="ml-2">
-                            {selectedPosts.length}개
-                          </Badge>
-                        </>
-                      ) : selectionMode === 'range' && selectedRange ? (
-                        <>
-                          {selectedRange.to ? (
-                            `${format(selectedRange.from, "MM/dd")} - ${format(selectedRange.to, "MM/dd")} 발행된 글`
-                          ) : (
-                            `${format(selectedRange.from, "yyyy년 MM월 dd일")}부터 선택 중`
-                          )}
-                          <Badge variant="secondary" className="ml-2">
-                            {selectedPosts.length}개
-                          </Badge>
-                        </>
-                      ) : null}
-                    </h4>
-                    
-                    {/* Range Statistics */}
-                    {selectionMode === 'range' && selectedRange?.to && selectedPosts.length > 0 && (
-                      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium">{selectedPosts.length}</span>
-                            <span className="text-muted-foreground ml-1">총 글</span>
-                          </div>
-                          <div>
-                            <span className="font-medium">
-                              {Math.ceil(differenceInDays(selectedRange.to, selectedRange.from) + 1)}
-                            </span>
-                            <span className="text-muted-foreground ml-1">일간</span>
-                          </div>
-                          <div>
-                            <span className="font-medium">
-                              {(selectedPosts.length / (Math.ceil(differenceInDays(selectedRange.to, selectedRange.from) + 1))).toFixed(1)}
-                            </span>
-                            <span className="text-muted-foreground ml-1">글/일</span>
-                          </div>
-                          <div>
-                            <span className="font-medium">
-                              {Array.from(new Set(selectedPosts.map(post => format(post.first_published!, 'yyyy-MM-dd')))).length}
-                            </span>
-                            <span className="text-muted-foreground ml-1">활성일</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="space-y-3 max-h-80 overflow-y-auto">
-                      {selectedPosts.map(post => (
-                        <div key={post.id} className="p-3 border rounded-lg flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h5 className="font-medium truncate">
-                              {post.title || "무제"}
-                            </h5>
-                            <p className="text-sm text-muted-foreground">
-                              {selectionMode === 'range' ? (
-                                `${format(post.first_published!, "MM/dd HH:mm")}`
-                              ) : (
-                                format(post.first_published!, "HH:mm")
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex gap-1 ml-2">
-                            <Link href={getBlogPostEditPath(blogSlug, post.id)}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Edit3 className="h-4 w-4" />
-                                <span className="sr-only">수정</span>
-                              </Button>
-                            </Link>
-                            <Link href={getBlogPostPath(blogSlug, post.id)} target="_blank">
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <ExternalLink className="h-4 w-4" />
-                                <span className="sr-only">보기</span>
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (selectionMode === 'single' && selectedDate) || (selectionMode === 'range' && selectedRange?.from) ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {selectionMode === 'single' && selectedDate ? (
-                        `${format(selectedDate, "yyyy년 MM월 dd일")}에 발행된 글이 없습니다`
-                      ) : selectionMode === 'range' && selectedRange ? (
-                        selectedRange.to ? (
-                          `${format(selectedRange.from, "MM/dd")} - ${format(selectedRange.to, "MM/dd")} 기간에 발행된 글이 없습니다`
-                        ) : (
-                          "종료 날짜를 선택하여 범위를 완성하세요"
-                        )
-                      ) : null}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full min-h-[200px]">
-                    <p className="text-muted-foreground text-center">
-                      {selectionMode === 'single' ? (
-                        "달력에서 날짜를 선택하여 발행된 글을 확인하세요"
-                      ) : (
-                        "달력에서 시작 날짜를 선택하여 범위 선택을 시작하세요"
+      <p className="text-neutral-500">
+        이번 달 {currentMonthPosts.length}개 · 전체 {publishedPosts.length}개 ·
+        발행 일수 {Object.keys(postsByDate).length}일 · 최장 연속{" "}
+        {longestStreak}일 · 현재 연속 {currentStreak}일
+      </p>
+
+      {hasSelection ? (
+        <div className="space-y-2">
+          <h3 className="text-lg">
+            {selectionMode === "single" && selectedDate
+              ? `${format(selectedDate, "yyyy년 MM월 dd일")}에 발행된 글`
+              : selectedRange?.to
+                ? `${format(selectedRange.from, "yyyy-MM-dd")} ~ ${format(selectedRange.to, "yyyy-MM-dd")}에 발행된 글`
+                : `${format(selectedRange!.from, "yyyy년 MM월 dd일")}부터 선택 중`}
+          </h3>
+          {selectionMode === "range" && selectedRange?.to && (
+            <p className="text-neutral-500">
+              {rangeDays}일간 {selectedPosts.length}개 · 하루 평균{" "}
+              {(selectedPosts.length / rangeDays).toFixed(1)}개 · 활성일{" "}
+              {
+                new Set(
+                  selectedPosts.map((post) =>
+                    format(post.first_published!, "yyyy-MM-dd")
+                  )
+                ).size
+              }
+              일
+            </p>
+          )}
+          {selectedPosts.length === 0 ? (
+            <p className="text-neutral-500">
+              {selectionMode === "range" && !selectedRange?.to
+                ? "종료 날짜를 선택하여 범위를 완성하세요."
+                : "발행된 글이 없습니다."}
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {selectedPosts.map((post) => (
+                <li key={post.id} className="break-keep">
+                  <Link href={getBlogPostEditPath(blogSlug, post.id)}>
+                    <span className="font-bold tabular-nums">
+                      {format(
+                        post.first_published!,
+                        selectionMode === "range" ? "MM-dd HH:mm" : "HH:mm"
                       )}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>발행 통계</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{publishedPosts.length}</div>
-              <div className="text-sm text-muted-foreground">총 발행 글</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{Object.keys(postsByDate).length}</div>
-              <div className="text-sm text-muted-foreground">발행 일수</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{longestStreak}</div>
-              <div className="text-sm text-muted-foreground">최장 연속</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{currentStreak}</div>
-              <div className="text-sm text-muted-foreground">현재 연속</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                    </span>{" "}
+                    {post.title || "무제"}
+                  </Link>
+                  <span className="text-neutral-500 text-sm">
+                    {" · "}
+                    <Link
+                      href={getBlogPostPath(blogSlug, post.id)}
+                      target="_blank"
+                      className="underline"
+                    >
+                      보기
+                    </Link>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <p className="text-neutral-500">
+          {selectionMode === "single"
+            ? "달력에서 날짜를 선택하면 그날 발행된 글을 볼 수 있습니다."
+            : "달력에서 시작 날짜를 선택하여 기간을 고르세요."}
+        </p>
+      )}
     </div>
   );
 }

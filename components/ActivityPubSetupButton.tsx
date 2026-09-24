@@ -37,7 +37,6 @@ export function ActivityPubSetupButton({ blogSlug }: ActivityPubSetupButtonProps
     <Button 
       onClick={handleSetupActivityPub}
       disabled={setting}
-      className="w-full"
     >
       {setting ? "설정 중..." : "ActivityPub 연합 활성화"}
     </Button>

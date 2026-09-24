@@ -23,5 +23,10 @@ export default async function BlogNewPostPage(props: { params: Params }) {
     redirect(getRootPath());
   }
 
-  return <PostEditor blogId={blogId} />;
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xl">새 글 쓰기</h3>
+      <PostEditor blogId={blogId} />
+    </div>
+  );
 }

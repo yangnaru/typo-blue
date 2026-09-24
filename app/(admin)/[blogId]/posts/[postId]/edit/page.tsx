@@ -36,13 +36,16 @@ export default async function EditPost(props: { params: Params }) {
   const emailSent = !!editingPost.emailSent;
 
   return (
-    <PostEditor
-      blogId={slug}
-      existingTitle={editingPost.title ?? ""}
-      existingContent={editingPost.content ?? ""}
-      existingPostId={(await props.params).postId}
-      existingPublishedAt={editingPost.published}
-      existingEmailSent={emailSent}
-    />
+    <div className="space-y-2">
+      <h3 className="text-xl">글 수정</h3>
+      <PostEditor
+        blogId={slug}
+        existingTitle={editingPost.title ?? ""}
+        existingContent={editingPost.content ?? ""}
+        existingPostId={(await props.params).postId}
+        existingPublishedAt={editingPost.published}
+        existingEmailSent={emailSent}
+      />
+    </div>
   );
 }

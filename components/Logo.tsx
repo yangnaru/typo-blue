@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ModeToggle } from "./mode-toggle";
-import AccountDropdown from "./account-dropdown";
+import AccountLinks from "./account-links";
 import { getCurrentSession } from "@/lib/auth";
-import { Button } from "./ui/button";
 import { getLoginPath } from "@/lib/paths";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -19,19 +18,22 @@ export default async function Logo() {
   }
 
   return (
-    <h1 className="flex flex-row justify-between items-center py-2">
-      <Link href="/" className="text-xl font-extrabold">
-        typo <span className="text-blue-500">blue</span>
-      </Link>
-      <div className="flex flex-row gap-2">
-        {!user && (
-          <Button asChild>
-            <Link href={getLoginPath()}>로그인 / 회원 가입</Link>
-          </Button>
+    <header className="flex flex-row justify-between items-center gap-4 py-2">
+      <h1>
+        <Link href="/" className="text-xl font-extrabold">
+          typo <span className="text-blue-500">blue</span>
+        </Link>
+      </h1>
+      <nav className="flex flex-row flex-wrap justify-end gap-x-3 text-sm">
+        {user ? (
+          <AccountLinks blogs={blogs ?? []} />
+        ) : (
+          <Link href={getLoginPath()} className="text-blue-500">
+            로그인
+          </Link>
         )}
         <ModeToggle />
-        {user && <AccountDropdown user={user} blogs={blogs ?? []} />}
-      </div>
-    </h1>
+      </nav>
+    </header>
   );
 }

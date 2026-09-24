@@ -3,3 +3,5 @@ export const inputClassName =
   "border border-blue-500 p-1 rounded-sm dark:bg-black dark:text-white";
 export const submitClassName =
   "border border-blue-500 p-1 rounded-sm hover:bg-blue-300 hover:text-black";
+export const linkButtonClassName =
+  "text-blue-500 cursor-pointer disabled:cursor-default disabled:text-neutral-500";
