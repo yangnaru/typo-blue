@@ -328,6 +328,13 @@ export async function upsertPost(
     } catch (error) {
       console.error("Failed to send ActivityPub article:", error);
     }
+  } else if (wasAlreadyPublished && !published) {
+    // Unpublished by saving it as a draft
+    try {
+      await sendNoteToFollowers(targetBlog.slug, targetPost.id, true);
+    } catch (error) {
+      console.error("Failed to send ActivityPub delete:", error);
+    }
   }
 
   revalidatePath(`/@${blogSlug}`);

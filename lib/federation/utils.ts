@@ -5,6 +5,8 @@ import { actorTable, postTable } from "@/drizzle/schema";
 import type { ContextData } from "./core";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
+import { escapeHtml } from "../utils";
+import { sanitizePostHtml } from "../sanitize";
 
 // Node.js has no native Temporal yet, so build Instants with the polyfill
 // (as Fedify does) and type them as the global Temporal that Fedify expects.
@@ -35,7 +37,9 @@ export async function getNote(
   if (!actor) return null;
   if (!actor.blog) return null;
 
-  const content = `<p>${post.title}</p>${post.content}`;
+  const content = `<p>${escapeHtml(post.title ?? "")}</p>${sanitizePostHtml(
+    post.content ?? ""
+  )}`;
   const note = new Note({
     id: ctx.getObjectUri(Note, { id: post.id }),
     to: PUBLIC_COLLECTION,
@@ -47,8 +51,9 @@ export async function getNote(
         post.id
       }`
     ),
-    published: post.published
-      ? toInstant(post.published)
+    // post.published moves on every edit of a published post
+    published: (post.first_published ?? post.published)
+      ? toInstant((post.first_published ?? post.published)!)
       : undefined,
     updated:
       post.published &&
@@ -62,18 +67,33 @@ export async function getNote(
 
 async function getNodeInfo(url: string) {
   try {
-    const response = await fetch(new URL("/.well-known/nodeinfo", url));
+    const wellKnownUrl = new URL("/.well-known/nodeinfo", url);
+    const response = await fetch(wellKnownUrl, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!response.ok) return null;
 
     const nodeInfoLinks = await response.json();
-    const nodeInfoUrl = nodeInfoLinks.links?.find(
+    const href = nodeInfoLinks.links?.find(
       (link: { rel?: string; href?: string }) =>
         link.rel === "http://nodeinfo.diaspora.software/ns/schema/2.0"
     )?.href;
 
-    if (!nodeInfoUrl) return null;
+    if (!href) return null;
 
-    const nodeInfoResponse = await fetch(nodeInfoUrl);
+    // Only follow it on the same host, so a remote server can't point us at
+    // an internal address
+    const nodeInfoUrl = new URL(href, wellKnownUrl);
+    if (
+      nodeInfoUrl.protocol !== "https:" ||
+      nodeInfoUrl.host !== wellKnownUrl.host
+    ) {
+      return null;
+    }
+
+    const nodeInfoResponse = await fetch(nodeInfoUrl, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!nodeInfoResponse.ok) return null;
 
     return await nodeInfoResponse.json();

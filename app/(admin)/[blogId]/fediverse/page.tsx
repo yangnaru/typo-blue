@@ -114,7 +114,7 @@ export default async function FediversePage(props: { params: PageProps }) {
                     <span className="text-neutral-500">이름 없음</span>
                   )}{" "}
                   <Link
-                    href={follow.follower.url!}
+                    href={follow.follower.url ?? follow.follower.iri}
                     target="_blank"
                     className="text-neutral-500"
                   >

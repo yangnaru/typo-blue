@@ -23,7 +23,8 @@ import {
   postTable,
   notificationTable,
 } from "@/drizzle/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, isNotNull, isNull, sql } from "drizzle-orm";
+import { isUuid } from "../utils";
 import {
   persistActor,
   updateFolloweesCount,
@@ -180,7 +181,7 @@ export async function sendNoteToFollowers(
         { identifier: blogSlug },
         "followers",
         new Delete({
-          id: new URL("#delete", note.id ?? context.origin),
+          id: new URL(`#delete/${Date.now()}`, note.id ?? context.origin),
           actor: context.getActorUri(blogSlug),
           object: note,
         }),
@@ -191,7 +192,7 @@ export async function sendNoteToFollowers(
         { identifier: blogSlug },
         "followers",
         new Update({
-          id: new URL("#update", note.id ?? context.origin),
+          id: new URL(`#update/${Date.now()}`, note.id ?? context.origin),
           actor: context.getActorUri(blogSlug),
           object: note,
         }),
@@ -202,7 +203,7 @@ export async function sendNoteToFollowers(
         { identifier: blogSlug },
         "followers",
         new Create({
-          id: new URL("#create", note.id ?? context.origin),
+          id: new URL(`#create/${Date.now()}`, note.id ?? context.origin),
           actors: [context.getActorUri(blogSlug)],
           object: note,
         }),
@@ -242,8 +243,8 @@ export async function onUnfollowed(
     return;
   }
   const [following] = rows;
-  await updateFolloweesCount(db, following.followerId, 1);
-  await updateFollowersCount(db, following.followeeId, 1);
+  await updateFolloweesCount(db, following.followerId, -1);
+  await updateFollowersCount(db, following.followeeId, -1);
 }
 
 async function handleMentionOrQuote(
@@ -266,9 +267,9 @@ async function handleMentionOrQuote(
   if (!objectId) return;
 
   if (object.quoteUrl) {
-    const post = await db.query.postTable.findFirst({
-      where: eq(postTable.id, object.quoteUrl.href.split("/").pop()!),
-    });
+    const quotedPostId = postIdFromUri(fedCtx, object.quoteUrl);
+    if (!quotedPostId) return;
+    const post = await findPublishedPost(quotedPostId);
     if (!post) return;
 
     await db.insert(notificationTable).values({
@@ -286,39 +287,17 @@ async function handleMentionOrQuote(
     return;
   }
 
-  const replyTargetId = object.replyTargetId?.href;
-  const replyTargetIdUuid = replyTargetId?.split("/").pop();
-  if (!replyTargetIdUuid) return;
+  const replyTargetPostId = postIdFromUri(fedCtx, object.replyTargetId);
+  if (!replyTargetPostId) return;
 
-  let isReply = false;
-  let replyTargetBlogId: string | null = null;
-  let localPost;
-
-  if (replyTargetId) {
-    localPost = await db
-      .select({
-        post: postTable,
-        blog: blogTable,
-      })
-      .from(postTable)
-      .innerJoin(blogTable, eq(postTable.blogId, blogTable.id))
-      .where(eq(postTable.id, replyTargetIdUuid))
-      .limit(1);
-
-    if (localPost.length > 0) {
-      isReply = true;
-      replyTargetBlogId = localPost[0].blog.id;
-    }
-  }
-  if (!localPost) return;
-
-  if (isReply && replyTargetBlogId) {
+  const localPost = await findPublishedPost(replyTargetPostId);
+  if (localPost) {
     await db.insert(notificationTable).values({
       type: "reply",
       actorId: actor.id,
       activityId: create.id?.href || objectId,
       objectId: objectId,
-      postId: localPost[0].post.id,
+      postId: localPost.id,
       content,
       url: object.url?.toString(),
       created: new Date(),
@@ -335,7 +314,9 @@ async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
     with: { actor: true },
     where: (blog, { eq }) => eq(blog.slug, followObject.identifier),
   });
-  if (followee == null) return;
+  // Federation may have been turned off for the blog since
+  if (followee?.actor == null) return;
+  const followeeActor = followee.actor;
   const followActor = await follow.getActor(fedCtx);
   if (followActor == null) return;
   const follower = await persistActor(fedCtx, followActor, {
@@ -348,20 +329,24 @@ async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
     .values({
       iri: follow.id.href,
       followerId: follower.id,
-      followeeId: followee.actor.id,
+      followeeId: followeeActor.id,
       accepted: sql`CURRENT_TIMESTAMP`,
     })
     .onConflictDoNothing()
     .returning();
-  if (rows.length < 1) return;
-  await updateFolloweesCount(db, follower.id!.toString(), 1);
-  await updateFollowersCount(db, followee.actor.id, 1);
+  // Already following, e.g. when an earlier Undo was lost: accept again
+  // anyway, or the follower stays pending
+  if (rows.length > 0) {
+    await updateFolloweesCount(db, follower.id!.toString(), 1);
+    await updateFollowersCount(db, followeeActor.id, 1);
+  }
+  const accepted = rows[0]?.accepted ?? new Date();
   await fedCtx.sendActivity(
     { identifier: followee.slug },
     followActor,
     new Accept({
       id: new URL(
-        `#accept/${follower.id}/${+rows[0].accepted!}`,
+        `#accept/${follower.id}/${+accepted}`,
         fedCtx.getActorUri(followee.slug)
       ),
       actor: fedCtx.getActorUri(followee.slug),
@@ -371,9 +356,27 @@ async function onFollowed(fedCtx: InboxContext<ContextData>, follow: Follow) {
   );
 }
 
-// Our post URIs end in the post's UUID.
-function postIdFromUri(uri: URL | null | undefined): string | undefined {
-  return uri?.pathname.split("/").pop() || undefined;
+// The ID of our post that a URI points at, if it's one of our Note URIs
+function postIdFromUri(
+  fedCtx: InboxContext<ContextData>,
+  uri: URL | null | undefined
+): string | undefined {
+  if (uri == null) return undefined;
+  const parsed = fedCtx.parseUri(uri);
+  if (parsed?.type !== "object" || parsed.class !== Note) return undefined;
+  const id = parsed.values.id;
+  return id && isUuid(id) ? id : undefined;
+}
+
+// Only published posts can be interacted with
+function findPublishedPost(postId: string) {
+  return db.query.postTable.findFirst({
+    where: and(
+      eq(postTable.id, postId),
+      isNotNull(postTable.published),
+      isNull(postTable.deleted)
+    ),
+  });
 }
 
 async function onPostShared(
@@ -382,12 +385,10 @@ async function onPostShared(
 ): Promise<void> {
   const object = await announce.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
-  const postId = postIdFromUri(object.id);
+  const postId = postIdFromUri(fedCtx, object.id);
   if (!object.id || !announce.id || !postId) return;
 
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
 
   const actorObject = await announce.getActor(fedCtx);
@@ -423,12 +424,10 @@ async function onPostUnshared(
     !isPostObject(await announce.getObject({ ...fedCtx, suppressError: true }))
   )
     return;
-  const postId = postIdFromUri(announce.objectId);
+  const postId = postIdFromUri(fedCtx, announce.objectId);
   if (!postId) return;
 
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
 
   const actorObject = await undo.getActor(fedCtx);
@@ -457,13 +456,16 @@ async function onPostLiked(
 ): Promise<void> {
   const object = await like.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
-  const postId = postIdFromUri(object.id);
+  const postId = postIdFromUri(fedCtx, object.id);
   if (!object.id || !like.id || !like.actorId || !postId) return;
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
-  const [actor] = await getActorByUri(like.actorId.href);
+  const actorObject = await like.getActor(fedCtx);
+  if (!actorObject) return;
+  const actor = await persistActor(fedCtx, actorObject, {
+    ...fedCtx,
+    outbox: false,
+  });
   if (!actor) return;
 
   await db.insert(notificationTable).values({
@@ -486,11 +488,9 @@ async function onPostUnliked(
   if (!(object instanceof Like)) return;
   const postObject = await object.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(postObject)) return;
-  const postId = postIdFromUri(postObject.id);
+  const postId = postIdFromUri(fedCtx, postObject.id);
   if (!undo.actorId || !postId) return;
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
   const [actor] = await getActorByUri(undo.actorId.href);
   if (!actor) return;
@@ -512,13 +512,16 @@ async function onReactedOnPost(
 ): Promise<void> {
   const object = await react.getObject({ ...fedCtx, suppressError: true });
   if (!isPostObject(object)) return;
-  const postId = postIdFromUri(object.id);
+  const postId = postIdFromUri(fedCtx, object.id);
   if (!object.id || !react.id || !react.actorId || !postId) return;
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
-  const [actor] = await getActorByUri(react.actorId.href);
+  const actorObject = await react.getActor(fedCtx);
+  if (!actorObject) return;
+  const actor = await persistActor(fedCtx, actorObject, {
+    ...fedCtx,
+    outbox: false,
+  });
   if (!actor) return;
 
   await db.insert(notificationTable).values({
@@ -548,12 +551,10 @@ async function onReactionUndoneOnPost(
     suppressError: true,
   });
   if (!isPostObject(postObject)) return;
-  const postId = postIdFromUri(postObject.id);
+  const postId = postIdFromUri(fedCtx, postObject.id);
   const content = reactionObject.content?.toString();
   if (!undo.actorId || !postId || content == null) return;
-  const post = await db.query.postTable.findFirst({
-    where: eq(postTable.id, postId),
-  });
+  const post = await findPublishedPost(postId);
   if (!post) return;
   const [actor] = await getActorByUri(undo.actorId.href);
   if (!actor) return;
@@ -584,15 +585,22 @@ async function onPostDeleted(
   fedCtx: InboxContext<ContextData>,
   deleteActivity: Delete
 ): Promise<void> {
-  const object = await deleteActivity.getObject({
-    ...fedCtx,
-    suppressError: true,
-  });
-  if (!object?.id) return;
+  // The object is usually gone by now, so go by its ID rather than fetching
+  const objectId = deleteActivity.objectId;
+  if (!objectId || !deleteActivity.actorId) return;
+  const [actor] = await getActorByUri(deleteActivity.actorId.href);
+  if (!actor) return;
 
+  // Only what the sender made, or anyone could delete others' notifications
+  // by naming our own Note, which likes and boosts point at
   await db
     .delete(notificationTable)
-    .where(eq(notificationTable.objectId, object.id.href));
+    .where(
+      and(
+        eq(notificationTable.objectId, objectId.href),
+        eq(notificationTable.actorId, actor.id)
+      )
+    );
 }
 
 export const activityHandlers = {
