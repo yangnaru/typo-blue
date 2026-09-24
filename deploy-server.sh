@@ -99,7 +99,7 @@ HEALTH_TIMEOUT_SECONDS=${HEALTH_TIMEOUT_SECONDS:-120}
 echo "==> Verifying the published port..."
 PUBLISHED_OK=""
 for i in {1..$HEALTH_TIMEOUT_SECONDS}; do
-    if curl -fsS -o /dev/null http://localhost:23000/; then
+    if curl -fsS -o /dev/null http://localhost:23000/ 2>/dev/null; then
         echo "typo-blue is answering after ${i}s"
         PUBLISHED_OK=1
         break
