@@ -18,6 +18,8 @@ COPY components.json \
      pnpm-lock.yaml \
      pnpm-workspace.yaml \
      postcss.config.js \
+     sentry.edge.config.ts \
+     sentry.server.config.ts \
      tsconfig.json \
      ./
 
