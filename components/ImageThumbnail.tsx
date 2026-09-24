@@ -97,7 +97,11 @@ export function ImageThumbnail({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>취소</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
+              onClick={(e) => {
+                // Stay open until the deletion finishes
+                e.preventDefault();
+                handleDelete();
+              }}
               disabled={isDeleting}
               className={plainButtonClassName("destructive")}
             >

@@ -25,6 +25,21 @@ export default function Login() {
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
 
+  async function verify(check: () => Promise<boolean>) {
+    setLoginButtonDisabled(true);
+    try {
+      if (await check()) {
+        router.push("/");
+        router.refresh();
+        return;
+      }
+      toast("로그인에 실패했습니다. 다시 시도해주세요.");
+    } catch {
+      toast("로그인에 실패했습니다. 다시 시도해주세요.");
+    }
+    setLoginButtonDisabled(false);
+  }
+
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -34,16 +49,7 @@ export default function Login() {
     }
 
     if (usingPassword) {
-      verifyPassword(email, password).then((verified) => {
-        if (verified) {
-          router.push("/");
-          router.refresh();
-
-          return;
-        } else {
-          toast("로그인에 실패했습니다. 다시 시도해주세요.");
-        }
-      });
+      await verify(() => verifyPassword(email, password));
     } else {
       if (challengeId === null) {
         setLoginButtonDisabled(true);
@@ -60,21 +66,12 @@ export default function Login() {
         } catch {
           toast("로그인에 실패했습니다. 다시 시도해주세요.");
           setLoginButtonDisabled(false);
-          setButtonText("로그인 링크 보내기");
+          setButtonText("로그인 코드 보내기");
         }
       }
 
       if (challengeId) {
-        verifyEmailVerificationCode(challengeId, code).then((verified) => {
-          if (verified) {
-            router.push("/");
-            router.refresh();
-
-            return;
-          } else {
-            toast("로그인에 실패했습니다. 다시 시도해주세요.");
-          }
-        });
+        await verify(() => verifyEmailVerificationCode(challengeId, code));
       }
     }
   }

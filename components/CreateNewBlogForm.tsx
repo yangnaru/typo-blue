@@ -14,23 +14,31 @@ export default function CreateNewBlogForm() {
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setIsLoading(true);
     setStatus("블로그 만드는 중...");
 
-    createBlog(form.blogId).then(async (res) => {
-      if (!res.error) {
-        router.push(getBlogHomePath(form.blogId));
-      } else {
-        setIsLoading(false);
-        setStatus(res.error);
+    try {
+      const res = await createBlog(form.blogId);
+      if (res.blogId) {
+        // The server lowercases the ID
+        router.push(getBlogHomePath(res.blogId));
+        return;
       }
-    });
+      setStatus(res.error ?? "알 수 없는 오류가 발생했습니다.");
+    } catch {
+      setStatus("알 수 없는 오류가 발생했습니다.");
+    }
+    setIsLoading(false);
   }
 
   return (
     <>
-      <form className="flex flex-col float-left space-y-2">
+      <form
+        className="flex flex-col float-left space-y-2"
+        onSubmit={handleSubmit}
+      >
         <h2 className="text-xl font-bold">새 블로그를 만듭니다.</h2>
 
         <BlogSlugInput
@@ -51,7 +59,7 @@ export default function CreateNewBlogForm() {
         </div>
 
         <div className="flex flex-row items-baseline space-x-2">
-          <PlainButton disabled={isLoading} onClick={handleSubmit}>
+          <PlainButton type="submit" disabled={isLoading}>
             만들기
           </PlainButton>
           <p>{status}</p>

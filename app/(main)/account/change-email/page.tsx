@@ -5,10 +5,12 @@ import {
   verifyEmailVerificationCodeAndChangeAccountEmail,
 } from "@/lib/actions/account";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { inputClassName, submitClassName } from "@/lib/form-styles";
 
 export default function ChangeEmailPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [emailInputDisabled, setEmailInputDisabled] = useState(false);
   const [buttonText, setButtonText] = useState("이메일 변경 코드 보내기");
@@ -46,17 +48,23 @@ export default function ChangeEmailPage() {
     }
 
     if (challengeId) {
-      verifyEmailVerificationCodeAndChangeAccountEmail(challengeId, code).then(
-        (verified) => {
-          if (verified) {
-            toast("이메일 변경에 성공했습니다.");
-
-            return;
-          } else {
-            toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
-          }
+      setButtonDisabled(true);
+      try {
+        const verified = await verifyEmailVerificationCodeAndChangeAccountEmail(
+          challengeId,
+          code
+        );
+        if (verified) {
+          toast("이메일 변경에 성공했습니다.");
+          router.refresh();
+        } else {
+          toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
         }
-      );
+      } catch {
+        toast("이메일 변경에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        setButtonDisabled(false);
+      }
     }
   }
 

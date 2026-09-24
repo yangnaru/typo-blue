@@ -16,7 +16,6 @@ import { PlainButton, plainButtonClassName } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
 import { getBlogPostsPath, getBlogPostEditPath } from "@/lib/paths";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +46,6 @@ export default function PostEditor({
   existingUpdated?: Date | null;
   existingEmailSent?: boolean;
 }) {
-  const router = useRouter();
   const [postId, setPostId] = useState(existingPostId);
   const [title, setTitle] = useState(existingTitle);
   const [content, setContent] = useState(existingContent);
@@ -77,6 +75,8 @@ export default function PostEditor({
   const postIdRef = useRef(existingPostId);
   // Saves run one at a time, so a new post is only ever created once
   const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  // Set once the post is deleted, so no save queued behind it writes it back
+  const deletedRef = useRef(false);
 
   useEffect(() => {
     latestRef.current = { title, content, publishedAt };
@@ -89,6 +89,15 @@ export default function PostEditor({
   }
 
   function markSaved(savedPostId: string, title: string, content: string) {
+    if (!postIdRef.current) {
+      // Point the URL at the new post without remounting the editor, so a
+      // reload finds it
+      window.history.replaceState(
+        null,
+        "",
+        getBlogPostEditPath(blogId, savedPostId)
+      );
+    }
     postIdRef.current = savedPostId;
     setPostId(savedPostId);
     savedRef.current = { title, content };
@@ -109,7 +118,7 @@ export default function PostEditor({
   function autosave() {
     return enqueueSave(async () => {
       const { title, content, publishedAt } = latestRef.current;
-      if (publishedAt !== null) return;
+      if (deletedRef.current || publishedAt !== null) return;
       if (!title.trim() && !content.trim()) return;
       if (
         title === savedRef.current.title &&
@@ -153,12 +162,13 @@ export default function PostEditor({
     return () => clearTimeout(timeout);
   }, [autosaveStatus]);
 
-  // Warn before leaving a draft with unsaved changes
+  // Warn before leaving with unsaved changes; published posts aren't
+  // autosaved, so this is all that stops their edits being lost
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const { title, content, publishedAt } = latestRef.current;
+      const { title, content } = latestRef.current;
       if (
-        publishedAt === null &&
+        !deletedRef.current &&
         (title.trim() || content.trim()) &&
         (title !== savedRef.current.title ||
           content !== savedRef.current.content)
@@ -342,12 +352,11 @@ export default function PostEditor({
 
   async function handleSavePost(status: "save" | "publish" = "save") {
     setIsLoading(true);
-    const wasNewPost = !postIdRef.current;
     const publishedAtValue = status === "publish" ? new Date() : publishedAt;
 
     try {
       // After any autosave in flight, so both don't create a post
-      const res = await enqueueSave(async () => {
+      await enqueueSave(async () => {
         const res = await upsertPost(
           blogId,
           publishedAtValue,
@@ -356,7 +365,6 @@ export default function PostEditor({
           content
         );
         markSaved(res.postId, title, content);
-        return res;
       });
 
       setPublishedAt(publishedAtValue);
@@ -367,10 +375,6 @@ export default function PostEditor({
         format(new Date(), "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
-
-      if (wasNewPost) {
-        router.replace(getBlogPostEditPath(blogId, res.postId));
-      }
     } catch (error) {
       console.error("Save failed:", error);
       toast("❗️");
@@ -380,15 +384,35 @@ export default function PostEditor({
   }
 
   async function handleDelete() {
-    const res = await deletePost(blogId, postId!);
-
-    if (res.success) {
+    setIsLoading(true);
+    try {
+      // After any save in flight, and before any queued behind it
+      await enqueueSave(async () => {
+        await deletePost(blogId, postIdRef.current!);
+        deletedRef.current = true;
+      });
       toast.success("삭제되었습니다.");
       window.location.href = getBlogPostsPath(blogId);
-    } else {
+    } catch (error) {
+      console.error("Delete failed:", error);
       toast.error("삭제에 실패했습니다.");
+      setIsLoading(false);
+      setDeleteDialogOpen(false);
     }
-    setDeleteDialogOpen(false);
+  }
+
+  async function handleUnpublish() {
+    setIsLoading(true);
+    try {
+      await enqueueSave(() => unPublishPost(blogId, postIdRef.current!));
+      setPublishedAt(null);
+      toast("발행 취소 완료 ✅");
+    } catch (error) {
+      console.error("Unpublish failed:", error);
+      toast("❗️");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function handleSendEmail() {
@@ -514,15 +538,7 @@ export default function PostEditor({
               발행
             </PillItem>
           ) : (
-            <PillItem
-              onClick={async () => {
-                const res = await unPublishPost(blogId, postId!);
-                if (res.success) {
-                  setPublishedAt(null);
-                  toast("발행 취소 완료 ✅");
-                }
-              }}
-            >
+            <PillItem disabled={isLoading} onClick={handleUnpublish}>
               발행 취소
             </PillItem>
           )}
@@ -553,7 +569,12 @@ export default function PostEditor({
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleDelete}
+                  disabled={isLoading}
+                  onClick={(e) => {
+                    // Stay open until the deletion finishes
+                    e.preventDefault();
+                    handleDelete();
+                  }}
                   className={plainButtonClassName("destructive")}
                 >
                   삭제

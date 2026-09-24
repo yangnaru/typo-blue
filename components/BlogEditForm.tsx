@@ -41,6 +41,8 @@ export default function BlogEditForm({
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmationInput, setConfirmationInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   function handleChange(
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -58,35 +60,25 @@ export default function BlogEditForm({
     });
   }
 
-  async function handleDelete() {
-    if (postCount === 0) {
-      // If no posts, delete immediately
-      const res = await deleteBlog(slug);
-      if (res.success) {
-        toast.success("블로그가 삭제되었습니다.");
-        window.location.href = getAccountPath();
-      } else {
-        toast.error("블로그 삭제에 실패했습니다.");
-      }
-    } else {
-      // If has posts, show confirmation dialog
-      setDeleteDialogOpen(true);
-    }
-  }
-
   async function handleConfirmDelete() {
-    if (postCount > 0 && confirmationInput !== blog.slug) {
+    if (confirmationInput !== blog.slug) {
       toast.error("블로그 이름을 정확히 입력해주세요.");
       return;
     }
 
-    const res = await deleteBlog(slug);
-    if (res.success) {
-      toast.success("블로그가 삭제되었습니다.");
-      window.location.href = getAccountPath();
-    } else {
+    setIsDeleting(true);
+    try {
+      const res = await deleteBlog(slug);
+      if (res.success) {
+        toast.success("블로그가 삭제되었습니다.");
+        window.location.href = getAccountPath();
+        return;
+      }
+      toast.error(res.error ?? "블로그 삭제에 실패했습니다.");
+    } catch {
       toast.error("블로그 삭제에 실패했습니다.");
     }
+    setIsDeleting(false);
     setDeleteDialogOpen(false);
     setConfirmationInput("");
   }
@@ -96,17 +88,19 @@ export default function BlogEditForm({
   ) {
     e.preventDefault();
 
-    const res = await editBlogInfo(
-      blog.slug,
-      blog.name,
-      blog.description,
-      blog.discoverable
-    );
-
-    if (res.success) {
+    setIsSaving(true);
+    try {
+      await editBlogInfo(
+        blog.slug,
+        blog.name,
+        blog.description,
+        blog.discoverable
+      );
       toast("블로그 정보가 수정되었습니다.");
-    } else {
+    } catch {
       toast("블로그 정보 수정에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -149,10 +143,18 @@ export default function BlogEditForm({
           <label htmlFor="discoverable">타이포 블루 메인에 새 글 노출</label>
         </div>
         <div className="flex flex-row gap-2">
-          <PlainButton type="submit" onClick={(e) => handleSubmit(e)}>
+          <PlainButton
+            type="submit"
+            disabled={isSaving}
+            onClick={(e) => handleSubmit(e)}
+          >
             저장
           </PlainButton>
-          <PlainButton type="button" variant="destructive" onClick={handleDelete}>
+          <PlainButton
+            type="button"
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
             블로그 삭제
           </PlainButton>
         </div>
@@ -182,8 +184,12 @@ export default function BlogEditForm({
               취소
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={confirmationInput !== blog.slug}
+              onClick={(e) => {
+                // Stay open until the deletion finishes
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              disabled={confirmationInput !== blog.slug || isDeleting}
               className={plainButtonClassName("destructive")}
             >
               삭제
