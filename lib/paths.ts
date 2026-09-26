@@ -2,6 +2,10 @@ export function getRootPath() {
   return "/";
 }
 
+export function getAboutPath() {
+  return "/about";
+}
+
 export function getDesignPath() {
   return "/design";
 }

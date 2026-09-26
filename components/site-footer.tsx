@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDesignPath, getRootPath } from "@/lib/paths";
+import { getAboutPath, getDesignPath, getRootPath } from "@/lib/paths";
 
 const SOURCE_URL = "https://github.com/yangnaru/typo-blue";
 
@@ -13,6 +13,7 @@ export default function SiteFooter() {
           typo <span className="text-blue-500">blue</span>
         </Link>
         <p className="text-neutral-500">
+          <Link href={getAboutPath()}>소개</Link> ·{" "}
           <Link href={getDesignPath()}>디자인</Link> ·{" "}
           <a href={SOURCE_URL}>소스 코드</a>
         </p>

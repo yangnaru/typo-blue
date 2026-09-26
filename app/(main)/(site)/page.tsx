@@ -1,5 +1,4 @@
 import Logo from "@/components/Logo";
-import SiteFooter from "@/components/site-footer";
 import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -9,7 +8,6 @@ import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
 import { convert } from "html-to-text";
-import { SELF_DESCRIPTION } from "@/lib/const";
 
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -44,16 +42,6 @@ export default async function Home() {
   return (
     <main className="space-y-4">
       <Logo />
-
-      <p>{SELF_DESCRIPTION}</p>
-
-      <ul className="list-disc list-inside">
-        <li>텍스트와 이미지 등을 포함한 게시물을 쓸 수 있습니다.</li>
-        <li>독자들이 이메일로 새 글을 구독할 수 있습니다.</li>
-        <li>연합우주로 글을 발행할 수 있습니다.</li>
-      </ul>
-
-      <p>지금 이메일로 가입하고 블로그를 만들어 보세요.</p>
 
       <nav className="space-x-2 flex">
         <HomeWithSession />
@@ -92,8 +80,6 @@ export default async function Home() {
           </ul>
         </>
       )}
-
-      <SiteFooter />
     </main>
   );
 }
