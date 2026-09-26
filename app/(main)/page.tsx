@@ -1,4 +1,5 @@
 import Logo from "@/components/Logo";
+import SiteFooter from "@/components/site-footer";
 import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -91,6 +92,8 @@ export default async function Home() {
           </ul>
         </>
       )}
+
+      <SiteFooter />
     </main>
   );
 }

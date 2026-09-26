@@ -2,6 +2,10 @@ export function getRootPath() {
   return "/";
 }
 
+export function getDesignPath() {
+  return "/design";
+}
+
 export function getLoginPath() {
   return "/auth/signin";
 }
