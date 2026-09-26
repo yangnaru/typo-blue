@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // .next/standalone holds only the files the server was traced to use, so
+    // the image can leave node_modules and the sources behind.
+    output: 'standalone',
     serverExternalPackages: ['@node-rs/argon2'],
     images: {
         remotePatterns: [

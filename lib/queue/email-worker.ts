@@ -16,10 +16,6 @@ class EmailWorker {
     this.shutdownSignal = false;
     
     console.log('Starting email worker...');
-    
-    // Handle graceful shutdown
-    process.on('SIGTERM', () => this.shutdown());
-    process.on('SIGINT', () => this.shutdown());
 
     // Recover any stuck jobs on startup
     await emailQueue.recoverStuckJobs();
@@ -28,8 +24,10 @@ class EmailWorker {
     this.processJobs();
   }
 
-  async shutdown() {
-    console.log('Shutting down email worker...');
+  // Resolves once the job in progress, if any, has finished. Exiting is left to
+  // the caller: inside the Next.js server, Next exits after draining requests.
+  async stop() {
+    console.log('Stopping email worker...');
     this.shutdownSignal = true;
     
     // Wait for current job to complete
@@ -37,8 +35,7 @@ class EmailWorker {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    console.log('Email worker shut down gracefully');
-    process.exit(0);
+    console.log('Email worker stopped');
   }
 
   private async processJobs() {

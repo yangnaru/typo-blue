@@ -76,13 +76,13 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     exit 1
 fi
 
-# The app and the email worker are both declared with typo-blue:current.
-# Moving that tag does not touch the running containers: a container holds the
-# image it was created from, not the name.
+# The app is declared with typo-blue:current. Moving that tag does not touch
+# the running container: a container holds the image it was created from, not
+# the name.
 docker tag "$IMAGE" typo-blue:current
 
 echo "==> Running database migrations..."
-if ! docker compose run --rm typo-blue pnpm drizzle-kit migrate; then
+if ! docker compose run --rm typo-blue node migrate.mjs; then
     echo "ERROR: database migration failed; the previous release is still running"
     exit 1
 fi

@@ -28,6 +28,22 @@ export async function register() {
       },
     ],
   });
+
+  // The email worker shares the server's process rather than paying for a
+  // second Node.js in its own container. In development, run it with
+  // `pnpm email-worker` when you want mail sent.
+  if (
+    process.env.NEXT_RUNTIME === "nodejs" &&
+    process.env.NODE_ENV === "production"
+  ) {
+    const { emailWorker } = await import("./lib/queue/email-worker");
+    // Stop taking jobs; Next finishes the requests in flight and exits. A job
+    // cut short stays `processing` and is retried on the next start.
+    process.once("SIGTERM", () => emailWorker.stop());
+    emailWorker.start().catch((error) => {
+      console.error("Failed to start email worker:", error);
+    });
+  }
 }
 
 export const onRequestError = Sentry.captureRequestError;

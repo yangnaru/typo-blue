@@ -1,33 +1,25 @@
-x-typo-blue: &typo-blue
-  # Pulled from GHCR or built on another machine by deploy.py, and deploy-server.sh
-  # points this tag at it before recreating the containers. There is
-  # deliberately no `build:`: a build here is what used to peg this machine's
-  # CPU on every deploy.
-  image: typo-blue:current
-  # Without a `build:`, a missing image would send compose to Docker Hub for
-  # someone else's `typo-blue`. Fail instead.
-  pull_policy: never
-  env_file: ".env"
-  networks:
-    - typo-blue-network
-  restart: always
-  # Forwards SIGTERM to the app, which as PID 1 would otherwise be exempt from
-  # the default action and sit out the ten seconds until Docker kills it.
-  init: true
-
 services:
   typo-blue:
-    <<: *typo-blue
+    # Pulled from GHCR or built on another machine by deploy.py, and
+    # deploy-server.sh points this tag at it before recreating the container.
+    # There is deliberately no `build:`: a build here is what used to peg this
+    # machine's CPU on every deploy.
+    image: typo-blue:current
+    # Without a `build:`, a missing image would send compose to Docker Hub for
+    # someone else's `typo-blue`. Fail instead.
+    pull_policy: never
     container_name: typo-blue
+    env_file: ".env"
+    networks:
+      - typo-blue-network
+    restart: always
+    # Forwards SIGTERM to the app, which as PID 1 would otherwise be exempt from
+    # the default action and sit out the ten seconds until Docker kills it.
+    init: true
     ports:
       - "23000:3000"
-
-  typo-blue-email-worker:
-    <<: *typo-blue
-    container_name: typo-blue-email-worker
-    # Not `pnpm run email-worker`, which is pnpm, then the tsx CLI, then node:
-    # three resident processes where one does the work.
-    command: ["node", "--import", "tsx", "scripts/email-worker.ts"]
+    # The email worker runs inside this process (see instrumentation.ts); the
+    # typo-blue-email-worker container it used to have is removed as an orphan.
 
 networks:
   typo-blue-network:
