@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Tiptap, { TiptapRef } from "./Tiptap";
 import { ImageThumbnail, ImageData } from "./ImageThumbnail";
-import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import {
   deletePost,
@@ -372,7 +371,7 @@ export default function PostEditor({
       setShowAutosaveStatus(false);
 
       toast(
-        format(new Date(), "yyyy년 MM월 dd일 HH시 mm분") +
+        formatInTimeZone(new Date(), "Asia/Seoul", "yyyy년 MM월 dd일 HH시 mm분") +
           ` ${status === "save" ? "저장" : "발행"} 완료 ✅`
       );
     } catch (error) {
