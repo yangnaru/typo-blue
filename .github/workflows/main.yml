@@ -1,8 +1,23 @@
+# Builds typo-blue for every commit on main and pushes it to GHCR as
+# ghcr.io/yangnaru/typo-blue:git-<commit>-arm64, which is what
+# `mise run deploy` has the server pull. `mise run deploy:local` still builds
+# on the Mac and ships over ssh, for when this is broken or GitHub is down.
+#
+# NEXT_PUBLIC_* are compiled into the client bundle, so they come from
+# repository variables that have to match the server's .env; deploy.py refuses
+# an image built with others.
 name: main
 on:
   push:
     branches:
     - main
+  workflow_dispatch:
+
+# Only main's newest commit is ever deployed, so a build that a newer push has
+# overtaken is not worth finishing.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   image:
@@ -12,6 +27,18 @@ jobs:
       attestations: write
     runs-on: ubuntu-24.04-arm
     steps:
+    - name: Check the build-time settings
+      env:
+        NEXT_PUBLIC_URL: ${{ vars.NEXT_PUBLIC_URL }}
+        NEXT_PUBLIC_DOMAIN: ${{ vars.NEXT_PUBLIC_DOMAIN }}
+        NEXT_PUBLIC_R2_PUBLIC_URL: ${{ vars.NEXT_PUBLIC_R2_PUBLIC_URL }}
+      run: |
+        for name in NEXT_PUBLIC_URL NEXT_PUBLIC_DOMAIN NEXT_PUBLIC_R2_PUBLIC_URL; do
+          if [ -z "${!name}" ]; then
+            echo "::error::The $name repository variable is not set, so the client bundle would be built without it"
+            exit 1
+          fi
+        done
     - uses: docker/setup-buildx-action@v3
     - uses: docker/login-action@v3
       with:
@@ -20,13 +47,18 @@ jobs:
         password: ${{ github.token }}
     - id: arch
       run: echo arch=arm64 >> "$GITHUB_OUTPUT"
-    - uses: docker/build-push-action@v6
+    # deploy.py waits for this step by name (IMAGE_PUSH_STEP).
+    - name: Build and push the image
+      uses: docker/build-push-action@v6
       with:
         pull: "true"
         push: "true"
         no-cache: "false"
-        build-args:
+        build-args: |
           GIT_COMMIT=${{ github.sha }}
+          NEXT_PUBLIC_URL=${{ vars.NEXT_PUBLIC_URL }}
+          NEXT_PUBLIC_DOMAIN=${{ vars.NEXT_PUBLIC_DOMAIN }}
+          NEXT_PUBLIC_R2_PUBLIC_URL=${{ vars.NEXT_PUBLIC_R2_PUBLIC_URL }}
         tags: ghcr.io/${{ github.repository }}:git-${{ github.sha }}-${{ steps.arch.outputs.arch }}
         labels: |
           org.opencontainers.image.revision=${{ github.sha }}

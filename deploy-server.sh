@@ -1,7 +1,7 @@
 #!/bin/zsh
 
-# The server half of a deploy. deploy.sh runs this over ssh once it has built
-# the image elsewhere and loaded it here as typo-blue:<commit>:
+# The server half of a deploy. deploy.py runs this over ssh once the image
+# is here as typo-blue:<commit>, pulled from GHCR or built elsewhere and shipped:
 #
 #   ./deploy-server.sh <commit>
 #
@@ -72,7 +72,7 @@ if [[ "$SCRIPT_BEFORE_UPDATE" != "$(shasum "$0")" ]]; then
 fi
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-    echo "ERROR: $IMAGE is not loaded here; deploy.sh ships it before running this"
+    echo "ERROR: $IMAGE is not loaded here; deploy.py pulls or ships it before running this"
     exit 1
 fi
 

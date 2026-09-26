@@ -1,5 +1,5 @@
 x-typo-blue: &typo-blue
-  # Built on another machine and loaded here by deploy.sh, and deploy-server.sh
+  # Pulled from GHCR or built on another machine by deploy.py, and deploy-server.sh
   # points this tag at it before recreating the containers. There is
   # deliberately no `build:`: a build here is what used to peg this machine's
   # CPU on every deploy.

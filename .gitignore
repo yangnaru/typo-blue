@@ -40,3 +40,6 @@ next-env.d.ts
 .env.sentry-build-plugin
 
 /.deploy.lock/
+
+# From running deploy.py.
+__pycache__/
