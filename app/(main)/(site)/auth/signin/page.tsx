@@ -90,8 +90,12 @@ export default function Login() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
+      {/* Keyed so the code field is a new element rather than the password
+          field with its type changed, which browsers would still treat as the
+          password and offer to save the code as one. */}
       {challengeId ? (
         <input
+          key="code"
           type="text"
           id="pin"
           name="code"
@@ -106,6 +110,7 @@ export default function Login() {
         />
       ) : (
         <input
+          key="password"
           type="password"
           id="password"
           name="password"
