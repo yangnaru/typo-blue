@@ -4,6 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useState, useCallback, useEffect } from "react";
 import { format, isSameDay, isSameMonth, differenceInDays, subDays, isWithinInterval, startOfDay, endOfDay, addDays, addMonths, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
+import { toZonedTime } from "date-fns-tz";
 import Link from "next/link";
 import { getBlogPostEditPath, getBlogPostPath } from "@/lib/paths";
 import { Pill, PillItem } from "@/components/pill";
@@ -17,6 +18,12 @@ interface BlogPost {
   blogId: string;
 }
 
+// Days on the calendar are days in Seoul, as everywhere else on the site,
+// whatever the viewer's or the server's time zone. The Dates below hold Seoul's
+// wall-clock time in local fields, so date-fns's local-time helpers see Seoul.
+const TIME_ZONE = "Asia/Seoul";
+const nowInSeoul = () => toZonedTime(new Date(), TIME_ZONE);
+
 interface BlogCalendarProps {
   posts: BlogPost[];
   blogSlug: string;
@@ -25,11 +32,13 @@ interface BlogCalendarProps {
 export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedRange, setSelectedRange] = useState<{from: Date; to?: Date} | undefined>(undefined);
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(nowInSeoul);
   const [selectionMode, setSelectionMode] = useState<'single' | 'range'>('single');
 
   // Filter only published posts and use first_published date
-  const publishedPosts = posts.filter(post => post.published !== null && post.first_published !== null);
+  const publishedPosts = posts
+    .filter(post => post.published !== null && post.first_published !== null)
+    .map(post => ({ ...post, first_published: toZonedTime(post.first_published!, TIME_ZONE) }));
 
   // Create a map of dates to posts for quick lookup
   const postsByDate = publishedPosts.reduce((acc, post) => {
@@ -99,7 +108,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
 
     // Calculate current streak (from today backwards)
     let currentStreak = 0;
-    const today = new Date();
+    const today = nowInSeoul();
     let checkDate = today;
     
     // Check if there's a post today or yesterday (to account for different time zones)
@@ -146,7 +155,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
   }, []);
 
   const goToCurrentMonth = useCallback(() => {
-    setCurrentMonth(new Date());
+    setCurrentMonth(nowInSeoul());
   }, []);
 
   const toggleSelectionMode = useCallback(() => {
@@ -213,7 +222,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
         break;
       case 'Home':
         event.preventDefault();
-        const today = new Date();
+        const today = nowInSeoul();
         setSelectedDate(today);
         setCurrentMonth(today);
         break;
@@ -254,7 +263,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
     };
   }, [handleKeyDown]);
 
-  const isCurrentMonth = isSameMonth(currentMonth, new Date());
+  const isCurrentMonth = isSameMonth(currentMonth, nowInSeoul());
 
   const hasSelection =
     (selectionMode === "single" && selectedDate) ||
@@ -330,6 +339,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
       {selectionMode === "single" ? (
         <Calendar
           mode="single"
+          today={nowInSeoul()}
           selected={selectedDate}
           onSelect={setSelectedDate}
           month={currentMonth}
@@ -340,6 +350,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
       ) : (
         <Calendar
           mode="range"
+          today={nowInSeoul()}
           selected={selectedRange}
           onSelect={(range) => {
             if (range?.from) {

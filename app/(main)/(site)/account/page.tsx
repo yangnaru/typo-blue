@@ -9,7 +9,7 @@ import {
   getBlogNewPath,
   getBlogPostsPath,
 } from "@/lib/paths";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 
 export default async function AccountHome() {
@@ -41,7 +41,7 @@ export default async function AccountHome() {
         <div>
           <p>이메일 주소: {targetUser.email}</p>
           <p>
-            가입일: {format(new Date(targetUser.created), "yyyy년 M월 d일")}
+            가입일: {formatInTimeZone(targetUser.created, "Asia/Seoul", "yyyy년 M월 d일")}
           </p>
         </div>
         <div className="flex flex-row space-x-2">
@@ -70,7 +70,7 @@ export default async function AccountHome() {
                   @{blog.slug} {blog.name && `(${blog.name})`}
                 </Link>
                 <p className="text-neutral-500">
-                  개설일: {format(new Date(blog.created), "yyyy년 M월 d일")}
+                  개설일: {formatInTimeZone(blog.created, "Asia/Seoul", "yyyy년 M월 d일")}
                 </p>
                 <p className="text-neutral-500">
                   글 수: {blog.posts.filter((post) => post.published).length}

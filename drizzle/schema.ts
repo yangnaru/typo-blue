@@ -215,13 +215,13 @@ export const emailQueue = pgTable(
     status: text("status").notNull().default("pending"), // pending, processing, completed, failed
     retryCount: integer("retry_count").notNull().default(0),
     maxRetries: integer("max_retries").notNull().default(3),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    processedAt: timestamp("processed_at"),
-    scheduledFor: timestamp("scheduled_for").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }).defaultNow().notNull(),
     errorMessage: text("error_message"),
-    sentAt: timestamp("sent_at"),
-    openedAt: timestamp("opened_at"),
-    clickedAt: timestamp("clicked_at"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    clickedAt: timestamp("clicked_at", { withTimezone: true }),
   },
   (table) => {
     return {
@@ -246,7 +246,7 @@ export const pageViews = pgTable(
     id: uuid().primaryKey().notNull(),
     blogId: uuid("blog_id").notNull(),
     postId: uuid("post_id"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     ipAddress: text("ip_address").notNull(), // Store as inet type (IPv6 compatible)
     userAgent: text("user_agent"),
     referrer: text("referrer"),

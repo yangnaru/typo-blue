@@ -8,9 +8,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 const db = drizzle({ connection: process.env.DATABASE_URL! });
 
-try {
-  await migrate(db, { migrationsFolder: process.env.MIGRATIONS_FOLDER ?? "drizzle" });
-  console.log("Migrations applied");
-} finally {
-  await db.$client.end();
-}
+// No top-level await: `pnpm migrate` runs this through tsx as CommonJS.
+migrate(db, { migrationsFolder: process.env.MIGRATIONS_FOLDER ?? "drizzle" })
+  .then(() => console.log("Migrations applied"))
+  .finally(() => db.$client.end());

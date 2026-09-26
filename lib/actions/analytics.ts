@@ -140,9 +140,8 @@ export async function getAnalyticsOverview(
   };
 }
 
-// created_at has no time zone, and is written in the database's, which is
-// Asia/Seoul, so its date is already the day in Seoul
-const seoulDate = sql`DATE(${pageViews.createdAt})`;
+// The day in Seoul, whatever the database's own time zone
+const seoulDate = sql`DATE(${pageViews.createdAt} AT TIME ZONE 'Asia/Seoul')`;
 
 export async function getVisitorTrends(
   blogSlug: string,
@@ -275,9 +274,10 @@ export async function getEmailAnalytics(
   const now = new Date();
   const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
+  const sentDate = sql`DATE(${emailQueue.sentAt} AT TIME ZONE 'Asia/Seoul')`;
   const emailStats = await db
     .select({
-      date: sql<string>`DATE(sent_at)`,
+      date: sql<string>`${sentDate}`,
       sent: sql<number>`COUNT(CASE WHEN sent_at IS NOT NULL THEN 1 END)`,
       opened: sql<number>`COUNT(CASE WHEN opened_at IS NOT NULL THEN 1 END)`,
       clicked: sql<number>`COUNT(CASE WHEN clicked_at IS NOT NULL THEN 1 END)`,
@@ -290,8 +290,8 @@ export async function getEmailAnalytics(
         isNotNull(emailQueue.sentAt)
       )
     )
-    .groupBy(sql`DATE(sent_at)`)
-    .orderBy(sql`DATE(sent_at)`);
+    .groupBy(sentDate)
+    .orderBy(sentDate);
 
   return emailStats.map((stat) => ({
     date: stat.date,

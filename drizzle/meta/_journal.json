@@ -204,6 +204,13 @@
       "when": 1790237173022,
       "tag": "0028_subscription_confirmation",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790463155635,
+      "tag": "0029_timestamptz",
+      "breakpoints": true
     }
   ]
 }
