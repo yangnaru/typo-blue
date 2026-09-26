@@ -16,7 +16,7 @@ export async function register() {
       {
         category: [],
         sinks: ["console"],
-        lowestLevel: "debug",
+        lowestLevel: "info",
       },
       {
         category: ["logtape", "meta"],

@@ -18,6 +18,13 @@ services:
     init: true
     ports:
       - "23000:3000"
+    # This machine is shared, so the app gets a ceiling rather than whatever
+    # the host allows. It sits around 120MiB; the heap cap makes V8 collect
+    # harder before it nears the container's, where the kernel would kill it
+    # (and `restart: always` bring it back).
+    environment:
+      NODE_OPTIONS: --max-old-space-size=256
+    mem_limit: 512m
     # The email worker runs inside this process (see instrumentation.ts); the
     # typo-blue-email-worker container it used to have is removed as an orphan.
 

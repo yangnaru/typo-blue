@@ -7,8 +7,9 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://446e90100c93bd55f81a641c6761be3c@o4504757655764992.ingest.us.sentry.io/4510046034984960",
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // A trace in ten: every request traced kept a span tree per request in
+  // memory until it was sent. Errors are still all reported.
+  tracesSampleRate: 0.1,
 
   // Enable logs to be sent to Sentry
   enableLogs: true,
