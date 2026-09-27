@@ -3,7 +3,10 @@ import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { blog, postTable } from "@/drizzle/schema";
-import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
+import {
+  getBlogHomePath,
+  getBlogPostPathWithSlugAndUuid,
+} from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
 import { DayHeading } from "@/components/day-heading";
@@ -72,9 +75,12 @@ export default async function Home() {
                       >
                         {post.title || "무제"}
                       </Link>{" "}
-                      <span className="text-neutral-500 text-sm">
+                      <Link
+                        href={getBlogHomePath(post.blog!.slug)}
+                        className="text-neutral-500 text-sm"
+                      >
                         {post.blog?.name || `@${post.blog?.slug}`}
-                      </span>
+                      </Link>
                     </p>
                     <p className="text-neutral-500 text-sm line-clamp-2">
                       {post.preview}

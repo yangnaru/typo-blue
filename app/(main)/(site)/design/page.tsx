@@ -315,9 +315,12 @@ export default async function DesignPage() {
                         <Link href="/design" className="font-semibold">
                           {post.title || "무제"}
                         </Link>{" "}
-                        <span className="text-neutral-500 text-sm">
+                        <Link
+                          href="/design"
+                          className="text-neutral-500 text-sm"
+                        >
                           {post.blog}
-                        </span>
+                        </Link>
                       </p>
                       <p className="text-neutral-500 text-sm line-clamp-2">
                         {post.preview}
@@ -332,7 +335,7 @@ export default async function DesignPage() {
         <p className="text-neutral-500">
           하루에 여러 항목이 쌓이는 목록에 씁니다. 머리글이 날짜를 말하므로 각
           줄은 제목으로 시작하고, 블로그 이름은 제목 바로 뒤에 회색으로
-          잇습니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
+          잇습니다. 블로그 이름은 그 블로그의 첫 페이지로 가는 링크입니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
           날짜를 부가 정보 줄에 둡니다.
         </p>
         <Token>groupBySeoulDay · DayHeading</Token>
