@@ -6,6 +6,7 @@ import { ImageThumbnail, ImageData } from "./ImageThumbnail";
 import { formatInTimeZone } from "date-fns-tz";
 import { formatSeoulDate } from "@/lib/dates";
 import { stripImageMetadata } from "@/lib/strip-image-metadata";
+import { isHeic, shrinkImage } from "@/lib/shrink-image";
 import {
   deletePost,
   unPublishPost,
@@ -218,8 +219,16 @@ export default function PostEditor({
       const fileArray = Array.from(files);
       const uploadPromises = fileArray.map(async (file) => {
         try {
-          // Step 1: Drop the photo's EXIF (location, camera) and read its size
-          const upload = await stripImageMetadata(file);
+          // Step 1: Shrink a large photo, drop the EXIF (location, camera) of
+          // one kept as is, and read its size
+          const shrunk = await shrinkImage(file);
+          if (isHeic(shrunk)) {
+            toast.error(
+              `${file.name}: 이 브라우저는 HEIC 사진을 변환할 수 없습니다. Safari에서 올리거나 JPEG로 바꿔 올려 주세요.`
+            );
+            return { success: false, error: "HEIC 변환 불가" };
+          }
+          const upload = await stripImageMetadata(shrunk);
           const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -239,10 +248,10 @@ export default function PostEditor({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               postId: uploadPostId,
-              filename: file.name,
+              filename: shrunk.name,
               width: dimensions.width,
               height: dimensions.height,
-              contentType: file.type,
+              contentType: shrunk.type,
               size: upload.size,
             }),
           });
@@ -260,7 +269,7 @@ export default function PostEditor({
           const uploadResponse = await fetch(presignedUrl, {
             method: "PUT",
             headers: {
-              "Content-Type": file.type,
+              "Content-Type": shrunk.type,
               "If-None-Match": "*",
             },
             body: upload,
@@ -508,7 +517,7 @@ export default function PostEditor({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
             onChange={handleImageUpload}
             className="hidden"
             id="image-upload"
