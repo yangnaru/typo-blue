@@ -62,17 +62,19 @@ export default async function Home() {
               <ul className="space-y-3">
                 {posts.map((post) => (
                   <li key={post.id} className="break-keep">
-                    <Link
-                      href={getBlogPostPathWithSlugAndUuid(
-                        post.blog!.slug,
-                        post.id
-                      )}
-                      className="font-semibold"
-                    >
-                      {post.title || "무제"}
-                    </Link>
-                    <p className="text-neutral-500 text-xs truncate">
-                      {post.blog?.name || `@${post.blog?.slug}`}
+                    <p>
+                      <Link
+                        href={getBlogPostPathWithSlugAndUuid(
+                          post.blog!.slug,
+                          post.id
+                        )}
+                        className="font-semibold"
+                      >
+                        {post.title || "무제"}
+                      </Link>{" "}
+                      <span className="text-neutral-500 text-sm">
+                        {post.blog?.name || `@${post.blog?.slug}`}
+                      </span>
                     </p>
                     <p className="text-neutral-500 text-sm line-clamp-2">
                       {post.preview}
