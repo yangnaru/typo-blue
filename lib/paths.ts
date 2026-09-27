@@ -26,6 +26,10 @@ export function getBlogHomePath(slug: string) {
   return `/@${slug}`;
 }
 
+export function getBlogSubscribePath(slug: string) {
+  return `/@${slug}/subscribe`;
+}
+
 export function getBlogPostPathWithSlugAndUuid(slug: string, uuid: string) {
   return `/@${slug}/${uuid}`;
 }

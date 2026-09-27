@@ -8,7 +8,7 @@ export default function BlogFooter({
   blog: { visitor_count: number } | null;
 }) {
   return (
-    <footer className="mt-12 mb-8 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+    <footer className="mt-8 mb-8 pt-3 border-t border-neutral-200 dark:border-neutral-800">
       <div className="flex flex-row items-baseline justify-between gap-3 text-xs font-semibold">
         <Link href={getRootPath()}>
           <span className="text-neutral-500">powered by</span> typo{" "}

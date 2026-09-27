@@ -1,5 +1,4 @@
 import PostList from "@/components/PostList";
-import MailingListSubscription from "@/components/MailingListSubscription";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { PlainButton } from "@/components/plain-button";
 import { getCurrentSession } from "@/lib/auth";
@@ -11,8 +10,6 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { incrementVisitorCount } from "@/lib/tracking";
 import { notFound } from "next/navigation";
-import { getActorForBlog } from "@/lib/activitypub";
-import { FediverseHandle } from "@/components/fediverse-handle";
 
 type MetadataParams = Promise<{
   blogId: string;
@@ -102,13 +99,6 @@ export default async function BlogHome(props: { params: Params }) {
     sessionUser && targetBlog.user.id === sessionUser.id;
   const publishedPosts = targetBlog.posts;
 
-  // Check if ActivityPub federation is enabled for this blog
-  const blogActor = await getActorForBlog(targetBlog.id);
-  const federationEnabled = !!blogActor;
-  const fediverseHandle = federationEnabled
-    ? `@${targetBlog.slug}@${process.env.NEXT_PUBLIC_DOMAIN}`
-    : null;
-
   await incrementVisitorCount(targetBlog.id);
 
   return (
@@ -121,27 +111,6 @@ export default async function BlogHome(props: { params: Params }) {
         posts={publishedPosts}
         showTitle={false}
       />
-
-      {!isCurrentUserBlogOwner && (
-        <>
-          <MailingListSubscription
-            blogId={targetBlog.id}
-            blogName={targetBlog.name || `@${targetBlog.slug}`}
-          />
-
-          {federationEnabled && fediverseHandle && (
-            <div className="space-y-1">
-              <p className="text-neutral-500 text-sm">
-                마스토돈, 미스키 등 연합우주에서 팔로우할 수 있습니다.
-              </p>
-              <FediverseHandle
-                handle={fediverseHandle}
-                className="text-sm font-mono text-blue-500 select-all"
-              />
-            </div>
-          )}
-        </>
-      )}
 
       {isCurrentUserBlogOwner && (
         <div className="flex flex-row gap-2">
