@@ -5,7 +5,10 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { getBlogHomePath, getRootPath } from "@/lib/paths";
+import { getBlogHomePath } from "@/lib/paths";
+import { getCurrentSession } from "@/lib/auth";
+import { getActorForBlog } from "@/lib/activitypub";
+import BlogFooter from "@/components/blog-footer";
 
 type BlogLayoutProps = {
   children: ReactNode;
@@ -26,6 +29,12 @@ export default async function BlogLayout({
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId.replace("@", "")),
   });
+  const { user } = await getCurrentSession();
+  const isOwner = !!user && targetBlog?.userId === user.id;
+  const fediverseHandle =
+    targetBlog && (await getActorForBlog(targetBlog.id))
+      ? `@${targetBlog.slug}@${process.env.NEXT_PUBLIC_DOMAIN}`
+      : null;
 
   return (
     <>
@@ -42,20 +51,11 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
-      <footer className="py-8">
-        <hr className="bg-neutral-500" />
-        <div className="flex flex-row items-center justify-between text-sm font-semibold">
-          <Link href={getRootPath()}>
-            <span className="text-neutral-500">powered by</span> typo{" "}
-            <span className="text-blue-500">blue</span>
-          </Link>
-          {targetBlog && (
-            <p className="text-neutral-500">
-              total {targetBlog.visitor_count}
-            </p>
-          )}
-        </div>
-      </footer>
+      <BlogFooter
+        blog={targetBlog ?? null}
+        fediverseHandle={fediverseHandle}
+        showSubscribe={!isOwner}
+      />
     </>
   );
 }

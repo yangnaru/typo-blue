@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
+import BlogFooter from "@/components/blog-footer";
 import { DayHeading } from "@/components/day-heading";
 import { PlainButton } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
@@ -372,16 +373,17 @@ export default async function DesignPage() {
       </Section>
 
       <Section title="바닥글">
-        <div>
-          <hr className="bg-neutral-500" />
-          <div className="flex flex-row items-center justify-between text-sm font-semibold">
-            <span>
-              <span className="text-neutral-500">powered by</span> typo{" "}
-              <span className="text-blue-500">blue</span>
-            </span>
-            <span className="text-neutral-500">total 42</span>
-          </div>
-        </div>
+        <BlogFooter
+          blog={{ slug: "design", name: "블로그 이름", visitor_count: 2544 }}
+          fediverseHandle="@design@typo.blue"
+          showSubscribe
+        />
+        <p className="text-neutral-500">
+          블로그의 모든 페이지는 누구의 블로그인지와 따라가는 방법으로 끝납니다.
+          타이포 블루와 방문 수는 그 아래 작은 한 줄에 둡니다. 서비스 페이지의
+          바닥글도 같은 선과 여백을 씁니다.
+        </p>
+        <Token>BlogFooter · SiteFooter</Token>
       </Section>
     </div>
   );

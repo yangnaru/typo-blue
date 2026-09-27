@@ -6,10 +6,9 @@ const SOURCE_URL = "https://github.com/yangnaru/typo-blue";
 // The footer of the service's own pages, drawn like a blog's.
 export default function SiteFooter() {
   return (
-    <footer className="py-8">
-      <hr className="bg-neutral-500" />
-      <div className="flex flex-row items-center justify-between text-sm font-semibold">
-        <Link href={getRootPath()}>
+    <footer className="mt-12 mb-8 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+      <div className="flex flex-row flex-wrap items-baseline justify-between gap-x-3 text-sm">
+        <Link href={getRootPath()} className="font-semibold">
           typo <span className="text-blue-500">blue</span>
         </Link>
         <p className="text-neutral-500">
