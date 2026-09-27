@@ -1,16 +1,13 @@
 import Link from "next/link";
-import { FediverseHandle } from "@/components/fediverse-handle";
-import { getBlogFeedPath, getBlogHomePath, getRootPath } from "@/lib/paths";
+import { getBlogHomePath, getRootPath } from "@/lib/paths";
 
-// The end of every page of a blog: whose blog it is and the ways to follow it,
-// then typo blue and the visit count on one small line.
+// The end of every page of a blog: whose blog it is and a way to subscribe,
+// then "powered by typo blue" and the visit count on one small line.
 export default function BlogFooter({
   blog,
-  fediverseHandle,
   showSubscribe,
 }: {
   blog: { slug: string; name: string | null; visitor_count: number } | null;
-  fediverseHandle: string | null;
   // The mailing list form is on the blog's first page, except for its owner.
   showSubscribe: boolean;
 }) {
@@ -21,40 +18,26 @@ export default function BlogFooter({
           <Link href={getBlogHomePath(blog.slug)} className="font-semibold">
             {blog.name || `@${blog.slug}`}
           </Link>
-          <p className="text-neutral-500 text-sm">
-            {showSubscribe && (
-              <>
-                <Link
-                  href={`${getBlogHomePath(blog.slug)}#subscribe`}
-                  className="underline"
-                >
-                  메일 구독
-                </Link>
-                {" · "}
-              </>
-            )}
-            <a href={getBlogFeedPath(blog.slug)} className="underline">
-              피드
-            </a>
-            {fediverseHandle && (
-              <>
-                {" · "}
-                <FediverseHandle
-                  handle={fediverseHandle}
-                  className="text-xs font-mono break-all select-all"
-                />
-              </>
-            )}
-          </p>
+          {showSubscribe && (
+            <p className="text-neutral-500 text-sm">
+              <Link
+                href={`${getBlogHomePath(blog.slug)}#subscribe`}
+                className="underline"
+              >
+                메일 구독
+              </Link>
+            </p>
+          )}
         </div>
       )}
-      <div className="flex flex-row items-baseline justify-between gap-3 text-xs text-neutral-500">
+      <div className="flex flex-row items-baseline justify-between gap-3 text-xs font-semibold">
         <Link href={getRootPath()}>
-          typo <span className="text-blue-500">blue</span>로 만든 블로그
+          <span className="text-neutral-500">powered by</span> typo{" "}
+          <span className="text-blue-500">blue</span>
         </Link>
         {blog && (
-          <span className="tabular-nums">
-            방문 {blog.visitor_count.toLocaleString("ko-KR")}
+          <span className="text-neutral-500 tabular-nums">
+            HIT {blog.visitor_count.toLocaleString("ko-KR")}
           </span>
         )}
       </div>

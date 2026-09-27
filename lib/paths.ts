@@ -26,10 +26,6 @@ export function getBlogHomePath(slug: string) {
   return `/@${slug}`;
 }
 
-export function getBlogFeedPath(slug: string) {
-  return `/@${slug}/feed.xml`;
-}
-
 export function getBlogPostPathWithSlugAndUuid(slug: string, uuid: string) {
   return `/@${slug}/${uuid}`;
 }

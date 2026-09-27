@@ -7,7 +7,6 @@ import { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getBlogHomePath } from "@/lib/paths";
 import { getCurrentSession } from "@/lib/auth";
-import { getActorForBlog } from "@/lib/activitypub";
 import BlogFooter from "@/components/blog-footer";
 
 type BlogLayoutProps = {
@@ -31,10 +30,6 @@ export default async function BlogLayout({
   });
   const { user } = await getCurrentSession();
   const isOwner = !!user && targetBlog?.userId === user.id;
-  const fediverseHandle =
-    targetBlog && (await getActorForBlog(targetBlog.id))
-      ? `@${targetBlog.slug}@${process.env.NEXT_PUBLIC_DOMAIN}`
-      : null;
 
   return (
     <>
@@ -53,7 +48,6 @@ export default async function BlogLayout({
       {children}
       <BlogFooter
         blog={targetBlog ?? null}
-        fediverseHandle={fediverseHandle}
         showSubscribe={!isOwner}
       />
     </>
