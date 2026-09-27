@@ -76,3 +76,36 @@ export function groupBySeoulDay<T>(
   }
   return groups;
 }
+
+// The month a date falls in, in Seoul: "8월", or "2025년 12월" outside the
+// current year.
+export function formatSeoulMonth(date: Date, now: Date = new Date()): string {
+  const sameYear =
+    formatInTimeZone(date, SEOUL, "yyyy") ===
+    formatInTimeZone(now, SEOUL, "yyyy");
+  return formatInTimeZone(date, SEOUL, sameYear ? "M월" : "yyyy년 M월");
+}
+
+// Items in order, grouped by day in Seoul while they are under `recentDays`
+// days old and by month after that, so an old list doesn't become a heading
+// per item. Each group keeps the date of its first item, to label it with.
+export function groupByRecency<T>(
+  items: T[],
+  getDate: (item: T) => Date,
+  { recentDays = 7, now = new Date() }: { recentDays?: number; now?: Date } = {}
+): { key: string; kind: "day" | "month"; date: Date; items: T[] }[] {
+  const today = Date.parse(seoulDay(now));
+  const groups: { key: string; kind: "day" | "month"; date: Date; items: T[] }[] =
+    [];
+  for (const item of items) {
+    const date = getDate(item);
+    const day = seoulDay(date);
+    const age = (today - Date.parse(day)) / (24 * 60 * 60 * 1000);
+    const kind = age < recentDays ? "day" : "month";
+    const key = kind === "day" ? day : day.slice(0, 7);
+    const last = groups.at(-1);
+    if (last?.key === key) last.items.push(item);
+    else groups.push({ key, kind, date, items: [item] });
+  }
+  return groups;
+}

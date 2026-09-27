@@ -9,8 +9,13 @@ import {
 } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
-import { DayLabel, ListGroup, ListGroups } from "@/components/list-group";
-import { groupBySeoulDay } from "@/lib/dates";
+import {
+  DayLabel,
+  ListGroup,
+  ListGroups,
+  MonthLabel,
+} from "@/components/list-group";
+import { formatSeoulDate, groupByRecency } from "@/lib/dates";
 import { convert } from "html-to-text";
 
 export default async function Home() {
@@ -56,11 +61,20 @@ export default async function Home() {
           <h3 className="text-normal font-bold">최근 새 글</h3>
 
           <ListGroups>
-            {groupBySeoulDay(
+            {groupByRecency(
               recentPosts,
               (post) => post.first_published!
-            ).map(({ day, date, items: posts }) => (
-              <ListGroup key={day} heading={<DayLabel date={date} />}>
+            ).map(({ key, kind, date, items: posts }) => (
+              <ListGroup
+                key={key}
+                heading={
+                  kind === "day" ? (
+                    <DayLabel date={date} />
+                  ) : (
+                    <MonthLabel date={date} />
+                  )
+                }
+              >
 
                 <ul className="space-y-3">
                   {posts.map((post) => (
@@ -82,6 +96,15 @@ export default async function Home() {
                         >
                           {post.blog?.name || `@${post.blog?.slug}`}
                         </Link>
+                        {/* A month's heading doesn't say which day. */}
+                        {kind === "month" && (
+                          <span className="text-neutral-500 text-sm tabular-nums">
+                            {" · "}
+                            {formatSeoulDate(post.first_published!, {
+                              year: false,
+                            })}
+                          </span>
+                        )}
                       </p>
                       <p className="text-neutral-500 text-sm line-clamp-2">
                         {post.preview}

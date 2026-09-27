@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import { formatSeoulDate, getRelativeDay } from "@/lib/dates";
+import {
+  formatSeoulDate,
+  formatSeoulMonth,
+  getRelativeDay,
+} from "@/lib/dates";
 
 // Lists split under small grey headings with a rule, such as days or years.
 // The spacing is fixed here and takes no className, so every such list keeps
@@ -39,4 +43,9 @@ export function DayLabel({ date }: { date: Date }) {
       </span>
     </>
   );
+}
+
+// The heading for a group of items from one month: "8월", or "2025년 12월".
+export function MonthLabel({ date }: { date: Date }) {
+  return <span className="tabular-nums">{formatSeoulMonth(date)}</span>;
 }

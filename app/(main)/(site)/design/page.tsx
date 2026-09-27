@@ -4,13 +4,18 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import BlogFooter from "@/components/blog-footer";
-import { DayLabel, ListGroup, ListGroups } from "@/components/list-group";
+import {
+  DayLabel,
+  ListGroup,
+  ListGroups,
+  MonthLabel,
+} from "@/components/list-group";
 import { PlainButton } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
 import { inputClassName } from "@/lib/form-styles";
 import { TextButton } from "@/components/text-button";
 import type { Post } from "@/lib/db";
-import { formatSeoulDate, groupBySeoulDay } from "@/lib/dates";
+import { formatSeoulDate, groupByRecency } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "디자인",
@@ -67,6 +72,20 @@ function sampleRecentPosts(now: Date) {
       blog: "데이터베이스 노트",
       preview: "EXPLAIN ANALYZE 결과를 읽는 법부터 시작하자. ...",
       date: new Date(now.getTime() - 26 * HOUR),
+    },
+    {
+      id: "recent-4",
+      title: "제주 3박 4일, 비 오는 날의 동선",
+      blog: "여행하는 고양이",
+      preview: "첫날부터 비가 왔다. ...",
+      date: new Date(now.getTime() - 40 * 24 * HOUR),
+    },
+    {
+      id: "recent-5",
+      title: "올해 읽은 책",
+      blog: "문장수집가",
+      preview: "열두 권을 읽었고, 그중 세 권을 두 번 읽었다. ...",
+      date: new Date(now.getTime() - 400 * 24 * HOUR),
     },
   ];
 }
@@ -304,9 +323,18 @@ export default async function DesignPage() {
 
       <Section title="날짜별 목록">
         <ListGroups>
-          {groupBySeoulDay(sampleRecentPosts(now), (post) => post.date).map(
-            ({ day, date, items }) => (
-              <ListGroup key={day} heading={<DayLabel date={date} />}>
+          {groupByRecency(sampleRecentPosts(now), (post) => post.date).map(
+            ({ key, kind, date, items }) => (
+              <ListGroup
+                key={key}
+                heading={
+                  kind === "day" ? (
+                    <DayLabel date={date} />
+                  ) : (
+                    <MonthLabel date={date} />
+                  )
+                }
+              >
                 <ul className="space-y-3">
                   {items.map((post) => (
                     <li key={post.id} className="break-keep">
@@ -320,6 +348,12 @@ export default async function DesignPage() {
                         >
                           {post.blog}
                         </Link>
+                        {kind === "month" && (
+                          <span className="text-neutral-500 text-sm tabular-nums">
+                            {" · "}
+                            {formatSeoulDate(post.date, { year: false })}
+                          </span>
+                        )}
                       </p>
                       <p className="text-neutral-500 text-sm line-clamp-2">
                         {post.preview}
@@ -332,14 +366,16 @@ export default async function DesignPage() {
           )}
         </ListGroups>
         <p className="text-neutral-500">
-          하루에 여러 항목이 쌓이는 목록에 씁니다. 머리글이 날짜를 말하므로 각
-          줄은 제목으로 시작하고, 블로그 이름은 제목 바로 뒤에 회색으로
-          잇습니다. 블로그 이름은 그 블로그의 첫 페이지로 가는 링크입니다.
+          하루에 여러 항목이 쌓이는 목록에 씁니다. 최근 7일은 날짜로, 그보다
+          오래된 항목은 달로 묶어 머리글이 항목마다 하나씩 생기지 않게 합니다.
+          머리글이 날짜를 말하므로 각 줄은 제목으로 시작하고, 블로그 이름은 제목
+          바로 뒤에 회색으로 잇습니다. 달로 묶인 항목은 그 뒤에 날짜를 붙입니다.
+          블로그 이름은 그 블로그의 첫 페이지로 가는 링크입니다.
           하루에 하나뿐인 목록은 연도로 묶습니다. 머리글의 선 위는 32px, 아래는
           12px로 바닥글의 선과 같고, ListGroup이 이 간격을 정하므로 쓰는 곳에서
           바꿀 수 없습니다.
         </p>
-        <Token>groupBySeoulDay · ListGroups · ListGroup · DayLabel</Token>
+        <Token>groupByRecency · ListGroups · ListGroup · DayLabel · MonthLabel</Token>
       </Section>
 
       <Section title="글 목록">
