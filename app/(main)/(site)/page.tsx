@@ -103,8 +103,8 @@ function groupBySeoulDay<T extends { first_published: Date | null }>(
   return groups;
 }
 
-// "오늘 9월 27일 일", "어제 9월 26일 토", or "9월 25일 목" for a yyyy-MM-dd day
-// in Seoul.
+// "오늘 9월 27일 일", "어제 9월 26일 토", "9월 25일 목", or "2023년 7월 23일 일"
+// for a yyyy-MM-dd day in Seoul.
 function DayLabel({ day }: { day: string }) {
   const now = new Date();
   const today = formatInTimeZone(now, SEOUL, "yyyy-MM-dd");
@@ -118,7 +118,9 @@ function DayLabel({ day }: { day: string }) {
     day === today ? "오늘" : day === yesterday ? "어제" : null;
   // Noon keeps the date the same in any zone the formatter might use.
   const date = new Date(`${day}T12:00:00+09:00`);
-  const label = formatInTimeZone(date, SEOUL, "M월 d일 EEE", { locale: ko });
+  const pattern =
+    day.slice(0, 4) === today.slice(0, 4) ? "M월 d일 EEE" : "yyyy년 M월 d일 EEE";
+  const label = formatInTimeZone(date, SEOUL, pattern, { locale: ko });
 
   return (
     <>
