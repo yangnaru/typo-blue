@@ -1,5 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
-import { DayHeading } from "@/components/day-heading";
+import { DayLabel, ListGroup, ListGroups } from "@/components/list-group";
 import { SEOUL, groupBySeoulDay } from "@/lib/dates";
 import { getBlogPostPath, getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
@@ -83,13 +83,12 @@ export default async function NotificationsPage(props: { params: PageProps }) {
       {notifications.length === 0 ? (
         <p>아직 알림이 없습니다.</p>
       ) : (
-        <div className="space-y-4">
+        <ListGroups>
           {groupBySeoulDay(
             notifications,
             ({ notification }) => notification.created
           ).map(({ day, date, items }) => (
-            <section key={day} className="space-y-3">
-              <DayHeading date={date} />
+            <ListGroup key={day} heading={<DayLabel date={date} />}>
               <ul className="space-y-3">
                 {items.map(({ notification, actor, post }) => {
                   const time = formatInTimeZone(
@@ -169,9 +168,9 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                   );
                 })}
               </ul>
-            </section>
+            </ListGroup>
           ))}
-        </div>
+        </ListGroups>
       )}
     </div>
   );

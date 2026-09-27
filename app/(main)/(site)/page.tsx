@@ -9,7 +9,7 @@ import {
 } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
-import { DayHeading } from "@/components/day-heading";
+import { DayLabel, ListGroup, ListGroups } from "@/components/list-group";
 import { groupBySeoulDay } from "@/lib/dates";
 import { convert } from "html-to-text";
 
@@ -55,42 +55,43 @@ export default async function Home() {
         <section className="space-y-4">
           <h3 className="text-normal font-bold">최근 새 글</h3>
 
-          {groupBySeoulDay(
-            recentPosts,
-            (post) => post.first_published!
-          ).map(({ day, date, items: posts }) => (
-            <section key={day} className="space-y-3">
-              <DayHeading date={date} />
+          <ListGroups>
+            {groupBySeoulDay(
+              recentPosts,
+              (post) => post.first_published!
+            ).map(({ day, date, items: posts }) => (
+              <ListGroup key={day} heading={<DayLabel date={date} />}>
 
-              <ul className="space-y-3">
-                {posts.map((post) => (
-                  <li key={post.id} className="break-keep">
-                    <p>
-                      <Link
-                        href={getBlogPostPathWithSlugAndUuid(
-                          post.blog!.slug,
-                          post.id
-                        )}
-                        prefetch
-                        className="font-semibold"
-                      >
-                        {post.title || "무제"}
-                      </Link>{" "}
-                      <Link
-                        href={getBlogHomePath(post.blog!.slug)}
-                        className="text-neutral-500 text-sm"
-                      >
-                        {post.blog?.name || `@${post.blog?.slug}`}
-                      </Link>
-                    </p>
-                    <p className="text-neutral-500 text-sm line-clamp-2">
-                      {post.preview}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
+                <ul className="space-y-3">
+                  {posts.map((post) => (
+                    <li key={post.id} className="break-keep">
+                      <p>
+                        <Link
+                          href={getBlogPostPathWithSlugAndUuid(
+                            post.blog!.slug,
+                            post.id
+                          )}
+                          prefetch
+                          className="font-semibold"
+                        >
+                          {post.title || "무제"}
+                        </Link>{" "}
+                        <Link
+                          href={getBlogHomePath(post.blog!.slug)}
+                          className="text-neutral-500 text-sm"
+                        >
+                          {post.blog?.name || `@${post.blog?.slug}`}
+                        </Link>
+                      </p>
+                      <p className="text-neutral-500 text-sm line-clamp-2">
+                        {post.preview}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </ListGroup>
+            ))}
+          </ListGroups>
         </section>
       )}
     </main>

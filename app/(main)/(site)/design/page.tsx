@@ -4,7 +4,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
 import BlogFooter from "@/components/blog-footer";
-import { DayHeading } from "@/components/day-heading";
+import { DayLabel, ListGroup, ListGroups } from "@/components/list-group";
 import { PlainButton } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
 import { inputClassName } from "@/lib/form-styles";
@@ -303,11 +303,10 @@ export default async function DesignPage() {
       </Section>
 
       <Section title="날짜별 목록">
-        <div className="space-y-4">
+        <ListGroups>
           {groupBySeoulDay(sampleRecentPosts(now), (post) => post.date).map(
             ({ day, date, items }) => (
-              <section key={day} className="space-y-3">
-                <DayHeading date={date} />
+              <ListGroup key={day} heading={<DayLabel date={date} />}>
                 <ul className="space-y-3">
                   {items.map((post) => (
                     <li key={post.id} className="break-keep">
@@ -328,17 +327,19 @@ export default async function DesignPage() {
                     </li>
                   ))}
                 </ul>
-              </section>
+              </ListGroup>
             )
           )}
-        </div>
+        </ListGroups>
         <p className="text-neutral-500">
           하루에 여러 항목이 쌓이는 목록에 씁니다. 머리글이 날짜를 말하므로 각
           줄은 제목으로 시작하고, 블로그 이름은 제목 바로 뒤에 회색으로
-          잇습니다. 블로그 이름은 그 블로그의 첫 페이지로 가는 링크입니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
-          날짜를 부가 정보 줄에 둡니다.
+          잇습니다. 블로그 이름은 그 블로그의 첫 페이지로 가는 링크입니다.
+          하루에 하나뿐인 목록은 연도로 묶습니다. 머리글의 선 위는 32px, 아래는
+          12px로 바닥글의 선과 같고, ListGroup이 이 간격을 정하므로 쓰는 곳에서
+          바꿀 수 없습니다.
         </p>
-        <Token>groupBySeoulDay · DayHeading</Token>
+        <Token>groupBySeoulDay · ListGroups · ListGroup · DayLabel</Token>
       </Section>
 
       <Section title="글 목록">
@@ -352,7 +353,7 @@ export default async function DesignPage() {
           블로그 한 곳의 글은 하루에 하나를 넘기는 일이 드물어서, 날짜 대신
           연도로 묶고 날짜는 줄 끝에 둡니다.
         </p>
-        <Token>PostList · GroupHeading</Token>
+        <Token>PostList · ListGroups · ListGroup</Token>
       </Section>
 
       <Section title="본문">

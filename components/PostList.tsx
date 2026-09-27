@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GroupHeading } from "@/components/day-heading";
+import { ListGroup, ListGroups } from "@/components/list-group";
 import { formatSeoulDate, seoulDay } from "@/lib/dates";
 import { getBlogPostPath } from "@/lib/paths";
 import type { Blog, Post } from "@/lib/db";
@@ -39,13 +39,12 @@ export default function PostList({
       {posts.length === 0 ? (
         <p>아직 글이 없습니다.</p>
       ) : (
-        // The same room around each year's rule as around the footer's.
-        <div className="space-y-8">
+        <ListGroups>
           {years.map(({ year, posts }) => (
-            <section key={year} className="space-y-3">
-              <GroupHeading>
-                <span className="tabular-nums">{year}년</span>
-              </GroupHeading>
+            <ListGroup
+              key={year}
+              heading={<span className="tabular-nums">{year}년</span>}
+            >
               <ul className="space-y-2">
                 {posts.map(({ post, date }) => (
                   <li
@@ -68,9 +67,9 @@ export default function PostList({
                   </li>
                 ))}
               </ul>
-            </section>
+            </ListGroup>
           ))}
-        </div>
+        </ListGroups>
       )}
     </>
   );
