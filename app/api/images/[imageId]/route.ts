@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { imageTable, postImageTable, postTable, blog } from "@/drizzle/schema";
 import { deleteFromR2 } from "@/lib/r2";
+import { isUuid } from "@/lib/utils";
 import { getCurrentSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
@@ -17,6 +18,9 @@ export async function DELETE(
     }
 
     const { imageId } = await params;
+    if (!isUuid(imageId)) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
 
     // Get image metadata and check authorization
     // Join through post_image -> post -> blog to verify ownership
@@ -24,6 +28,7 @@ export async function DELETE(
       .select({
         image: imageTable,
         blogUserId: blog.userId,
+        postContent: postTable.content,
       })
       .from(imageTable)
       .innerJoin(postImageTable, eq(imageTable.id, postImageTable.imageId))
@@ -39,13 +44,22 @@ export async function DELETE(
       );
     }
 
-    const { image, blogUserId } = result[0];
+    const { image, blogUserId, postContent } = result[0];
 
     // Check if user owns the blog
     if (blogUserId !== user.id) {
       return NextResponse.json(
         { error: "You don't have permission to delete this image" },
         { status: 403 }
+      );
+    }
+
+    // Refuse while the post still shows it, or the published post would
+    // point at a deleted file
+    if (postContent?.includes(image.key)) {
+      return NextResponse.json(
+        { error: "본문에 들어 있는 이미지입니다. 본문에서 먼저 지운 뒤 저장해 주세요." },
+        { status: 409 }
       );
     }
 

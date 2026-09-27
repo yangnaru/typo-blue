@@ -5,6 +5,7 @@ import Tiptap, { TiptapRef } from "./Tiptap";
 import { ImageThumbnail, ImageData } from "./ImageThumbnail";
 import { formatInTimeZone } from "date-fns-tz";
 import { formatSeoulDate } from "@/lib/dates";
+import { stripImageMetadata } from "@/lib/strip-image-metadata";
 import {
   deletePost,
   unPublishPost,
@@ -217,7 +218,8 @@ export default function PostEditor({
       const fileArray = Array.from(files);
       const uploadPromises = fileArray.map(async (file) => {
         try {
-          // Step 1: Extract image metadata client-side
+          // Step 1: Drop the photo's EXIF (location, camera) and read its size
+          const upload = await stripImageMetadata(file);
           const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -228,7 +230,7 @@ export default function PostEditor({
               reject(new Error("Failed to load image"));
               URL.revokeObjectURL(img.src);
             };
-            img.src = URL.createObjectURL(file);
+            img.src = URL.createObjectURL(upload);
           });
 
           // Step 2: Request presigned upload URL
@@ -241,7 +243,7 @@ export default function PostEditor({
               width: dimensions.width,
               height: dimensions.height,
               contentType: file.type,
-              size: file.size,
+              size: upload.size,
             }),
           });
 
@@ -252,13 +254,16 @@ export default function PostEditor({
 
           const { presignedUrl, imageId } = await uploadUrlResponse.json();
 
-          // Step 3: Upload directly to R2 using presigned PUT
+          // Step 3: Upload directly to R2 using presigned PUT. The link is
+          // signed for this type and size and for If-None-Match, so the
+          // headers have to match.
           const uploadResponse = await fetch(presignedUrl, {
             method: "PUT",
             headers: {
               "Content-Type": file.type,
+              "If-None-Match": "*",
             },
-            body: file,
+            body: upload,
           });
 
           if (!uploadResponse.ok) {
@@ -329,6 +334,14 @@ export default function PostEditor({
   };
 
   const handleImageDelete = async (imageId: string) => {
+    // The server refuses while the saved post shows the image; this catches
+    // it in the text not saved yet, too
+    const image = images.find((img) => img.id === imageId);
+    if (image && content?.includes(image.url)) {
+      toast.error("본문에 들어 있는 이미지입니다. 본문에서 먼저 지워 주세요.");
+      return;
+    }
+
     try {
       const response = await fetch(`/api/images/${imageId}`, {
         method: "DELETE",
@@ -338,7 +351,8 @@ export default function PostEditor({
         setImages((prev) => prev.filter((img) => img.id !== imageId));
         toast.success("이미지가 삭제되었습니다.");
       } else {
-        toast.error("이미지 삭제에 실패했습니다.");
+        const error = await response.json().catch(() => null);
+        toast.error(error?.error ?? "이미지 삭제에 실패했습니다.");
       }
     } catch (error) {
       console.error("Image delete failed:", error);

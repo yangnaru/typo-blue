@@ -28,6 +28,7 @@ import {
 import { randomUUID, timingSafeEqual } from "crypto";
 import { and, count, eq, gt, lt, sql } from "drizzle-orm";
 import { isUuid, isValidEmail, normalizeEmail } from "../utils";
+import { deleteImageObjects, deleteImageRowsForBlogs } from "../images";
 
 type ChallengePurpose =
   | "sign-in"
@@ -457,7 +458,16 @@ export async function deleteAccount(
   }
 
   // Delete account and all related data in a transaction
-  await db.transaction(async (tx) => {
+  const imageKeys = await db.transaction(async (tx) => {
+    // Images don't cascade from their posts, so delete them first
+    const blogIds = (
+      await tx
+        .select({ id: blogTable.id })
+        .from(blogTable)
+        .where(eq(blogTable.userId, user.id))
+    ).map((row) => row.id);
+    const keys = await deleteImageRowsForBlogs(tx, blogIds);
+
     // Delete all user's blogs (cascade will handle posts and related data)
     await tx.delete(blogTable).where(eq(blogTable.userId, user.id));
 
@@ -467,7 +477,11 @@ export async function deleteAccount(
     // Delete the user
     await tx.delete(userTable).where(eq(userTable.id, user.id));
 
+    return keys;
   });
+
+  // Then the files, which stay public on R2 until deleted
+  await deleteImageObjects(imageKeys);
 
   // Clear the session cookie
   await deleteSessionTokenCookie();

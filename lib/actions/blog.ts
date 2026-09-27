@@ -6,7 +6,7 @@ import { db } from "../db";
 import { blog, postTable, imageTable, postImageTable } from "@/drizzle/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { sendNoteToFollowers, sendActorUpdateToFollowers } from "../federation";
-import { deleteFromR2 } from "../r2";
+import { deleteImageObjects, deleteImageRowsForBlogs } from "../images";
 
 export async function createBlog(blogId: string) {
   const { user } = await getCurrentSession();
@@ -96,7 +96,14 @@ export async function deleteBlog(blogId: string) {
     // Continue with blog deletion even if federation cleanup fails
   }
 
-  await db.delete(blog).where(eq(blog.slug, blogId));
+  // Images don't cascade from their posts, so delete their rows with the blog,
+  // then the files, which stay public on R2 until deleted
+  const imageKeys = await db.transaction(async (tx) => {
+    const keys = await deleteImageRowsForBlogs(tx, [targetBlog.id]);
+    await tx.delete(blog).where(eq(blog.slug, blogId));
+    return keys;
+  });
+  await deleteImageObjects(imageKeys);
 
   return {
     success: true,
@@ -208,14 +215,8 @@ export async function deletePost(blogSlug: string, postId: string) {
       .where(eq(postTable.id, uuid));
   });
 
-  // Then delete from R2; an orphaned object is harmless
-  for (const image of imageResults) {
-    try {
-      await deleteFromR2(image.key);
-    } catch (error) {
-      console.error(`Failed to delete image from R2: ${image.key}`, error);
-    }
-  }
+  // Then delete from R2
+  await deleteImageObjects(imageResults.map((image) => image.key));
 
   try {
     await sendNoteToFollowers(targetBlog.slug, uuid, true);

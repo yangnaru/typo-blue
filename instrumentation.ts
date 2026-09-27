@@ -43,6 +43,10 @@ export async function register() {
     emailWorker.start().catch((error) => {
       console.error("Failed to start email worker:", error);
     });
+
+    // Uploads never confirmed, and images whose post is gone
+    const { startImageCleanup } = await import("./lib/images");
+    process.once("SIGTERM", startImageCleanup());
   }
 }
 

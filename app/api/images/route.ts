@@ -4,6 +4,7 @@ import { imageTable, postImageTable, postTable, blog } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { getPublicUrl } from "@/lib/r2";
 import { getCurrentSession } from "@/lib/auth";
+import { isUuid } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const postId = searchParams.get("postId");
 
-    if (!postId) {
+    if (!postId || !isUuid(postId)) {
       return NextResponse.json(
         { error: "postId query parameter is required" },
         { status: 400 }

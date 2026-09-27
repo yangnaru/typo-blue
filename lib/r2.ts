@@ -49,18 +49,26 @@ export function getPublicUrl(key: string): string {
   return `${R2_PUBLIC_URL}/${key}`;
 }
 
+// A link the browser PUTs one image to. The type, the exact size and
+// If-None-Match: * are signed, so R2 refuses a different type (HTML, say), a
+// different size, or a second upload over the first; it lasts five minutes.
+// The browser has to send the same Content-Type and If-None-Match headers.
 export async function generatePresignedUploadUrl(
   key: string,
-  contentType: string
+  contentType: string,
+  contentLength: number
 ): Promise<{ url: string }> {
   const command = new PutObjectCommand({
     Bucket: R2_BUCKET_NAME!,
     Key: key,
     ContentType: contentType,
+    ContentLength: contentLength,
+    IfNoneMatch: "*",
   });
 
   const url = await getSignedUrl(r2Client, command, {
-    expiresIn: 3600, // 1 hour
+    expiresIn: 5 * 60,
+    signableHeaders: new Set(["content-type", "content-length", "if-none-match"]),
   });
 
   return { url };

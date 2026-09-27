@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { blog, imageTable, postImageTable, postTable } from "@/drizzle/schema";
 import { getPublicUrl } from "@/lib/r2";
 import { getCurrentSession } from "@/lib/auth";
-import { and, eq } from "drizzle-orm";
+import { and, eq, exists } from "drizzle-orm";
 import { isUuid } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
@@ -48,22 +48,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark the image completed and attach it to the post together, and only
-    // if it's still pending, so it can't end up completed but unattached
-    const updatedImage = await db.transaction(async (tx) => {
-      const [image] = await tx
-        .update(imageTable)
-        .set({ status: "completed" })
-        .where(and(eq(imageTable.id, imageId), eq(imageTable.status, "pending")))
-        .returning();
-      if (!image) return null;
-
-      await tx
-        .insert(postImageTable)
-        .values({ postId, imageId: image.id })
-        .onConflictDoNothing();
-      return image;
-    });
+    // Mark the image completed only if it's still pending and was created for
+    // this post, which upload-url tied it to, so nobody can claim another
+    // post's upload
+    const [updatedImage] = await db
+      .update(imageTable)
+      .set({ status: "completed" })
+      .where(
+        and(
+          eq(imageTable.id, imageId),
+          eq(imageTable.status, "pending"),
+          exists(
+            db
+              .select({ id: postImageTable.id })
+              .from(postImageTable)
+              .where(
+                and(
+                  eq(postImageTable.imageId, imageId),
+                  eq(postImageTable.postId, postId)
+                )
+              )
+          )
+        )
+      )
+      .returning();
 
     if (!updatedImage) {
       return NextResponse.json(
