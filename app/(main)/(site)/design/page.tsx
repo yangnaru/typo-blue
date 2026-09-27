@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import PostList from "@/components/PostList";
+import { DayHeading } from "@/components/day-heading";
 import { PlainButton } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
 import {
@@ -11,6 +12,7 @@ import {
   submitClassName,
 } from "@/lib/form-styles";
 import type { Post } from "@/lib/db";
+import { formatSeoulDate, groupBySeoulDay } from "@/lib/dates";
 
 export const metadata: Metadata = {
   title: "디자인",
@@ -42,6 +44,35 @@ const samplePosts = [
   },
 ] as Post[];
 
+const HOUR = 60 * 60 * 1000;
+
+// Times before now, so 오늘 and 어제 show as they would on a real list.
+function sampleRecentPosts(now: Date) {
+  return [
+    {
+      id: "recent-1",
+      title: "두 번째 책을 마치며: 편집자와 주고받은 스무 통의 편지",
+      blog: "문장수집가",
+      preview: "원고를 넘긴 지 정확히 일주일이 지났다. ...",
+      date: new Date(now.getTime() - HOUR),
+    },
+    {
+      id: "recent-2",
+      title: "",
+      blog: "@jh",
+      preview: "고양이가 키보드 위에서 잠들었다.",
+      date: new Date(now.getTime() - 2 * HOUR),
+    },
+    {
+      id: "recent-3",
+      title: "PostgreSQL 인덱스가 생각대로 쓰이지 않을 때",
+      blog: "데이터베이스 노트",
+      preview: "EXPLAIN ANALYZE 결과를 읽는 법부터 시작하자. ...",
+      date: new Date(now.getTime() - 26 * HOUR),
+    },
+  ];
+}
+
 function Section({
   title,
   children,
@@ -64,6 +95,14 @@ function Token({ children }: { children: React.ReactNode }) {
 export default async function DesignPage() {
   await connection();
 
+  const now = new Date();
+  const sampleDates = [
+    { date: now, note: "오늘" },
+    { date: new Date(now.getTime() - 24 * HOUR), note: "어제" },
+    { date: new Date("2026-09-24T05:05:00Z"), note: "올해" },
+    { date: new Date("2024-03-14T05:05:00Z"), note: "지난해 이전" },
+  ];
+
   return (
     <div className="space-y-12 pb-8">
       <Logo />
@@ -83,7 +122,11 @@ export default async function DesignPage() {
           <li>이동은 파란 글자 링크로, 동작은 파란 테두리 버튼으로 합니다.</li>
           <li>관련된 버튼과 메뉴는 하나의 버튼 묶음으로 붙여 둡니다.</li>
           <li>부가 정보는 회색으로 한 줄에 모아 · 로 나눕니다.</li>
-          <li>날짜는 굵은 고정폭 숫자로 목록 맨 앞에 둡니다.</li>
+          <li>목록의 줄은 제목으로 시작하고, 부가 정보는 그 아래 줄에 둡니다.</li>
+          <li>
+            날짜는 오늘, 어제, 9월 24일처럼 말로 쓰고, 같은 날의 항목이 많으면
+            날짜 머리글 아래 모읍니다.
+          </li>
         </ul>
       </Section>
 
@@ -111,7 +154,7 @@ export default async function DesignPage() {
           </div>
           <div>
             <p className="text-neutral-500 text-sm">
-              부가 정보 · 2026-09-24 · 3분
+              부가 정보 · 9월 24일 · 3분
             </p>
             <Token>text-neutral-500 text-sm</Token>
           </div>
@@ -235,6 +278,64 @@ export default async function DesignPage() {
         <Token>inputClassName · submitClassName</Token>
       </Section>
 
+      <Section title="날짜">
+        <ul className="space-y-2">
+          {sampleDates.map(({ date, note }) => (
+            <li key={note} className="space-y-0.5">
+              <p className="tabular-nums">
+                {formatSeoulDate(date, { relative: true, time: true })}
+                <span className="text-neutral-500">
+                  {" · "}
+                  {formatSeoulDate(date, { weekday: true })}
+                </span>
+              </p>
+              <p className="text-neutral-500 text-sm">{note}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-neutral-500">
+          날짜는 서울 기준으로 셉니다. 올해가 아니면 연도를 붙이고, 요일은
+          머리글과 글 페이지에만, 시각은 글 페이지, 내 글 목록, 알림처럼 필요한
+          곳에만 붙입니다. 오늘과 어제는 목록에만 쓰고, 주소가 남는 글
+          페이지에는 쓰지 않습니다.
+        </p>
+        <Token>formatSeoulDate · relative · weekday · time</Token>
+      </Section>
+
+      <Section title="날짜별 목록">
+        <div className="space-y-4">
+          {groupBySeoulDay(sampleRecentPosts(now), (post) => post.date).map(
+            ({ day, date, items }) => (
+              <section key={day} className="space-y-3">
+                <DayHeading date={date} />
+                <ul className="space-y-3">
+                  {items.map((post) => (
+                    <li key={post.id} className="break-keep">
+                      <Link href="/design" className="font-semibold">
+                        {post.title || "무제"}
+                      </Link>
+                      <p className="text-neutral-500 text-xs truncate">
+                        {post.blog}
+                      </p>
+                      <p className="text-neutral-500 text-sm line-clamp-2">
+                        {post.preview}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          )}
+        </div>
+        <p className="text-neutral-500">
+          하루에 여러 항목이 쌓이는 목록에 씁니다. 머리글이 날짜를 말하므로 각
+          줄은 제목으로 시작하고, 블로그 이름처럼 길어질 수 있는 부가 정보는 한
+          줄에서 잘라 냅니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
+          날짜를 부가 정보 줄에 둡니다.
+        </p>
+        <Token>groupBySeoulDay · DayHeading</Token>
+      </Section>
+
       <Section title="글 목록">
         <PostList
           name="글 목록"
@@ -242,7 +343,7 @@ export default async function DesignPage() {
           posts={samplePosts}
           showTitle={false}
         />
-        <Token>PostList · 굵은 날짜 + 제목</Token>
+        <Token>PostList · 굵은 날짜 + 제목 (날짜 표기를 옮기기 전의 방식)</Token>
       </Section>
 
       <Section title="본문">
