@@ -71,6 +71,7 @@ export default async function Home() {
                           post.blog!.slug,
                           post.id
                         )}
+                        prefetch
                         className="font-semibold"
                       >
                         {post.title || "무제"}

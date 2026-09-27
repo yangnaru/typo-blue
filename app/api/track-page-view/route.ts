@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { trackPageView } from "@/lib/tracking";
+import { incrementVisitorCount, trackPageView } from "@/lib/tracking";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +51,9 @@ export async function POST(request: NextRequest) {
     }
 
     await trackPageView(blogId, postId, ipAddress, userAgent, referrer, path);
+    // Counted here, when a reader's browser reports the page, rather than when
+    // the server renders it: links prefetch pages nobody may open.
+    await incrementVisitorCount(blogId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

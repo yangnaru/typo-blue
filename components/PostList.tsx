@@ -39,9 +39,10 @@ export default function PostList({
       {posts.length === 0 ? (
         <p>아직 글이 없습니다.</p>
       ) : (
-        <div className="space-y-4">
+        // The same room around each year's rule as around the footer's.
+        <div className="space-y-8">
           {years.map(({ year, posts }) => (
-            <section key={year} className="space-y-2">
+            <section key={year} className="space-y-3">
               <GroupHeading>
                 <span className="tabular-nums">{year}년</span>
               </GroupHeading>
@@ -53,6 +54,7 @@ export default function PostList({
                   >
                     <Link
                       href={getBlogPostPath(blog.slug, post.id)}
+                      prefetch
                       className="break-keep tabular-nums"
                     >
                       {post.title?.length === 0 ? "무제" : post.title}
