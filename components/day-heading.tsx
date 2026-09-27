@@ -7,11 +7,21 @@ export function DayHeading({ date }: { date: Date }) {
   const relative = getRelativeDay(date);
 
   return (
-    <h4 className="flex items-baseline gap-2 text-xs font-bold text-neutral-500 after:flex-1 after:border-b after:border-neutral-200 dark:after:border-neutral-800">
+    <GroupHeading>
       {relative && <span className="text-foreground">{relative}</span>}
       <span className="tabular-nums">
         {formatSeoulDate(date, { weekday: true })}
       </span>
+    </GroupHeading>
+  );
+}
+
+// A small grey heading over a group of list items, such as a day or a year,
+// with a rule to the right edge.
+export function GroupHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className="flex items-baseline gap-2 text-xs font-bold text-neutral-500 after:flex-1 after:border-b after:border-neutral-200 dark:after:border-neutral-800">
+      {children}
     </h4>
   );
 }

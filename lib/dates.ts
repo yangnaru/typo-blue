@@ -13,14 +13,22 @@ export function seoulDay(date: Date): string {
 // current year. `relative` says 오늘 or 어제 for those days instead, which only
 // belongs on pages rendered per request and never on a permalink. `weekday`
 // adds the day of the week (9월 24일 목) and `time` the time (9월 24일 14:05).
+// `year: false` leaves the year out, for lists already grouped by year.
 export function formatSeoulDate(
   date: Date,
   {
     relative = false,
     weekday = false,
     time = false,
+    year,
     now = new Date(),
-  }: { relative?: boolean; weekday?: boolean; time?: boolean; now?: Date } = {}
+  }: {
+    relative?: boolean;
+    weekday?: boolean;
+    time?: boolean;
+    year?: boolean;
+    now?: Date;
+  } = {}
 ): string {
   const suffix = time ? ` ${formatInTimeZone(date, SEOUL, "HH:mm")}` : "";
 
@@ -29,11 +37,12 @@ export function formatSeoulDate(
     if (relativeDay) return relativeDay + suffix;
   }
 
-  const sameYear =
-    formatInTimeZone(date, SEOUL, "yyyy") ===
-    formatInTimeZone(now, SEOUL, "yyyy");
+  const showYear =
+    year ??
+    formatInTimeZone(date, SEOUL, "yyyy") !==
+      formatInTimeZone(now, SEOUL, "yyyy");
   const pattern =
-    (sameYear ? "M월 d일" : "yyyy년 M월 d일") + (weekday ? " EEE" : "");
+    (showYear ? "yyyy년 M월 d일" : "M월 d일") + (weekday ? " EEE" : "");
   return formatInTimeZone(date, SEOUL, pattern, { locale: ko }) + suffix;
 }
 

@@ -1,5 +1,4 @@
 import { PlainButton } from "@/components/plain-button";
-import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import {
   getBlogNewPostPath,
@@ -11,6 +10,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { Post } from "@/lib/db";
+import { formatSeoulDate } from "@/lib/dates";
 import { desc, eq, isNull } from "drizzle-orm";
 import { blog, postTable } from "@/drizzle/schema";
 
@@ -82,17 +82,22 @@ function OwnerPostList({
         <ul className="space-y-2">
           {posts.map((post) => (
             <li key={post.id} className="break-keep">
-              <Link href={getBlogPostEditPath(slug, post.id)}>
-                <span className="font-bold tabular-nums">
-                  {formatInTimeZone(
-                    post.first_published ?? post.published ?? post.updated,
-                    "Asia/Seoul",
-                    "yyyy-MM-dd HH:mm"
-                  )}
-                </span>{" "}
+              <Link
+                href={getBlogPostEditPath(slug, post.id)}
+                className="font-semibold"
+              >
                 {post.title === "" ? "무제" : post.title}
               </Link>
-              <span className="text-neutral-500 text-sm">
+              <p className="text-neutral-500 text-xs tabular-nums">
+                {post.published
+                  ? formatSeoulDate(post.first_published ?? post.published, {
+                      relative: true,
+                      time: true,
+                    })
+                  : `${formatSeoulDate(post.updated, {
+                      relative: true,
+                      time: true,
+                    })} 저장`}
                 {post.emailSent && " · 이메일 발송됨"} ·{" "}
                 <Link
                   href={getBlogPostPath(slug, post.id)}
@@ -101,7 +106,7 @@ function OwnerPostList({
                 >
                   보기
                 </Link>
-              </span>
+              </p>
             </li>
           ))}
         </ul>

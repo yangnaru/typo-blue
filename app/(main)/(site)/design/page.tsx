@@ -343,7 +343,11 @@ export default async function DesignPage() {
           posts={samplePosts}
           showTitle={false}
         />
-        <Token>PostList · 굵은 날짜 + 제목 (날짜 표기를 옮기기 전의 방식)</Token>
+        <p className="text-neutral-500">
+          블로그 한 곳의 글은 하루에 하나를 넘기는 일이 드물어서, 날짜 대신
+          연도로 묶고 날짜는 줄 끝에 둡니다.
+        </p>
+        <Token>PostList · GroupHeading</Token>
       </Section>
 
       <Section title="본문">

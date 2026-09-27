@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Tiptap, { TiptapRef } from "./Tiptap";
 import { ImageThumbnail, ImageData } from "./ImageThumbnail";
 import { formatInTimeZone } from "date-fns-tz";
+import { formatSeoulDate } from "@/lib/dates";
 import {
   deletePost,
   unPublishPost,
@@ -457,7 +458,7 @@ export default function PostEditor({
 
   const statusParts = [
     publishedAt
-      ? `발행됨 ${formatInTimeZone(publishedAt, "Asia/Seoul", "yyyy-MM-dd HH:mm")}`
+      ? `발행됨 ${formatSeoulDate(publishedAt, { relative: true, time: true })}`
       : "초안",
     emailSent && "이메일 발송됨",
     `${wordCount}단어`,

@@ -310,7 +310,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
           </PillItem>
         </Pill>
         <span className="font-bold" role="status" aria-live="polite">
-          {format(currentMonth, "yyyy년 MM월")}
+          {format(currentMonth, "yyyy년 M월")}
         </span>
       </div>
 
@@ -376,10 +376,10 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
         <div className="space-y-2">
           <h3 className="text-lg">
             {selectionMode === "single" && selectedDate
-              ? `${format(selectedDate, "yyyy년 MM월 dd일")}에 발행된 글`
+              ? `${format(selectedDate, "yyyy년 M월 d일 EEE", { locale: ko })}에 발행된 글`
               : selectedRange?.to
-                ? `${format(selectedRange.from, "yyyy-MM-dd")} ~ ${format(selectedRange.to, "yyyy-MM-dd")}에 발행된 글`
-                : `${format(selectedRange!.from, "yyyy년 MM월 dd일")}부터 선택 중`}
+                ? `${format(selectedRange.from, "yyyy년 M월 d일")} ~ ${format(selectedRange.to, "yyyy년 M월 d일")}에 발행된 글`
+                : `${format(selectedRange!.from, "yyyy년 M월 d일")}부터 선택 중`}
           </h3>
           {selectionMode === "range" && selectedRange?.to && (
             <p className="text-neutral-500">
@@ -405,16 +405,18 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
             <ul className="space-y-2">
               {selectedPosts.map((post) => (
                 <li key={post.id} className="break-keep">
-                  <Link href={getBlogPostEditPath(blogSlug, post.id)}>
-                    <span className="font-bold tabular-nums">
-                      {format(
-                        post.first_published!,
-                        selectionMode === "range" ? "MM-dd HH:mm" : "HH:mm"
-                      )}
-                    </span>{" "}
+                  <Link
+                    href={getBlogPostEditPath(blogSlug, post.id)}
+                    className="font-semibold"
+                  >
                     {post.title || "무제"}
                   </Link>
-                  <span className="text-neutral-500 text-sm">
+                  <p className="text-neutral-500 text-xs tabular-nums">
+                    {/* first_published is already in Seoul's wall time here. */}
+                    {format(
+                      post.first_published!,
+                      selectionMode === "range" ? "M월 d일 HH:mm" : "HH:mm"
+                    )}
                     {" · "}
                     <Link
                       href={getBlogPostPath(blogSlug, post.id)}
@@ -423,7 +425,7 @@ export function BlogCalendar({ posts, blogSlug }: BlogCalendarProps) {
                     >
                       보기
                     </Link>
-                  </span>
+                  </p>
                 </li>
               ))}
             </ul>

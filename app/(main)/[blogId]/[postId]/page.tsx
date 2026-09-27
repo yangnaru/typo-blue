@@ -1,5 +1,5 @@
 import { getCurrentSession } from "@/lib/auth";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatSeoulDate } from "@/lib/dates";
 import { Metadata } from "next";
 import Link from "next/link";
 import { PlainButton } from "@/components/plain-button";
@@ -130,22 +130,22 @@ export default async function BlogPost(props: { params: Params }) {
     <div className="space-y-8">
       <PageViewTracker blogId={targetBlog.id} postId={targetPost.id} />
 
-      <div className="flex flex-row gap-2 items-baseline flex-wrap">
+      <div className="space-y-1">
         <h3 className="text-2xl break-keep">
           <Link href={getBlogPostPath(targetBlog.slug, targetPost.id)}>
             {targetPost.title === "" ? "무제" : targetPost.title}
           </Link>
         </h3>
-        <span className="text-neutral-500">
-          {formatInTimeZone(
+        <p className="text-neutral-500 text-sm tabular-nums">
+          {/* Absolute, never 오늘: a permalink gets quoted elsewhere. */}
+          {formatSeoulDate(
             targetPost.first_published ??
               targetPost.published ??
               targetPost.updated,
-            "Asia/Seoul",
-            "yyyy-MM-dd HH:mm"
+            { weekday: true, time: true }
           )}
           {!targetPost.published && " (초안)"}
-        </span>
+        </p>
       </div>
       <div
         className="prose dark:prose-invert break-keep"

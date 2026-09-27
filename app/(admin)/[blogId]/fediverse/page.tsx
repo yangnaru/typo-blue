@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatSeoulDate } from "@/lib/dates";
 import { getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -101,25 +101,23 @@ export default async function FediversePage(props: { params: PageProps }) {
             <ul className="space-y-2">
               {follows.map((follow) => (
                 <li key={follow.follower.id} className="break-all">
-                  {follow.followingInfo.accepted && (
-                    <span className="font-bold tabular-nums">
-                      {formatInTimeZone(
-                        follow.followingInfo.accepted,
-                        "Asia/Seoul",
-                        "yyyy-MM-dd"
-                      )}{" "}
-                    </span>
-                  )}
-                  {follow.follower.name ?? (
-                    <span className="text-neutral-500">이름 없음</span>
-                  )}{" "}
-                  <Link
-                    href={follow.follower.url ?? follow.follower.iri}
-                    target="_blank"
-                    className="text-neutral-500"
-                  >
-                    {follow.follower.handle}
-                  </Link>
+                  <span className="font-semibold">
+                    {follow.follower.name ?? (
+                      <span className="text-neutral-500">이름 없음</span>
+                    )}
+                  </span>
+                  <p className="text-neutral-500 text-xs tabular-nums">
+                    <Link
+                      href={follow.follower.url ?? follow.follower.iri}
+                      target="_blank"
+                    >
+                      {follow.follower.handle}
+                    </Link>
+                    {follow.followingInfo.accepted &&
+                      ` · ${formatSeoulDate(follow.followingInfo.accepted, {
+                        relative: true,
+                      })} 팔로우`}
+                  </p>
                 </li>
               ))}
             </ul>

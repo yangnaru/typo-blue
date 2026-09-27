@@ -1,4 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
+import { DayHeading } from "@/components/day-heading";
+import { SEOUL, groupBySeoulDay } from "@/lib/dates";
 import { getBlogPostPath, getRootPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -80,73 +82,95 @@ export default async function NotificationsPage(props: { params: PageProps }) {
       {notifications.length === 0 ? (
         <p>아직 알림이 없습니다.</p>
       ) : (
-        <ul className="space-y-3">
-          {notifications.map(({ notification, actor, post }) => {
-            const time = formatInTimeZone(
-              notification.created,
-              "Asia/Seoul",
-              "MM-dd HH:mm"
-            );
-            const showContent =
-              notification.content &&
-              !["emoji_react", "like", "announce"].includes(notification.type);
+        <div className="space-y-4">
+          {groupBySeoulDay(
+            notifications,
+            ({ notification }) => notification.created
+          ).map(({ day, date, items }) => (
+            <section key={day} className="space-y-3">
+              <DayHeading date={date} />
+              <ul className="space-y-3">
+                {items.map(({ notification, actor, post }) => {
+                  const time = formatInTimeZone(
+                    notification.created,
+                    SEOUL,
+                    "HH:mm"
+                  );
+                  const showContent =
+                    notification.content &&
+                    !["emoji_react", "like", "announce"].includes(
+                      notification.type
+                    );
 
-            return (
-              <li key={notification.id} className="break-keep">
-                <span className="font-bold tabular-nums">
-                  {notification.type === "reply" && notification.url ? (
-                    <a
-                      href={notification.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {time}
-                    </a>
-                  ) : (
-                    time
-                  )}
-                </span>{" "}
-                <span
-                  className={notification.read ? undefined : "text-blue-500"}
-                >
-                  {notificationTypeLabels[notification.type] ?? "알림"}
-                  {notification.type === "emoji_react" &&
-                    ` ${notification.content}`}
-                </span>{" "}
-                {actor.name || actor.username}{" "}
-                <span className="text-neutral-500 break-all">
-                  {actor.handle}
-                </span>
-                {notification.postId && (
-                  <>
-                    {" → "}
-                    <a
-                      href={getBlogPostPath(slug, notification.postId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      {post.title || "무제"}
-                    </a>
-                  </>
-                )}
-                {showContent && (
-                  <div
-                    className="text-neutral-500 text-sm line-clamp-2"
-                    dangerouslySetInnerHTML={{
-                      __html: sanitize(notification.content!),
-                    }}
-                  />
-                )}
-                <NotificationActions
-                  blogSlug={slug}
-                  notificationId={notification.id}
-                  isRead={notification.read !== null}
-                />
-              </li>
-            );
-          })}
-        </ul>
+                  return (
+                    <li key={notification.id} className="break-keep">
+                      <div className="flex flex-row items-baseline justify-between gap-3">
+                        <span>
+                          <span
+                            className={
+                              notification.read
+                                ? "font-semibold"
+                                : "font-semibold text-blue-500"
+                            }
+                          >
+                            {notificationTypeLabels[notification.type] ??
+                              "알림"}
+                            {notification.type === "emoji_react" &&
+                              ` ${notification.content}`}
+                          </span>{" "}
+                          {actor.name || actor.username}
+                        </span>
+                        <span className="shrink-0 text-neutral-500 text-xs tabular-nums">
+                          {notification.type === "reply" && notification.url ? (
+                            <a
+                              href={notification.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline"
+                            >
+                              {time}
+                            </a>
+                          ) : (
+                            time
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-neutral-500 text-xs truncate">
+                        {actor.handle}
+                      </p>
+                      {notification.postId && (
+                        <p className="text-sm">
+                          {"→ "}
+                          <a
+                            href={getBlogPostPath(slug, notification.postId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline"
+                          >
+                            {post.title || "무제"}
+                          </a>
+                        </p>
+                      )}
+                      {showContent && (
+                        <div
+                          className="text-neutral-500 text-sm line-clamp-2"
+                          dangerouslySetInnerHTML={{
+                            __html: sanitize(notification.content!),
+                          }}
+                        />
+                      )}
+                      <NotificationActions
+                        blogSlug={slug}
+                        notificationId={notification.id}
+                        isRead={notification.read !== null}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );

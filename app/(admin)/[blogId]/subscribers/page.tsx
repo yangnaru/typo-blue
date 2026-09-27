@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatSeoulDate } from "@/lib/dates";
 import { getCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { and, count, eq, isNotNull, isNull, sql, desc } from "drizzle-orm";
@@ -97,16 +97,10 @@ export default async function SubscribersPage(props: { params: PageProps }) {
         <ul className="space-y-2">
           {subscribers.map((subscriber) => (
             <li key={subscriber.id} className="break-all">
-              <span className="font-bold tabular-nums">
-                {formatInTimeZone(
-                  subscriber.created,
-                  "Asia/Seoul",
-                  "yyyy-MM-dd"
-                )}
-              </span>{" "}
-              {subscriber.email}
-              <p className="text-neutral-500 text-sm">
-                발송 {subscriber.emailsSent} · 열람 {subscriber.emailsOpened}
+              <span className="font-semibold">{subscriber.email}</span>
+              <p className="text-neutral-500 text-xs tabular-nums">
+                {formatSeoulDate(subscriber.created, { relative: true })} 구독
+                · 발송 {subscriber.emailsSent} · 열람 {subscriber.emailsOpened}
                 {Number(subscriber.emailsFailed) > 0 && (
                   <span className="text-red-500">
                     {" "}
@@ -114,11 +108,10 @@ export default async function SubscribersPage(props: { params: PageProps }) {
                   </span>
                 )}
                 {subscriber.lastEmailSent &&
-                  ` · 마지막 발송 ${formatInTimeZone(
-                    subscriber.lastEmailSent,
-                    "Asia/Seoul",
-                    "yyyy-MM-dd HH:mm"
-                  )}`}
+                  ` · 마지막 발송 ${formatSeoulDate(subscriber.lastEmailSent, {
+                    relative: true,
+                    time: true,
+                  })}`}
               </p>
             </li>
           ))}
