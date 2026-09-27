@@ -14,6 +14,7 @@ import {
 } from "@/drizzle/schema";
 import { NotificationActions } from "@/components/NotificationActions";
 import sanitize from "sanitize-html";
+import { FediverseHandle } from "@/components/fediverse-handle";
 
 type PageProps = Promise<{
   blogId: string;
@@ -136,7 +137,7 @@ export default async function NotificationsPage(props: { params: PageProps }) {
                         </span>
                       </div>
                       <p className="text-neutral-500 text-xs truncate">
-                        {actor.handle}
+                        <FediverseHandle as="span" handle={actor.handle} />
                       </p>
                       {notification.postId && (
                         <p className="text-sm">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FediverseHandle } from "@/components/fediverse-handle";
 import { getBlogFeedPath, getBlogHomePath, getRootPath } from "@/lib/paths";
 
 // The end of every page of a blog: whose blog it is and the ways to follow it,
@@ -38,9 +39,10 @@ export default function BlogFooter({
             {fediverseHandle && (
               <>
                 {" · "}
-                <code className="text-xs font-mono break-all select-all">
-                  {fediverseHandle}
-                </code>
+                <FediverseHandle
+                  handle={fediverseHandle}
+                  className="text-xs font-mono break-all select-all"
+                />
               </>
             )}
           </p>

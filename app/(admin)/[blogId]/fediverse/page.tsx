@@ -10,6 +10,7 @@ import { getActorForBlog } from "@/lib/activitypub";
 import { DisableFederationButton } from "@/components/DisableFederationButton";
 import { BlogActivityPubProfile } from "@/components/BlogActivityPubProfile";
 import Link from "next/link";
+import { FediverseHandle } from "@/components/fediverse-handle";
 
 type PageProps = Promise<{
   blogId: string;
@@ -111,7 +112,7 @@ export default async function FediversePage(props: { params: PageProps }) {
                       href={follow.follower.url ?? follow.follower.iri}
                       target="_blank"
                     >
-                      {follow.follower.handle}
+                      <FediverseHandle as="span" handle={follow.follower.handle} />
                     </Link>
                     {follow.followingInfo.accepted &&
                       ` · ${formatSeoulDate(follow.followingInfo.accepted, {

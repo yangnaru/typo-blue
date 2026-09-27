@@ -1,6 +1,7 @@
 import { ActivityPubSetupButton } from "@/components/ActivityPubSetupButton";
 import Link from "next/link";
 import { getBlogSettingsPath } from "@/lib/paths";
+import { FediverseHandle } from "@/components/fediverse-handle";
 
 interface ActivityPubProfileData {
   handle: string;
@@ -23,7 +24,7 @@ export function BlogActivityPubProfile({
       {profile ? (
         <>
           <p>
-            핸들: <code className="select-all">{profile.handle}</code>
+            핸들: <FediverseHandle className="select-all" handle={profile.handle} />
           </p>
           <p>
             이름: {profile.name}{" "}
@@ -37,7 +38,7 @@ export function BlogActivityPubProfile({
           {profile.summary && <p>설명: {profile.summary}</p>}
           <p className="text-neutral-500">
             마스토돈, 미스키 등 연합우주 사용자들이{" "}
-            <span className="select-all">{profile.handle}</span>을 팔로우하면
+            <FediverseHandle as="span" className="select-all" handle={profile.handle} />을 팔로우하면
             새 글이 발행될 때 받아볼 수 있습니다.
           </p>
         </>
