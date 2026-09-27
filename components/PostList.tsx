@@ -56,14 +56,18 @@ export default function PostList({
                       prefetch
                       className="break-keep tabular-nums"
                     >
-                      {post.title?.length === 0 ? "무제" : post.title}
+                      {post.title || "무제"}
                       {!post.published && (
                         <span className="text-neutral-500"> (초안)</span>
                       )}
                     </Link>
-                    <span className="shrink-0 text-neutral-500 text-sm tabular-nums">
+                    {/* The date links too, so a row is reachable however its title reads. */}
+                    <Link
+                      href={getBlogPostPath(blog.slug, post.id)}
+                      className="shrink-0 text-neutral-500 text-sm tabular-nums"
+                    >
                       {formatSeoulDate(date, { year: false })}
-                    </span>
+                    </Link>
                   </li>
                 ))}
               </ul>

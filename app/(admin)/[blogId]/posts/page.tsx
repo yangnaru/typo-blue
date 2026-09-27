@@ -86,7 +86,7 @@ function OwnerPostList({
                 href={getBlogPostEditPath(slug, post.id)}
                 className="font-semibold"
               >
-                {post.title === "" ? "무제" : post.title}
+                {post.title || "무제"}
               </Link>
               <p className="text-neutral-500 text-xs tabular-nums">
                 {post.published

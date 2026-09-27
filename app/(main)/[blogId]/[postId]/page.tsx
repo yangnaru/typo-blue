@@ -51,7 +51,7 @@ export async function generateMetadata(props: {
 
   const blogName = targetPost.blog.name || `@${targetPost.blog.slug}`;
   const blogDescription = targetPost.blog.description ?? "";
-  const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
+  const postTitle = targetPost.title || "무제";
 
   return {
     title: postTitle,
@@ -131,7 +131,7 @@ export default async function BlogPost(props: { params: Params }) {
       <div className="space-y-1">
         <h3 className="text-2xl break-keep">
           <Link href={getBlogPostPath(targetBlog.slug, targetPost.id)}>
-            {targetPost.title === "" ? "무제" : targetPost.title}
+            {targetPost.title || "무제"}
           </Link>
         </h3>
         <p className="text-neutral-500 text-sm tabular-nums">
