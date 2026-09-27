@@ -8,7 +8,9 @@ import {
   reauthenticateWithPassword,
   sendReauthenticationCode,
 } from "@/lib/actions/account";
-import { inputClassName, submitClassName } from "@/lib/form-styles";
+import { inputClassName } from "@/lib/form-styles";
+import { PlainButton } from "@/components/plain-button";
+import { TextButton } from "@/components/text-button";
 
 // Asks the user to prove who they are again, by their password or a code
 // sent to their email, before a sensitive change
@@ -99,23 +101,13 @@ export default function ReauthenticationForm({
             />
           )
         )}
-        <input
-          type="submit"
-          className={submitClassName}
-          disabled={isLoading}
-          value={
-            usingPassword || challengeId ? "확인" : "확인 코드 보내기"
-          }
-        />
+        <PlainButton type="submit" disabled={isLoading}>
+          {usingPassword || challengeId ? "확인" : "확인 코드 보내기"}
+        </PlainButton>
         {hasPassword && (
-          <input
-            type="button"
-            className="text-blue-500 cursor-pointer"
-            value={
-              usingPassword ? "이메일로 확인하기" : "비밀번호로 확인하기"
-            }
-            onClick={() => setUsingPassword(!usingPassword)}
-          />
+          <TextButton onClick={() => setUsingPassword(!usingPassword)}>
+            {usingPassword ? "이메일로 확인하기" : "비밀번호로 확인하기"}
+          </TextButton>
         )}
       </form>
     </div>

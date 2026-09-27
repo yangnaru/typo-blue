@@ -16,7 +16,7 @@ export function BlogSubscribeButton({ slug }: { slug: string }) {
     <PlainButton
       asChild
       className={cn(
-        "shrink-0 text-sm",
+        "shrink-0",
         current && "bg-blue-500 text-white hover:bg-blue-500 hover:text-white"
       )}
     >

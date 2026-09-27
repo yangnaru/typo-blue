@@ -8,7 +8,6 @@ export function CopyButton({ text }: { text: string }) {
   return (
     <PlainButton
       type="button"
-      className="text-sm"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);

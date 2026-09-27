@@ -8,7 +8,8 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { inputClassName, submitClassName } from "@/lib/form-styles";
+import { inputClassName } from "@/lib/form-styles";
+import { PlainButton } from "@/components/plain-button";
 
 export default function Login() {
   const router = useRouter();
@@ -122,12 +123,9 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
       )}
-      <input
-        type="submit"
-        className={submitClassName}
-        value={buttonText}
-        disabled={isSendingCode || isVerifying}
-      />
+      <PlainButton type="submit" disabled={isSendingCode || isVerifying}>
+        {buttonText}
+      </PlainButton>
       {!challengeId && (
         <p className="text-neutral-500 text-sm">
           비밀번호가 없으면 비워 두세요. 이메일로 로그인 코드를 보내 드립니다.

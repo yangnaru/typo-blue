@@ -7,11 +7,8 @@ import BlogFooter from "@/components/blog-footer";
 import { DayHeading } from "@/components/day-heading";
 import { PlainButton } from "@/components/plain-button";
 import { Pill, PillItem } from "@/components/pill";
-import {
-  inputClassName,
-  linkButtonClassName,
-  submitClassName,
-} from "@/lib/form-styles";
+import { inputClassName } from "@/lib/form-styles";
+import { TextButton } from "@/components/text-button";
 import type { Post } from "@/lib/db";
 import { formatSeoulDate, groupBySeoulDay } from "@/lib/dates";
 
@@ -122,6 +119,10 @@ export default async function DesignPage() {
           <li>카드, 배지, 그림자, 아이콘 대신 글과 여백으로 구분합니다.</li>
           <li>이동은 파란 글자 링크로, 동작은 파란 테두리 버튼으로 합니다.</li>
           <li>관련된 버튼과 메뉴는 하나의 버튼 묶음으로 붙여 둡니다.</li>
+          <li>
+            버튼은 PlainButton, PillItem, TextButton 세 가지뿐이고 글자 크기는
+            모두 text-sm 하나입니다.
+          </li>
           <li>부가 정보는 회색으로 한 줄에 모아 · 로 나눕니다.</li>
           <li>목록의 줄은 제목으로 시작하고, 부가 정보는 그 아래 줄에 둡니다.</li>
           <li>
@@ -198,14 +199,10 @@ export default async function DesignPage() {
           <Link href="/design" className="text-neutral-500">
             보조 링크
           </Link>
-          <button type="button" className={linkButtonClassName}>
-            글자 버튼
-          </button>
-          <button type="button" className={linkButtonClassName} disabled>
-            비활성 글자 버튼
-          </button>
+          <TextButton>글자 버튼</TextButton>
+          <TextButton disabled>비활성 글자 버튼</TextButton>
         </div>
-        <Token>text-blue-500 · font-bold · text-neutral-500</Token>
+        <Token>text-blue-500 · font-bold · text-neutral-500 · TextButton</Token>
       </Section>
 
       <Section title="버튼">
@@ -217,8 +214,14 @@ export default async function DesignPage() {
             <Link href="/design">링크 버튼</Link>
           </PlainButton>
         </div>
+        <p className="text-neutral-500">
+          버튼, 버튼 묶음, 글자 버튼은 모두 text-sm 크기이고, 쓰는 곳에서 크기를
+          바꿀 수 없습니다. 크기를 넘기거나 컴포넌트 대신 button, input
+          type=&quot;submit&quot;을 직접 쓰면 린트(pnpm lint)가 막습니다.
+          아이콘만 있는 편집기 도구 버튼은 예외입니다.
+        </p>
         <Token>
-          PlainButton · border-blue-500 rounded-sm hover:bg-blue-300
+          PlainButton · border-blue-500 rounded-sm text-sm hover:bg-blue-300
         </Token>
       </Section>
 
@@ -270,13 +273,9 @@ export default async function DesignPage() {
             <input type="checkbox" defaultChecked />
             체크박스
           </label>
-          <input
-            type="button"
-            className={submitClassName}
-            value="폼 제출 버튼"
-          />
+          <PlainButton type="button">폼 제출 버튼</PlainButton>
         </form>
-        <Token>inputClassName · submitClassName</Token>
+        <Token>inputClassName · PlainButton type=&quot;submit&quot;</Token>
       </Section>
 
       <Section title="날짜">
@@ -312,11 +311,13 @@ export default async function DesignPage() {
                 <ul className="space-y-3">
                   {items.map((post) => (
                     <li key={post.id} className="break-keep">
-                      <Link href="/design" className="font-semibold">
-                        {post.title || "무제"}
-                      </Link>
-                      <p className="text-neutral-500 text-xs truncate">
-                        {post.blog}
+                      <p>
+                        <Link href="/design" className="font-semibold">
+                          {post.title || "무제"}
+                        </Link>{" "}
+                        <span className="text-neutral-500 text-sm">
+                          {post.blog}
+                        </span>
                       </p>
                       <p className="text-neutral-500 text-sm line-clamp-2">
                         {post.preview}
@@ -330,8 +331,8 @@ export default async function DesignPage() {
         </div>
         <p className="text-neutral-500">
           하루에 여러 항목이 쌓이는 목록에 씁니다. 머리글이 날짜를 말하므로 각
-          줄은 제목으로 시작하고, 블로그 이름처럼 길어질 수 있는 부가 정보는 한
-          줄에서 잘라 냅니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
+          줄은 제목으로 시작하고, 블로그 이름은 제목 바로 뒤에 회색으로
+          잇습니다. 대부분 하루에 하나뿐인 목록이라면 머리글 대신
           날짜를 부가 정보 줄에 둡니다.
         </p>
         <Token>groupBySeoulDay · DayHeading</Token>

@@ -1,6 +1,6 @@
 "use client";
 
-import { linkButtonClassName } from "@/lib/form-styles";
+import { TextButton } from "@/components/text-button";
 import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
@@ -63,39 +63,24 @@ export function NotificationActions({
 
   if (notificationId) {
     return (
-      <div className="flex flex-row gap-3 text-sm">
+      <div className="flex flex-row gap-3">
         {!isRead && (
-          <button
-            type="button"
-            className={linkButtonClassName}
-            onClick={handleMarkAsRead}
-            disabled={isPending}
-          >
+          <TextButton onClick={handleMarkAsRead} disabled={isPending}>
             읽음 표시
-          </button>
+          </TextButton>
         )}
-        <button
-          type="button"
-          className={linkButtonClassName}
-          onClick={handleDelete}
-          disabled={isPending}
-        >
+        <TextButton onClick={handleDelete} disabled={isPending}>
           삭제
-        </button>
+        </TextButton>
       </div>
     );
   }
 
   if (hasUnreadNotifications) {
     return (
-      <button
-        type="button"
-        className={`${linkButtonClassName} text-sm`}
-        onClick={handleMarkAllAsRead}
-        disabled={isPending}
-      >
+      <TextButton onClick={handleMarkAllAsRead} disabled={isPending}>
         모두 읽음 표시
-      </button>
+      </TextButton>
     );
   }
 

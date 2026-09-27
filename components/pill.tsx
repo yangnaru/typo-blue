@@ -33,7 +33,7 @@ export function PillItem({
   return (
     <Comp
       className={cn(
-        "shrink-0 px-2 py-1 cursor-pointer disabled:cursor-default disabled:opacity-50",
+        "shrink-0 px-2 py-1 text-sm cursor-pointer disabled:cursor-default disabled:opacity-50",
         active
           ? "bg-blue-500 text-white"
           : "hover:bg-blue-300 hover:text-black disabled:hover:bg-transparent disabled:hover:text-inherit",

@@ -7,7 +7,8 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { inputClassName, submitClassName } from "@/lib/form-styles";
+import { inputClassName } from "@/lib/form-styles";
+import { PlainButton } from "@/components/plain-button";
 
 export default function ChangeEmailForm() {
   const router = useRouter();
@@ -96,12 +97,9 @@ export default function ChangeEmailForm() {
             required
           />
         )}
-        <input
-          type="submit"
-          className={submitClassName}
-          value={buttonText}
-          disabled={buttonDisabled}
-        />
+        <PlainButton type="submit" disabled={buttonDisabled}>
+          {buttonText}
+        </PlainButton>
       </form>
     </div>
   );

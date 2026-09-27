@@ -3,7 +3,8 @@ import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 
-// The blue-outlined button of the original typo blue design.
+// The blue-outlined button of the original typo blue design. Every button on
+// the site is text-sm, and callers may not change it; see /design.
 const variants = {
   default:
     "border-blue-500 hover:bg-blue-300 hover:text-black disabled:hover:bg-transparent disabled:hover:text-inherit",
@@ -15,7 +16,7 @@ export function plainButtonClassName(
   variant: keyof typeof variants = "default"
 ) {
   return cn(
-    "inline-block border px-2 py-1 rounded-sm cursor-pointer disabled:cursor-default disabled:opacity-50",
+    "inline-block border px-2 py-1 rounded-sm text-sm cursor-pointer disabled:cursor-default disabled:opacity-50",
     variants[variant]
   );
 }
