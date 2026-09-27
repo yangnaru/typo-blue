@@ -53,7 +53,7 @@ export default function PostList({
                   >
                     <Link
                       href={getBlogPostPath(blog.slug, post.id)}
-                      className="break-keep"
+                      className="break-keep tabular-nums"
                     >
                       {post.title?.length === 0 ? "무제" : post.title}
                       {!post.published && (

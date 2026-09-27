@@ -41,14 +41,14 @@ export async function generateMetadata(props: {
   }
 
   return {
-    title: targetBlog.name ?? `@${targetBlog.slug}`,
+    title: targetBlog.name || `@${targetBlog.slug}`,
     description: targetBlog.description,
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_URL}/${blogId}`,
       types: {
         "application/atom+xml": [
           {
-            title: targetBlog.name ?? blogId,
+            title: targetBlog.name || blogId,
             url: `${process.env.NEXT_PUBLIC_URL}/${blogId}/feed.xml`,
           },
         ],

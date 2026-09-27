@@ -30,7 +30,7 @@ export async function generateMetadata(props: {
     return { title: "존재하지 않는 블로그입니다." };
   }
 
-  return { title: `구독 · ${targetBlog.name ?? `@${targetBlog.slug}`}` };
+  return { title: `구독 · ${targetBlog.name || `@${targetBlog.slug}`}` };
 }
 
 // The ways to follow a blog, moved here so the blog's first page is only its

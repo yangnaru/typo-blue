@@ -50,7 +50,7 @@ export async function generateMetadata(props: {
     notFound();
   }
 
-  const blogName = targetPost.blog.name ?? `@${targetPost.blog.slug}`;
+  const blogName = targetPost.blog.name || `@${targetPost.blog.slug}`;
   const blogDescription = targetPost.blog.description ?? "";
   const postTitle = targetPost.title === "" ? "무제" : targetPost.title;
 
