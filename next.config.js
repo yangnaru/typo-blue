@@ -4,19 +4,17 @@ const nextConfig = {
     // the image can leave node_modules and the sources behind.
     output: 'standalone',
     serverExternalPackages: ['@node-rs/argon2'],
+    // Only this site's own image host: /_next/image resizes whatever these
+    // allow, and any *.r2.dev bucket would have let anyone's images through.
+    // NEXT_PUBLIC_R2_PUBLIC_URL is set at build time, like the other
+    // NEXT_PUBLIC_* settings.
     images: {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: 'r2.typo.blue',
-            },
-            {
-                protocol: 'https',
-                hostname: '**.r2.dev',
-            },
-            {
-                protocol: 'https',
-                hostname: '**.r2.cloudflarestorage.com',
+                hostname: new URL(
+                    process.env.NEXT_PUBLIC_R2_PUBLIC_URL || 'https://r2.typo.blue'
+                ).hostname,
             },
         ],
     },
