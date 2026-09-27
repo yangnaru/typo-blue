@@ -7,7 +7,10 @@ import { getBlogPostPathWithSlugAndUuid } from "@/lib/paths";
 import Link from "next/link";
 import { count, eq, isNotNull, and, desc, isNull } from "drizzle-orm";
 import { formatInTimeZone } from "date-fns-tz";
+import { ko } from "date-fns/locale";
 import { convert } from "html-to-text";
+
+const SEOUL = "Asia/Seoul";
 
 export default async function Home() {
   const latestPublishedPostsFromDiscoverableBlogs = await db
@@ -48,39 +51,80 @@ export default async function Home() {
       </nav>
 
       {recentPosts.length > 0 && (
-        <>
+        <section className="space-y-4">
           <h3 className="text-normal font-bold">최근 새 글</h3>
 
-          <ul className="space-y-3">
-            {recentPosts.map((post) => (
-              <li key={post.id} className="break-keep">
-                <Link
-                  href={getBlogPostPathWithSlugAndUuid(
-                    post.blog!.slug,
-                    post.id
-                  )}
-                >
-                  <span className="font-bold tabular-nums">
-                    {formatInTimeZone(
-                      post.first_published!,
-                      "Asia/Seoul",
-                      "yyyy-MM-dd"
-                    )}
-                  </span>{" "}
-                  {post.title || "무제"}{" "}
-                  <span className="text-neutral-500">
-                    {post.blog?.name || `@${post.blog?.slug}`}
-                  </span>
-                </Link>
-                <p className="text-neutral-500 text-sm line-clamp-2">
-                  {post.preview}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </>
+          {groupBySeoulDay(recentPosts).map(({ day, posts }) => (
+            <section key={day} className="space-y-3">
+              <h4 className="flex items-baseline gap-2 text-xs font-bold text-neutral-500 after:flex-1 after:border-b after:border-neutral-200 dark:after:border-neutral-800">
+                <DayLabel day={day} />
+              </h4>
+
+              <ul className="space-y-3">
+                {posts.map((post) => (
+                  <li key={post.id} className="break-keep">
+                    <Link
+                      href={getBlogPostPathWithSlugAndUuid(
+                        post.blog!.slug,
+                        post.id
+                      )}
+                      className="font-semibold"
+                    >
+                      {post.title || "무제"}
+                    </Link>
+                    <p className="text-neutral-500 text-xs truncate">
+                      {post.blog?.name || `@${post.blog?.slug}`}
+                    </p>
+                    <p className="text-neutral-500 text-sm line-clamp-2">
+                      {post.preview}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </section>
       )}
     </main>
+  );
+}
+
+// Posts in order, split wherever the day in Seoul changes.
+function groupBySeoulDay<T extends { first_published: Date | null }>(
+  posts: T[]
+): { day: string; posts: T[] }[] {
+  const groups: { day: string; posts: T[] }[] = [];
+  for (const post of posts) {
+    const day = formatInTimeZone(post.first_published!, SEOUL, "yyyy-MM-dd");
+    const last = groups.at(-1);
+    if (last?.day === day) last.posts.push(post);
+    else groups.push({ day, posts: [post] });
+  }
+  return groups;
+}
+
+// "오늘 9월 27일 일", "어제 9월 26일 토", or "9월 25일 목" for a yyyy-MM-dd day
+// in Seoul.
+function DayLabel({ day }: { day: string }) {
+  const now = new Date();
+  const today = formatInTimeZone(now, SEOUL, "yyyy-MM-dd");
+  // Seoul has no daylight saving, so a day ago is always yesterday there.
+  const yesterday = formatInTimeZone(
+    new Date(now.getTime() - 24 * 60 * 60 * 1000),
+    SEOUL,
+    "yyyy-MM-dd"
+  );
+  const relative =
+    day === today ? "오늘" : day === yesterday ? "어제" : null;
+  // Noon keeps the date the same in any zone the formatter might use.
+  const date = new Date(`${day}T12:00:00+09:00`);
+  const label = formatInTimeZone(date, SEOUL, "M월 d일 EEE", { locale: ko });
+
+  return (
+    <>
+      {relative && <span className="text-foreground">{relative}</span>}
+      <span className="tabular-nums">{label}</span>
+    </>
   );
 }
 
