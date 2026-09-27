@@ -373,14 +373,10 @@ export default async function DesignPage() {
       </Section>
 
       <Section title="바닥글">
-        <BlogFooter
-          blog={{ slug: "design", name: "블로그 이름", visitor_count: 2544 }}
-          showSubscribe
-        />
+        <BlogFooter blog={{ visitor_count: 2544 }} />
         <p className="text-neutral-500">
-          블로그의 모든 페이지는 블로그 이름과 메일 구독 링크로 끝납니다.
-          powered by typo blue와 방문 수(HIT)는 그 아래 작은 한 줄에 둡니다.
-          서비스 페이지의 바닥글도 같은 선과 여백을 씁니다.
+          블로그의 모든 페이지는 powered by typo blue와 방문 수(HIT) 한 줄로
+          끝납니다. 서비스 페이지의 바닥글도 같은 선과 여백을 씁니다.
         </p>
         <Token>BlogFooter · SiteFooter</Token>
       </Section>

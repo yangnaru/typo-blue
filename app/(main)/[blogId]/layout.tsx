@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getBlogHomePath } from "@/lib/paths";
-import { getCurrentSession } from "@/lib/auth";
 import BlogFooter from "@/components/blog-footer";
 
 type BlogLayoutProps = {
@@ -28,8 +27,6 @@ export default async function BlogLayout({
   const targetBlog = await db.query.blog.findFirst({
     where: eq(blog.slug, blogId.replace("@", "")),
   });
-  const { user } = await getCurrentSession();
-  const isOwner = !!user && targetBlog?.userId === user.id;
 
   return (
     <>
@@ -46,10 +43,7 @@ export default async function BlogLayout({
         </div>
       )}
       {children}
-      <BlogFooter
-        blog={targetBlog ?? null}
-        showSubscribe={!isOwner}
-      />
+      <BlogFooter blog={targetBlog ?? null} />
     </>
   );
 }

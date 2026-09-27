@@ -45,7 +45,7 @@ export default function MailingListSubscription({
   };
 
   return (
-    <div id="subscribe" className="space-y-2">
+    <div className="space-y-2">
       <h3 className="text-normal font-bold">메일링 리스트 구독</h3>
       <p className="text-neutral-500">
         {blogName}에 새 글이 올라오면 이메일로 받아볼 수 있습니다.
