@@ -57,7 +57,7 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
-# Declared again here because they are what deploy.py reads off the image to
+# Declared again here because they are what a deploy reads off the image to
 # check it was built for the server's .env.
 ARG NEXT_PUBLIC_URL
 ARG NEXT_PUBLIC_DOMAIN

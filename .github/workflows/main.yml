@@ -1,10 +1,9 @@
 # Builds typo-blue for every commit on main and pushes it to GHCR as
-# ghcr.io/yangnaru/typo-blue:git-<commit>-arm64, which is what
-# `mise run deploy` has the server pull. `mise run deploy:local` still builds
-# on the Mac and ships over ssh, for when this is broken or GitHub is down.
+# ghcr.io/yangnaru/typo-blue:git-<commit>-arm64, which is what a deploy has
+# the server pull.
 #
 # NEXT_PUBLIC_* are compiled into the client bundle, so they come from
-# repository variables that have to match the server's .env; deploy.py refuses
+# repository variables that have to match the server's .env; a deploy refuses
 # an image built with others.
 name: main
 on:
@@ -47,7 +46,7 @@ jobs:
         password: ${{ github.token }}
     - id: arch
       run: echo arch=arm64 >> "$GITHUB_OUTPUT"
-    # deploy.py waits for this step by name (IMAGE_PUSH_STEP).
+    # A deploy waits for this step by name; renaming it breaks that.
     - name: Build and push the image
       uses: docker/build-push-action@v6
       with:
